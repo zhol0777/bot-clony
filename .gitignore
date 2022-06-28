@@ -1,0 +1,7 @@
+__pycache__
+.DS_Store
+.env
+.mypy_cache
+.vscode
+bot.db
+venv
