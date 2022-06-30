@@ -5,6 +5,7 @@ import os
 
 from discord.ext import commands
 import discord
+
 import util
 
 MOD_CHAT_CHANNEL_NAME = os.getenv('MOD_CHAT')

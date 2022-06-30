@@ -1,7 +1,6 @@
 '''
 Module to handle the few DB operations we have
 '''
-
 import peewee
 
 bot_db = peewee.SqliteDatabase('bot.db')

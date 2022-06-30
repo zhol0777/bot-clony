@@ -3,8 +3,9 @@ Cog to allow helpers to apply slowmode in help channels
 '''
 import os
 
-import discord
 from discord.ext import commands
+
+import discord
 
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')

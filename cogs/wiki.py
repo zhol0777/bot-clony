@@ -8,6 +8,7 @@ import os
 
 from discord.ext import commands
 import validators
+
 import db
 import util
 

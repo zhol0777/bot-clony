@@ -1,12 +1,12 @@
 '''
 Cog to deport/un-deport on-command and mark role assignment in db
 '''
-
 import logging
 import os
 
 from discord.ext import commands
 import discord
+
 import db
 import util
 

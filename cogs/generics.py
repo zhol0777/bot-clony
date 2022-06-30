@@ -1,10 +1,9 @@
 '''
 Generic commands that provide simple responses
 '''
-
-
 from discord.ext import commands
 import discord
+
 import util
 
 TRADE_DISCLAIMER = '''

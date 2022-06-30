@@ -1,10 +1,11 @@
 '''
 Utility functions shared across cogs
 '''
-
 from typing import Any
+
 import validators
 import discord
+
 import db
 
 

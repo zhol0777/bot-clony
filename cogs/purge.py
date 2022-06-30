@@ -1,8 +1,11 @@
-'''Purge users messages'''
+'''
+Purge users/channels messages
+'''
 import os
 
 from discord.ext import commands
 import discord
+
 import util
 
 MOD_ROLE = os.getenv('MOD_ROLE')
