@@ -6,13 +6,13 @@ import logging
 import os
 
 from discord.ext import commands
-from dotenv import load_dotenv
 import discord
 import db
 import util
 
-load_dotenv()
 HELPER_CHANNEL = os.getenv('HELPER_CHANNEL')
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 logging.basicConfig(level=logging.INFO)
@@ -25,7 +25,7 @@ class MemberWarning(commands.Cog):
         self.client = client
 
     @commands.group()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def ejectwarn(self, ctx: commands.Context):
         '''
         Usage: !ejectwarn [@ user tag] [reason...]
@@ -68,7 +68,7 @@ class MemberWarning(commands.Cog):
             await ctx.channel.send("Stop foolin around!")
 
     @ejectwarn.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
     async def list(self, ctx: commands.Context, user_id_tag: str):
         '''
         Usage: !ejectwarn list [@ user tag]
@@ -90,7 +90,7 @@ class MemberWarning(commands.Cog):
             await channel.send(embed=embed)
 
     @ejectwarn.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def delete(self, reason_id: int):
         '''
         Usage: !ejectwarn delete [warning reason ID]

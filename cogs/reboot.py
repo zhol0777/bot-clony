@@ -7,6 +7,8 @@ import sys
 
 from discord.ext import commands
 
+MOD_ROLE = os.getenv('MOD_ROLE')
+
 
 class Reboot(commands.Cog):
     '''Cog to sanitize messages'''
@@ -14,7 +16,7 @@ class Reboot(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_role('mods')
+    @commands.has_role(MOD_ROLE)
     async def reboot(self, ctx: commands.Context):
         '''
         Usage: !reboot
@@ -24,7 +26,7 @@ class Reboot(commands.Cog):
         os.execv(sys.executable, ['python'] + sys.argv)
 
     @commands.command()
-    @commands.has_role('mods')
+    @commands.has_role(MOD_ROLE)
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update

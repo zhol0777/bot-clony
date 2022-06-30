@@ -4,11 +4,9 @@ Command to sanitize trackers out of URL parameters by stripping params
 import os
 
 from discord.ext import commands
-from dotenv import load_dotenv
 import discord
 import util
 
-load_dotenv()
 MOD_CHAT_CHANNEL_NAME = os.getenv('MOD_CHAT')
 
 

@@ -1,8 +1,13 @@
 '''
 Cog to allow helpers to apply slowmode in help channels
 '''
+import os
+
 import discord
 from discord.ext import commands
+
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 class SlowMode(commands.Cog):
@@ -11,7 +16,7 @@ class SlowMode(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def slowmode(self, ctx: commands.Context, interval: int):
         '''Activate slowmode in help channels'''
         # TODO: check against channel ID instead of name

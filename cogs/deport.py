@@ -3,12 +3,15 @@ Cog to deport/un-deport on-command and mark role assignment in db
 '''
 
 import logging
+import os
 
 from discord.ext import commands
 import discord
 import db
 import util
 
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -20,7 +23,7 @@ class Deport(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def deport(self, ctx: commands.Context, *args):
         '''
         Usage: !deport [@ user tag] [reason...]
@@ -45,7 +48,7 @@ class Deport(commands.Cog):
                                       deport_role)
 
     @commands.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def undeport(self, ctx: commands.Context, *args):
         '''
         Usage: !undeport [@ user tag]

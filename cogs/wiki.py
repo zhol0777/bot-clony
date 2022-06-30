@@ -4,10 +4,15 @@ and allow helpers to define page links in community wiki
 '''
 from urllib.parse import urljoin
 import logging
-import validators
+import os
+
 from discord.ext import commands
+import validators
 import db
 import util
+
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 logging.basicConfig(level=logging.INFO)
@@ -52,7 +57,7 @@ class Wiki(commands.Cog):
                 await ctx.channel.send(wiki_page.page, reference=reply_message)
 
     @wiki.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def define(self, ctx: commands.context, *args):
         '''
         Usage: !wiki define page [shortname] [url/subdirectory]
@@ -94,7 +99,7 @@ class Wiki(commands.Cog):
                 return
 
     @wiki.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def delete(self, ctx: commands.context, shortname: str):
         '''
         Usage: !wiki delete [shortname]

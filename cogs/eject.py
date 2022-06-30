@@ -2,11 +2,15 @@
 Eject users from the help channels and log the assignment accordingly
 '''
 import logging
+import os
 
 from discord.ext import commands
 import discord
 import db
 import util
+
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +23,7 @@ class Eject(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def eject(self, ctx: commands.Context, *args):
         '''
         Usage: !eject [@ user tag] [reason...]
@@ -51,7 +55,7 @@ class Eject(commands.Cog):
                 await ctx.channel.send("lol ejected")
 
     @commands.command()
-    @commands.has_any_role('Helpers', 'mods')
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def uneject(self, ctx: commands.Context, *args):
         '''
         Usage: !uneject [@ user tag]

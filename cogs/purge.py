@@ -1,8 +1,11 @@
 '''Purge users messages'''
+import os
 
 from discord.ext import commands
 import discord
 import util
+
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 class Deport(commands.Cog):
@@ -11,7 +14,7 @@ class Deport(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_role('mods')
+    @commands.has_role(MOD_ROLE)
     async def purgelast(self, ctx: commands.Context, *args):
         '''
         Usage: !purgelast [@ user tag] [count]
@@ -44,7 +47,7 @@ class Deport(commands.Cog):
         await ctx.message.delete()
 
     @commands.command()
-    @commands.has_role('mods')
+    @commands.has_role(MOD_ROLE)
     async def purge(self, ctx: commands.Context, count: int):
         '''
         Usage: !purge [count]
