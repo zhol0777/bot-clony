@@ -55,7 +55,7 @@ def get_id_from_tag(tag: str) -> int:
 async def get_reply_message(ctx, original) -> discord.Message:
     '''Find the message that bot will reply to later'''
     if ctx.message.reference is not None:
-        original = await ctx.fetch_message(id=ctx.message.reference.message_id)
+        original = await ctx.fetch_message(ctx.message.reference.message_id)
     return original
 
 
