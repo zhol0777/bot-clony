@@ -11,7 +11,7 @@ import util
 MOD_ROLE = os.getenv('MOD_ROLE')
 
 
-class Deport(commands.Cog):
+class Purge(commands.Cog):
     '''Cog to ban+purge users messages'''
     def __init__(self, client):
         self.client = client
@@ -62,4 +62,4 @@ class Deport(commands.Cog):
 
 def setup(client):
     '''setup'''
-    client.add_cog(Deport(client))
+    client.add_cog(Purge(client))
