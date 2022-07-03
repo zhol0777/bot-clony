@@ -85,6 +85,7 @@ class Help(commands.Cog):
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
                     and ctx.message.channel.name == os.getenv('MOD_CHAT'):
                 await ctx.channel.send(f'```{MOD_COMMANDS}```')
+            return
         command = args[0]
         help_msg = f'Help for {command}:\n'
         for line in GENERAL_COMMANDS.split('\n'):
