@@ -20,6 +20,7 @@ class LifeAlert(commands.Cog):
         '''Reply based on lifealert reason being provided'''
         reason = ' '.join(args) if len(args) > 0 else ''
         if not reason:
+            reason = 'N/A'
             channel_msg = 'Provide a reason with lifealert!'
         else:
             channel_msg = 'LifeAlert received...'

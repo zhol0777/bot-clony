@@ -30,7 +30,6 @@ class Eject(commands.Cog):
         Usage: !eject [@ user tag] [reason...]
                [as message reply] !eject [reason...]
         Eject a user from the help channels'''
-        eject_role = discord.utils.get(ctx.guild.roles, name="ejected")
         if ctx.message.reference is not None:
             # replying to someone who is about to be ejected
             reply_message = await util.get_reply_message(ctx, ctx.message)
@@ -41,7 +40,7 @@ class Eject(commands.Cog):
             if isinstance(ejected_member, discord.Member):
                 with db.bot_db:
                     await util.apply_role(ejected_member, ejected_user.id,
-                                          eject_role, reason=' '.join(args))
+                                          'ejected', reason=' '.join(args))
                     await ctx.channel.send("lol ejected",
                                            reference=reply_message)
                     # TODO: send message into appeals channel
@@ -52,7 +51,7 @@ class Eject(commands.Cog):
             ejected_member = await ctx.guild.fetch_member(ejected_user_id)
             with db.bot_db:
                 await util.apply_role(ejected_member, ejected_user_id,
-                                      eject_role, reason=eject_reason)
+                                      'ejected', reason=eject_reason)
                 await ctx.channel.send("lol ejected")
 
     @commands.command()

@@ -29,7 +29,6 @@ class Deport(commands.Cog):
         Usage: !deport [@ user tag] [reason...]
                [as message reply] !deport [reason...]
         Deport a user from the elitism channels'''
-        deport_role = discord.utils.get(ctx.guild.roles, name="deported")
         if ctx.message.reference is not None:
             # replying to someone who is about to be deported
             original_msg = await ctx.fetch_message(
@@ -38,14 +37,14 @@ class Deport(commands.Cog):
             deported_member = await ctx.guild.fetch_member(deported_user.id)
             if isinstance(deported_member, discord.Member):
                 await util.apply_role(deported_member, deported_user.id,
-                                      deport_role)
+                                      'deported')
 
         else:
             deported_user_id = util.get_id_from_tag(args[0])
             deported_member = await ctx.guild.fetch_member(deported_user_id)
             if isinstance(deported_member, discord.Member):
                 await util.apply_role(deported_member, deported_user_id,
-                                      deport_role)
+                                      'deported')
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)

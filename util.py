@@ -60,14 +60,17 @@ async def get_reply_message(ctx, original) -> discord.Message:
 
 
 async def apply_role(member: discord.Member, user_id: int,
-                     role: discord.Role, reason: str = None) -> None:
+                     role_name: str, reason: str = None,
+                     enter_in_db: bool = True) -> None:
     '''Apply a role to a member, and mark it in db'''
+    role = discord.utils.get(member.guild.roles, name=role_name)
     await member.add_roles(role, reason=reason)
-    with db.bot_db:
-        db.RoleAssignment.create(
-            user_id=user_id,
-            role_name=role.name
-        )
+    if enter_in_db:
+        with db.bot_db:
+            db.RoleAssignment.create(
+                user_id=user_id,
+                role_name=role.name
+            )
 
 
 async def remove_role(member: discord.Member, user_id: int,

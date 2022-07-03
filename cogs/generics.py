@@ -42,15 +42,20 @@ class Generics(commands.Cog):
     @commands.command()
     async def flashsales(self, ctx: commands.Context):
         '''apply/remove flash sales role'''
-        flash_sales_role = discord.utils.get(ctx.guild.roles,
-                                             name="Flash Sales")
         user = ctx.message.author
         member = await ctx.guild.fetch_member(user.id)
         if member:
-            if flash_sales_role not in member.roles:
-                await util.apply_role(member, user.id, flash_sales_role)
+            if not discord.utils.get(member.roles, name='Flash Sales'):
+                await util.apply_role(member, user.id, 'Flash Sales',
+                                      enter_in_db=False)
             else:
-                await util.remove_role(member, user.id, flash_sales_role)
+                await util.remove_role(member, user.id, 'Flash Sales')
+
+    @commands.command()
+    async def vote(self, ctx: commands.Context):
+        '''add emotes implying a poll'''
+        await ctx.message.add_reaction("👍")
+        await ctx.message.add_reaction("👎")
 
 
 def setup(client):

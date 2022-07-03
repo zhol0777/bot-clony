@@ -63,11 +63,11 @@ on Medium to prepare it for that.
           * verify that works as intended
         * ~~!reboot~~
           * ~~!update~~
-    * modmail
-      * slur-watch
-      * attempted role-evasion
-    * verification channel thing
-    * region role reaction thing
+    * listeners etc.
+      * ~~slur-watch~~
+      * ~~attempted role-evasion~~
+    * ~~verification channel thing~~
+    * region role thing
     * db integration
-      * roles renewal
+      * ~~roles renewal~~
       * ~~wiki page locations~~

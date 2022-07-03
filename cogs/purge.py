@@ -12,7 +12,7 @@ MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 class Purge(commands.Cog):
-    '''Cog to ban+purge users messages'''
+    '''Cog to purge users messages'''
     def __init__(self, client):
         self.client = client
 
@@ -44,9 +44,6 @@ class Purge(commands.Cog):
             if isinstance(channel, discord.TextChannel):
                 await channel.purge(limit=count, check=is_purged_user)
 
-        # TODO: is this necessary?
-        await ctx.guild.ban(purged_user)
-        # TODO: decide on delete_message_days value for ctx.guild.ban arg
         await ctx.message.delete()
 
     @commands.command()
