@@ -57,6 +57,39 @@ class Generics(commands.Cog):
         await ctx.message.add_reaction("👍")
         await ctx.message.add_reaction("👎")
 
+    # pylint: disable=missing-function-docstring
+    @commands.command()
+    async def eight(self, ctx: commands.Context):
+        await ctx.channel.send("No one likes row 8!")
+
+    @commands.command()
+    async def google(self, ctx: commands.Context):
+        await ctx.channel.send("Look things up before you ask questions!")
+
+    @commands.command()
+    async def groupbuy(self, ctx: commands.Context):
+        await ctx.channel.send("Individual consumers raise money for a product to be produced. "
+                               "Money is then given to an organizer who pays a manufacturer to "
+                               "produce that product.")
+
+    @commands.command()
+    async def northfacing(self, ctx: commands.Context):
+        await ctx.channel.send("https://www.youtube.com/watch?v=pFySgr0xmPw")
+
+    @commands.command()
+    async def oos(self, ctx: commands.Context):
+        await ctx.channel.send("Many products are produced in small, individual batches that are "
+                               "run only at certain times. Hence, after these products have sold, "
+                               "they remain out of stock unless another run is produced.")
+
+    @commands.command()
+    async def pins(self, ctx: commands.Context):
+        await ctx.channel.send("Check the pins!")
+
+    @commands.command()
+    async def spraylubing(self, ctx: commands.Context):
+        await ctx.channel.send("https://geekhack.org/index.php?topic=108287.0")
+
 
 def setup(client):
     '''setup'''

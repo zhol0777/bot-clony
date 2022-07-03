@@ -50,7 +50,7 @@ class LifeAlert(commands.Cog):
             if message_to_link.content:
                 embed.add_field(name="Message content", value=message_to_link.content)
         embed.add_field(name="Link", value=message_to_link.jump_url)
-        await channel.send(embed=embed)
+        await channel.send('@here', embed=embed)
 
     @commands.command()
     async def fakelifealert(self, ctx: commands.Context, *args):

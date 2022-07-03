@@ -81,7 +81,7 @@ class ModListeners(commands.Cog):
                 embed.add_field(name="Word Matched", value=word)
                 embed.add_field(name="Channel", value=message.channel.name)
                 embed.add_field(name="Link", value=message.jump_url)
-                await mod_chat_channel.send(embed=embed)
+                await mod_chat_channel.send('@here', embed=embed)
                 return
 
 
