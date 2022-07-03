@@ -19,7 +19,7 @@ I want more features.
 
 ## How do I run this?
 
-1. Apply values to `.env` from `.env-exmpmle`as needed. 
+1. `cp .env-example .env` and modify values as needed
 2. `python3 -m venv venv`
 3. `source venv/bin/activate`
 4. `pip install -U -r requirements.txt`
@@ -30,15 +30,15 @@ on Medium to prepare it for that.
 
 ## TODO
 
-* Migrate to pypy
+* Try out pypy
+* Migrate to pycord/hikari/whatever
 * features
     * commands
       * all users (verified)
-        * !help
+        * ~~!help~~
         * ~~!buy~~
         * ~~!map~~
         * ~~!trade~~
-          * re-add trade disclaimer once i rejoin server
         * ~~!vendors~~
         * ~~!flashsales~~
         * ~~!wiki (page)~~
@@ -48,7 +48,6 @@ on Medium to prepare it for that.
         * ~~!lifealert~~
           * ~~!fakelifealert~~
       * helpers
-        * show help channel on how to use all these only in helper-lounge
         * ~~!eject~~
           * ~~!ejectwarn~~
           * ~~!uneject~~
@@ -67,7 +66,7 @@ on Medium to prepare it for that.
       * ~~slur-watch~~
       * ~~attempted role-evasion~~
     * ~~verification channel thing~~
-    * region role thing
+    * ~~region role thing~~
     * db integration
       * ~~roles renewal~~
       * ~~wiki page locations~~
