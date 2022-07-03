@@ -1,7 +1,6 @@
 '''
 Eject users from the help channels and log the assignment accordingly
 '''
-import logging
 import os
 
 from discord.ext import commands
@@ -12,10 +11,6 @@ import util
 
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')
-
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 
 
 class Eject(commands.Cog):

@@ -3,7 +3,6 @@ Cog to allow users to link pages in community wiki
 and allow helpers to define page links in community wiki
 '''
 from urllib.parse import urljoin
-import logging
 import os
 
 from discord.ext import commands
@@ -14,10 +13,6 @@ import util
 
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')
-
-
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
 
 
 class Wiki(commands.Cog):
