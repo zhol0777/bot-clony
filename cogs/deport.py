@@ -52,9 +52,8 @@ class Deport(commands.Cog):
         deport_role = discord.utils.get(ctx.guild.roles, name="deported")
         deported_user_id = util.get_id_from_tag(args[0])
         deported_member = await ctx.guild.fetch_member(deported_user_id)
-        with db.bot_db:
-            await util.remove_role(deported_member, deported_user_id,
-                                   deport_role)
+        await util.remove_role(deported_member, deported_user_id,
+                                deport_role)
 
 
 def setup(client):

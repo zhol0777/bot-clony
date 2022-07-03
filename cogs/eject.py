@@ -33,21 +33,19 @@ class Eject(commands.Cog):
             ejected_user = original_msg.author
             ejected_member = await ctx.guild.fetch_member(ejected_user.id)
             if isinstance(ejected_member, discord.Member):
-                with db.bot_db:
-                    await util.apply_role(ejected_member, ejected_user.id,
-                                          'ejected', reason=' '.join(args))
-                    await ctx.channel.send("lol ejected",
-                                           reference=reply_message)
-                    # TODO: send message into appeals channel
+                await util.apply_role(ejected_member, ejected_user.id,
+                                        'ejected', reason=' '.join(args))
+                await ctx.channel.send("lol ejected",
+                                        reference=reply_message)
+                # TODO: send message into appeals channel
 
         else:
             ejected_user_id = util.get_id_from_tag(args[0])
             eject_reason = ' '.join(args[1:]) if len(args) >= 2 else ''
             ejected_member = await ctx.guild.fetch_member(ejected_user_id)
-            with db.bot_db:
-                await util.apply_role(ejected_member, ejected_user_id,
-                                      'ejected', reason=eject_reason)
-                await ctx.channel.send("lol ejected")
+            await util.apply_role(ejected_member, ejected_user_id,
+                                    'ejected', reason=eject_reason)
+            await ctx.channel.send("lol ejected")
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
