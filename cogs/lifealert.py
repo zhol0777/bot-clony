@@ -44,9 +44,12 @@ class LifeAlert(commands.Cog):
         embed = discord.Embed(colour=discord.Colour.red())
         embed.set_author(name="LifeAlert")
         embed.add_field(name="Channel", value=ctx.channel.name)
-        embed.add_field(name="Link", value=message_to_link.jump_url)
         embed.add_field(name="Reason", value=reason)
-        embed.add_field(name="Reporter", value=reporter)
+        if message_to_link.author.name not in (reporter.name, self.client.user.name):
+            embed.add_field(name="Reported user", value=message_to_link.author)
+            if message_to_link.content:
+                embed.add_field(name="Message content", value=message_to_link.content)
+        embed.add_field(name="Link", value=message_to_link.jump_url)
         await channel.send(embed=embed)
 
     @commands.command()
