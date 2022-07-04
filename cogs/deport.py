@@ -6,7 +6,6 @@ import os
 from discord.ext import commands
 import discord
 
-import db
 import util
 
 HELPER_ROLE = os.getenv('HELPER_ROLE')
@@ -49,11 +48,10 @@ class Deport(commands.Cog):
         Usage: !undeport [@ user tag]
         Un-deport a user from elitism channels
         '''
-        deport_role = discord.utils.get(ctx.guild.roles, name="deported")
         deported_user_id = util.get_id_from_tag(args[0])
         deported_member = await ctx.guild.fetch_member(deported_user_id)
         await util.remove_role(deported_member, deported_user_id,
-                                deport_role)
+                               'deported')
 
 
 def setup(client):

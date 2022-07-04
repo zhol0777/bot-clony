@@ -51,6 +51,7 @@ on Medium to prepare it for that.
         * ~~!eject~~
           * ~~!ejectwarn~~
           * ~~!uneject~~
+          * ~~!tempeject~~
         * ~~!deport~~
         * ~~!wiki define*~~
           * ~~!wiki define page stabs STABILIZERS.html~~

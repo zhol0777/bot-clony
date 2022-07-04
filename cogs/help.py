@@ -38,6 +38,7 @@ Helper Commands:
   eject         Usage: !eject [@ user tag] [reason...]
                        !eject [reason...] (as reply)
   uneject       Usage: !uneject [@ user tag]
+  tempeject     Usage: !tempeject [@ user tag] [time] [reason...]
   ejectwarn     Usage: !ejectwarn [@ user tag] [reason...]
                        !ejectwarn [reason...] (as reply)
                        !ejectwarn list [@ user tag]

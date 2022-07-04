@@ -1,6 +1,7 @@
 '''
 Eject users from the help channels and log the assignment accordingly
 '''
+import asyncio
 import os
 
 from discord.ext import commands
@@ -34,9 +35,9 @@ class Eject(commands.Cog):
             ejected_member = await ctx.guild.fetch_member(ejected_user.id)
             if isinstance(ejected_member, discord.Member):
                 await util.apply_role(ejected_member, ejected_user.id,
-                                        'ejected', reason=' '.join(args))
+                                      'ejected', reason=' '.join(args))
                 await ctx.channel.send("lol ejected",
-                                        reference=reply_message)
+                                       reference=reply_message)
                 # TODO: send message into appeals channel
 
         else:
@@ -44,7 +45,7 @@ class Eject(commands.Cog):
             eject_reason = ' '.join(args[1:]) if len(args) >= 2 else ''
             ejected_member = await ctx.guild.fetch_member(ejected_user_id)
             await util.apply_role(ejected_member, ejected_user_id,
-                                    'ejected', reason=eject_reason)
+                                  'ejected', reason=eject_reason)
             await ctx.channel.send("lol ejected")
 
     @commands.command()
@@ -54,11 +55,32 @@ class Eject(commands.Cog):
         Usage: !uneject [@ user tag]
         Uneject a user
         '''
-        eject_role = discord.utils.get(ctx.guild.roles, name="ejected")
         user_id = util.get_id_from_tag(args[0])
         ejected_member = await ctx.guild.fetch_member(user_id)
+        await util.remove_role(ejected_member, user_id, 'ejected')
+
+    @commands.command()
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    async def tempeject(self, ctx: commands.Context, tag: str, sleep_time: str,
+                        *args):
+        '''
+        Usage: !tempeject [time] [@ user tag] [reason...]
+        '''
+
+        sleep_time_s = util.get_id_from_tag(sleep_time)
+        if sleep_time.endswith('m'):
+            sleep_time_s *= 60
+        if sleep_time.endswith('h'):
+            sleep_time_s *= 3600
+
+        user_id = util.get_id_from_tag(tag)
+        ejected_member = await ctx.guild.fetch_member(user_id)
         with db.bot_db:
-            await util.remove_role(ejected_member, user_id, eject_role)
+            await util.apply_role(ejected_member, user_id, 'ejected',
+                                  ' '.join(args), False)
+            await ctx.channel.send('lol ejected')
+            await asyncio.sleep(sleep_time_s)
+            await util.remove_role(ejected_member, user_id, 'ejected')
 
 
 def setup(client):
