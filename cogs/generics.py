@@ -7,8 +7,24 @@ import discord
 import util
 
 TRADE_DISCLAIMER = '''
-This is a reminder that MechKeys should NOT be used as a trading platform.
-We do not audit against known scammer lists and do not exist to verify trades.
+This is a reminder that this discord SHOULD NOT be used as a trading platform.
+We have no way of preventing scammers from utilizing this service and we have
+ no way to verify trades or crosscheck the scammer list.
+Exercise caution if you do trade with other members of the discord, and
+ remember to always use Paypal "Goods and Services" or equivalent.
+Trade with users here at your own risk.
+'''
+
+GROUP_BUY = '''
+People interest in the product pay up front to the owner of the group buy to
+ help the funding of the product. Once the product is succesfully funded it
+ goes into production and begins to ship.
+'''
+
+OOS = '''
+Wondering why everything you see is out of stock? Remember, this is a small
+ hobby with high demand and low supply. Either you missed the group purchase
+ or it will restock eventually.
 '''
 
 
@@ -60,17 +76,15 @@ class Generics(commands.Cog):
     # pylint: disable=missing-function-docstring
     @commands.command()
     async def eight(self, ctx: commands.Context):
-        await ctx.channel.send("No one likes row 8!")
+        await ctx.channel.send("<- Nobody likes row 8")
 
     @commands.command()
     async def google(self, ctx: commands.Context):
-        await ctx.channel.send("Look things up before you ask questions!")
+        await ctx.channel.send("Look up your question before asking!")
 
     @commands.command()
     async def groupbuy(self, ctx: commands.Context):
-        await ctx.channel.send("Individual consumers raise money for a product to be produced. "
-                               "Money is then given to an organizer who pays a manufacturer to "
-                               "produce that product.")
+        await ctx.channel.send(GROUP_BUY)
 
     @commands.command()
     async def northfacing(self, ctx: commands.Context):
@@ -78,9 +92,7 @@ class Generics(commands.Cog):
 
     @commands.command()
     async def oos(self, ctx: commands.Context):
-        await ctx.channel.send("Many products are produced in small, individual batches that are "
-                               "run only at certain times. Hence, after these products have sold, "
-                               "they remain out of stock unless another run is produced.")
+        await ctx.channel.send(OOS)
 
     @commands.command()
     async def pins(self, ctx: commands.Context):
