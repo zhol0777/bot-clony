@@ -1,7 +1,7 @@
 '''
 Utility functions shared across cogs
 '''
-from typing import Any
+from typing import Any, Tuple
 
 import validators
 import discord
@@ -9,7 +9,7 @@ import discord
 import db
 
 
-def sanitize_message(args: Any) -> tuple[str, bool]:
+def sanitize_message(args: Any) -> Tuple[str, bool]:
     '''
     :return: Message with every URL sanitized if necessary
     '''
