@@ -101,6 +101,13 @@ class Generics(commands.Cog):
     @commands.command()
     async def spraylubing(self, ctx: commands.Context):
         await ctx.channel.send("https://geekhack.org/index.php?topic=108287.0")
+    
+    @commands.command()
+    async def thock(self, ctx: commands.Context):
+        '''Posts the vendors list'''
+        reply_message = await util.get_reply_message(ctx, ctx.message)
+        await ctx.channel.send('shut up',
+                               reference=reply_message)
 
 
 def setup(client):

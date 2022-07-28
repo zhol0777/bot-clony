@@ -31,6 +31,7 @@ Generics:
   groupbuy
   northfacing
   oos
+  thock
 '''
 
 HELPER_COMMANDS = '''
