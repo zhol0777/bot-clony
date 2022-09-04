@@ -80,9 +80,9 @@ class MemberWarning(commands.Cog):
         for warning in warnings:  # pylint: disable=not-an-iterable
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Warning")
-            embed.add_field(name="id", value=warning.id)
-            embed.add_field(name="Reason", value=warning.reason)
-            embed.add_field(name="Message link", value=warning.message_url)
+            embed.add_field(name="id", value=str(warning.id))
+            embed.add_field(name="Reason", value=str(warning.reason))
+            embed.add_field(name="Message link", value=str(warning.message_url))
             await channel.send(embed=embed)
 
     @ejectwarn.command()
