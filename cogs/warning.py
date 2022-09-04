@@ -10,7 +10,7 @@ import discord
 import db
 import util
 
-HELPER_CHANNEL = os.getenv('HELPER_CHANNEL')
+HELPER_CHAT = os.getenv('HELPER_CHAT')
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')
 
@@ -71,7 +71,7 @@ class MemberWarning(commands.Cog):
         list every warning given per some given user id
         '''
         channel = discord.utils.get(ctx.guild.channels,
-                                    name=HELPER_CHANNEL)
+                                    name=HELPER_CHAT)
 
         user_id = util.get_id_from_tag(user_id_tag)
         warnings = db.WarningMemberReason.select().where(
