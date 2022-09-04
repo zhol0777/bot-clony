@@ -6,7 +6,9 @@ RUN apk add git
 RUN mkdir -p /usr/src/bot
 WORKDIR /usr/src/bot
 
-RUN git clone https://github.com/zhol0777/bot-clony.git
+RUN git clone https://github.com/zhol0777/bot-clony.git .
+COPY .env .
+
 RUN git checkout bot-lite
 
 RUN pip3 install -U -r requirements.txt
