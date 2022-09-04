@@ -25,20 +25,19 @@ class Eject(commands.Cog):
         '''
         Usage: !eject [@ user tag] [reason...]
                [as message reply] !eject [reason...]
-        Eject a user from the help channels'''
+        Listens for eject and only records the eject in db'''
         if ctx.message.reference is not None:
             # replying to someone who is about to be ejected
-            reply_message = await util.get_reply_message(ctx, ctx.message)
             original_msg = await ctx.fetch_message(
                 id=ctx.message.reference.message_id)
             ejected_user = original_msg.author
             ejected_member = await ctx.guild.fetch_member(ejected_user.id)
             if isinstance(ejected_member, discord.Member):
-                await util.apply_role(ejected_member, ejected_user.id,
-                                      'ejected', reason=' '.join(args))
-                await ctx.channel.send("lol ejected",
-                                       reference=reply_message)
-                # TODO: send message into appeals channel
+                with db.bot_db:
+                    db.RoleAssignment.create(
+                        user_id=ejected_user.id,
+                        role_name='ejected'
+                    )
 
         else:
             ejected_user_id = util.get_id_from_tag(args[0])
@@ -46,7 +45,6 @@ class Eject(commands.Cog):
             ejected_member = await ctx.guild.fetch_member(ejected_user_id)
             await util.apply_role(ejected_member, ejected_user_id,
                                   'ejected', reason=eject_reason)
-            await ctx.channel.send("lol ejected")
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)

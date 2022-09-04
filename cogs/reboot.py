@@ -11,7 +11,7 @@ MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 class Reboot(commands.Cog):
-    '''Cog to sanitize messages'''
+    '''Cog to reboot this thing when it needs to'''
     def __init__(self, client):
         self.client = client
 

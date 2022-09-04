@@ -48,7 +48,7 @@ class MemberWarning(commands.Cog):
                     for_eject=True,
                     for_ban=False
                 )
-            await ctx.channel.send("Stop foolin around!",
+            await ctx.channel.send("stop being a punk",
                                    reference=reply_message)
         else:
             user_id = util.get_id_from_tag(args[1])
@@ -61,7 +61,7 @@ class MemberWarning(commands.Cog):
                     for_eject=True,
                     for_ban=False
                 )
-            await ctx.channel.send("Stop foolin around!")
+            await ctx.channel.send("stop being a punk")
 
     @ejectwarn.command()
     @commands.has_any_role(HELPER_ROLE, MOD_ROLE)

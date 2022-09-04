@@ -2,10 +2,10 @@ venv:
 	python3 -m venv venv
 
 source:
-	. venv/bin/activate
+	source venv/bin/activate
 
 install-requirements: source
-	pip install -U -r requirements.txt
+	python3 -m pip install -U -r requirements.txt
 
 install: venv install-requirements source
 

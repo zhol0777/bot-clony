@@ -1,0 +1,7 @@
+discord.py
+flake8
+mypy
+peewee
+pylint
+python-dotenv
+validators
