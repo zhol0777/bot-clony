@@ -13,8 +13,6 @@ Generics:
                 Usage: !sanitize [url1] [url2] ...
                        !sanitize (as reply)
   newvendors       Posts the vendors list
-  vote          add emotes implying a poll
-                Usage: !vote [thing to vote over...]
   wiki          Provide link from community wiki
                 Usage: !wiki [page name]
                        !wiki listall

@@ -33,7 +33,7 @@ class Reboot(commands.Cog):
         git pull, then bot reboot
         '''
         await ctx.channel.send("Updating...")
-        subprocess.run('git pull origin main', shell=True, check=True)
+        subprocess.run('git pull origin bot-lite', shell=True, check=True)
         await ctx.channel.send("Rebooting...")
         os.execv(sys.executable, ['python'] + sys.argv)
 
