@@ -1,6 +1,7 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
+import discord
 from discord.ext import commands
 
 import util
@@ -21,6 +22,7 @@ class Sanitize(commands.Cog):
         reply_message = await util.get_reply_message(ctx, ctx.message)
         sanitized_message, needs_sanitizing = util.sanitize_message(
             reply_message.content)
+        sanitized_message = discord.utils.escape_mentions(sanitized_message)
         if needs_sanitizing:
             await ctx.channel.send(sanitized_message, reference=reply_message)
             await ctx.channel.send("Stop leaving trackers in your URLs!")

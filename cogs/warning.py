@@ -80,7 +80,8 @@ class MemberWarning(commands.Cog):
                 return
 
         user_id = util.get_id_from_tag(user_id_tag)
-        await channel.send(f"Getting eject warnings for user <@{user_id}>")
+        first_message = discord.utils.escape_mentions(f"Getting eject warnings for user <@{user_id}>")
+        await channel.send(first_message)
         warnings = db.WarningMemberReason.select().where(
             db.WarningMemberReason.user_id == user_id
         )
