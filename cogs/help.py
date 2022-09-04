@@ -58,10 +58,10 @@ class Help(commands.Cog):
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                    and ctx.message.channel.name == os.getenv('HELPER_CHAT'):
+                    and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID')):
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                    and ctx.message.channel.name == os.getenv('MOD_CHAT'):
+                    and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID')):
                 await ctx.channel.send(f'```{MOD_COMMANDS}```')
             return
         command = args[0]
@@ -70,18 +70,18 @@ class Help(commands.Cog):
             if command in line:
                 help_msg += f'{line}\n'
         if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                and ctx.message.channel.name == os.getenv('HELPER_CHAT'):
+                and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID')):
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
         if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                and ctx.message.channel.name == os.getenv('MOD_CHAT'):
+                and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID')):
             for line in MOD_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
         await ctx.channel.send(f'```{help_msg}```')
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(Help(client))
+    await client.add_cog(Help(client))

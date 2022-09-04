@@ -2,6 +2,7 @@
 Method to warn users of impending eject/razer hate/etc
 and track these warnings for mods/helpers
 '''
+import logging
 import os
 
 from discord.ext import commands
@@ -10,9 +11,10 @@ import discord
 import db
 import util
 
-HELPER_CHAT = os.getenv('HELPER_CHAT')
+HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID'))
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')
+log = logging.getLogger(__name__)
 
 
 class MemberWarning(commands.Cog):
@@ -37,7 +39,7 @@ class MemberWarning(commands.Cog):
             reply_message = await util.get_reply_message(ctx, ctx.message)
             message_url = reply_message.jump_url
             original_msg = await ctx.fetch_message(
-                id=ctx.message.reference.message_id)
+                ctx.message.reference.message_id)
             warning_reason = ' '.join(args[1:]) if len(args) >= 2 else ''
             user_id = original_msg.author.id
             with db.bot_db:
@@ -70,10 +72,15 @@ class MemberWarning(commands.Cog):
         Usage: !ejectwarn list [@ user tag]
         list every warning given per some given user id
         '''
-        channel = discord.utils.get(ctx.guild.channels,
-                                    name=HELPER_CHAT)
+        channel = self.client.get_channel(HELPER_CHAT_ID)
+        if not channel:
+            channel = await ctx.message.author.create_dm()
+            if not channel:
+                log.error("Helper Chat Cannot Be Found! Cannot list eject warns")
+                return
 
         user_id = util.get_id_from_tag(user_id_tag)
+        await channel.send(f"Getting eject warnings for user <@{user_id}>")
         warnings = db.WarningMemberReason.select().where(
             db.WarningMemberReason.user_id == user_id
         )
@@ -87,7 +94,7 @@ class MemberWarning(commands.Cog):
 
     @ejectwarn.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def delete(self, ctx: commands.Context, reason_id: int):
+    async def delete(self, _: commands.Context, reason_id: int):
         '''
         Usage: !ejectwarn delete [warning reason ID]
         delete a warning from a user per reason_id
@@ -98,6 +105,6 @@ class MemberWarning(commands.Cog):
                 warning_reason.delete_instance()
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(MemberWarning(client))
+    await client.add_cog(MemberWarning(client))

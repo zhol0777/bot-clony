@@ -28,6 +28,6 @@ class ModListeners(commands.Cog):
                 await util.apply_role(member, member.id, r_a.role_name)
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(ModListeners(client))
+    await client.add_cog(ModListeners(client))

@@ -38,6 +38,6 @@ class Reboot(commands.Cog):
         os.execv(sys.executable, ['python'] + sys.argv)
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(Reboot(client))
+    await client.add_cog(Reboot(client))

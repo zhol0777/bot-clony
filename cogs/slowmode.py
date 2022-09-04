@@ -27,6 +27,6 @@ class SlowMode(commands.Cog):
             await ctx.channel.send("Slow it down!")
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(SlowMode(client))
+    await client.add_cog(SlowMode(client))

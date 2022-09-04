@@ -26,6 +26,6 @@ class Sanitize(commands.Cog):
             await ctx.channel.send("Stop leaving trackers in your URLs!")
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(Sanitize(client))
+    await client.add_cog(Sanitize(client))

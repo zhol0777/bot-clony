@@ -14,11 +14,11 @@ start: source
 
 lint: flake8 mypy pylint
 
-flake8: source
+flake8:
 	flake8 cogs/ db.py main.py util.py
 
-pylint: source
+pylint:
 	pylint cogs/ db.py main.py util.py
 
-mypy: source
+mypy:
 	mypy cogs/*.py db.py main.py util.py

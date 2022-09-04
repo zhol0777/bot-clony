@@ -19,6 +19,6 @@ class Generics(commands.Cog):
                                reference=reply_message)
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(Generics(client))
+    await client.add_cog(Generics(client))

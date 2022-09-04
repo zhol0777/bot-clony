@@ -124,6 +124,6 @@ class Wiki(commands.Cog):
             )
 
 
-def setup(client):
+async def setup(client):
     '''add cog'''
-    client.add_cog(Wiki(client))
+    await client.add_cog(Wiki(client))

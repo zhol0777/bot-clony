@@ -3,6 +3,7 @@ Eject users from the help channels and log the assignment accordingly
 '''
 import asyncio
 import os
+import time
 
 from discord.ext import commands
 import discord
@@ -73,14 +74,15 @@ class Eject(commands.Cog):
 
         user_id = util.get_id_from_tag(tag)
         ejected_member = await ctx.guild.fetch_member(user_id)
+        lift_time = int(time.time()) + sleep_time_s
         with db.bot_db:
             await util.apply_role(ejected_member, user_id, 'ejected',
                                   ' '.join(args), False)
-            await ctx.channel.send('lol ejected')
+            await ctx.channel.send(f'lol ejected\neject will be lifted at <t:{lift_time}:f>')
             await asyncio.sleep(sleep_time_s)
             await util.remove_role(ejected_member, user_id, 'ejected')
 
 
-def setup(client):
+async def setup(client):
     '''setup'''
-    client.add_cog(Eject(client))
+    await client.add_cog(Eject(client))
