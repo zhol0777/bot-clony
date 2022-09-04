@@ -12,4 +12,4 @@ COPY .env .
 RUN git checkout bot-lite
 
 RUN pip3 install -U -r requirements.txt
-RUN python3 ./main.py
+CMD ["python3", "./main.py"]
