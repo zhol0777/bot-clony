@@ -87,14 +87,15 @@ class MemberWarning(commands.Cog):
 
     @ejectwarn.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def delete(self, reason_id: int):
+    async def delete(self, ctx: commands.Context, reason_id: int):
         '''
         Usage: !ejectwarn delete [warning reason ID]
         delete a warning from a user per reason_id
         '''
-        warning_reason = db.WarningMemberReason.get_or_none(id=reason_id)
-        if warning_reason:
-            warning_reason.delete_instance()
+        with db.bot_db:
+            warning_reason = db.WarningMemberReason.get_by_id(reason_id)
+            if warning_reason:
+                warning_reason.delete_instance()
 
 
 def setup(client):
