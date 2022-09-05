@@ -69,8 +69,12 @@ class Eject(commands.Cog):
         sleep_time_s = util.get_id_from_tag(sleep_time)
         if sleep_time.endswith('m'):
             sleep_time_s *= 60
-        if sleep_time.endswith('h'):
-            sleep_time_s *= 3600
+        elif sleep_time.endswith('h'):
+            sleep_time_s *= (60 * 60)
+        elif sleep_time.endswith('d'):
+            sleep_time_s *= (60 * 60 * 24)
+        elif sleep_time.endswith('w'):
+            sleep_time_s *= (60 * 60 * 24 * 7)
 
         user_id = util.get_id_from_tag(tag)
         ejected_member = await ctx.guild.fetch_member(user_id)
