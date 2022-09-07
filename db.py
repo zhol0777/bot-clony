@@ -72,7 +72,7 @@ def create_tables():
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
                               WikiPage, WarningMemberReason,
-                              UnejectTime])
+                              UnejectTime, BannerPost])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'
