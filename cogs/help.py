@@ -28,6 +28,9 @@ Helper Commands:
                        !ejectwarn [reason...] (as reply)
                        !ejectwarn list [@ user tag]
                        !ejectwarn delete [reason ID]
+  unejectloopstart
+                Start async time monitoring loop for unejects
+                Usage: !unejectloopstart
   slowmode      Activate slowmode in help channels
                 Usage: !slowmode [interval]
   wiki          Usage: Define a wiki page by a shortcut:

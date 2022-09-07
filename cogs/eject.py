@@ -107,13 +107,13 @@ class Eject(commands.Cog):
                 )
 
     @commands.command()
-    async def unejectloopstart(self, ctx):
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    async def unejectloopstart(self):
         '''start uneject loop'''
         for guild in self.client.guilds:
             if guild.id == int(os.getenv('SERVER_ID', '0')):
                 self.guild = guild
                 self.undo_temp_eject.start()  # pylint: disable=no-member
-                await ctx.message.delete()
 
     @tasks.loop(seconds=LOOP_TIME)
     async def undo_temp_eject(self):
