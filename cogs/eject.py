@@ -108,7 +108,7 @@ class Eject(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def unejectloopstart(self):
+    async def unejectloopstart(self, ctx):
         '''start uneject loop'''
         for guild in self.client.guilds:
             if guild.id == int(os.getenv('SERVER_ID', '0')):
