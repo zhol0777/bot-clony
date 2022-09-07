@@ -44,6 +44,7 @@ Mod Commands:
                 Usage: !reboot
   update        Run git pull before restarting bot
                 Usage: !update
+  banner        Make the picture in a kb-show-and-tell message banner
 '''
 
 
@@ -58,10 +59,10 @@ class Help(commands.Cog):
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                    and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID')):
+                    and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID', '0')):
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                    and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID')):
+                    and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID', '0')):
                 await ctx.channel.send(f'```{MOD_COMMANDS}```')
             return
         command = args[0]
@@ -70,12 +71,12 @@ class Help(commands.Cog):
             if command in line:
                 help_msg += f'{line}\n'
         if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID')):
+                and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID', '0')):
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
         if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID')):
+                and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID', '0')):
             for line in MOD_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'

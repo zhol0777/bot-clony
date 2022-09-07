@@ -3,6 +3,7 @@ Utility functions shared across cogs
 '''
 from typing import Any, Tuple
 
+from discord.ext import commands
 import validators
 import discord
 
@@ -84,3 +85,10 @@ async def remove_role(member: discord.Member, user_id: int,
             (db.RoleAssignment.user_id == user_id) &
             (db.RoleAssignment.role_name == role_name)
         ).execute()
+
+
+async def handle_error(ctx: commands.Context, error_message: str):
+    '''send an error message to a user when they misuse a command'''
+    channel = await ctx.message.author.create_dm()
+    await channel.send(error_message)
+    await ctx.message.delete()

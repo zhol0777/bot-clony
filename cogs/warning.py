@@ -11,7 +11,7 @@ import discord
 import db
 import util
 
-HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID'))
+HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE = os.getenv('HELPER_ROLE')
 MOD_ROLE = os.getenv('MOD_ROLE')
 log = logging.getLogger(__name__)

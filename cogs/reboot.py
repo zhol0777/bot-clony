@@ -22,7 +22,7 @@ class Reboot(commands.Cog):
         Usage: !reboot
         Reboot bot
         '''
-        await ctx.channel.send("Rebooting...")
+        await ctx.message.delete()
         os.execv(sys.executable, ['python'] + sys.argv)
 
     @commands.command()
@@ -32,9 +32,8 @@ class Reboot(commands.Cog):
         Usage: !update
         git pull, then bot reboot
         '''
-        await ctx.channel.send("Updating...")
+        await ctx.message.delete()
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
-        await ctx.channel.send("Rebooting...")
         os.execv(sys.executable, ['python'] + sys.argv)
 
 

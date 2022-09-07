@@ -4,4 +4,6 @@ mypy
 peewee
 pylint
 python-dotenv
+requests
+types-requests
 validators

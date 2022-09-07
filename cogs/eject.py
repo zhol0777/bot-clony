@@ -30,7 +30,7 @@ class Eject(commands.Cog):
         if ctx.message.reference is not None:
             # replying to someone who is about to be ejected
             original_msg = await ctx.fetch_message(
-                id=ctx.message.reference.message_id)
+                ctx.message.reference.message_id)
             ejected_user = original_msg.author
             ejected_member = await ctx.guild.fetch_member(ejected_user.id)
             if isinstance(ejected_member, discord.Member):
@@ -60,11 +60,23 @@ class Eject(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def tempeject(self, ctx: commands.Context, tag: str, sleep_time: str,
-                        *args):
+    async def tempeject(self, ctx: commands.Context,  # pylint: disable=keyword-arg-before-vararg
+                        tag: str, sleep_time: str = '0', *args):
         '''
-        Usage: !tempeject [time] [@ user tag] [reason...]
+        Usage:  !tempeject [@ user tag] [time] [reason...]
+        [reply] !tempeject [time] [reason...]
         '''
+        if ctx.message.reference is not None:
+            # replying to someone who is about to be ejected
+            original_msg = await ctx.fetch_message(
+                ctx.message.reference.message_id)
+            ejected_user = original_msg.author
+            user_id = ejected_user.id
+            ejected_member = await ctx.guild.fetch_member(ejected_user.id)
+            sleep_time = tag
+        else:
+            user_id = util.get_id_from_tag(tag)
+            ejected_member = await ctx.guild.fetch_member(user_id)
 
         sleep_time_s = util.get_id_from_tag(sleep_time)
         if sleep_time.endswith('m'):
@@ -76,8 +88,6 @@ class Eject(commands.Cog):
         elif sleep_time.endswith('w'):
             sleep_time_s *= (60 * 60 * 24 * 7)
 
-        user_id = util.get_id_from_tag(tag)
-        ejected_member = await ctx.guild.fetch_member(user_id)
         lift_time = int(time.time()) + sleep_time_s
         with db.bot_db:
             await util.apply_role(ejected_member, user_id, 'ejected',
