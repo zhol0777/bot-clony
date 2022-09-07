@@ -67,12 +67,19 @@ class BannerPost(BaseModel):
     message_id = peewee.BigIntegerField()
 
 
+class SocialCredit(BaseModel):
+    '''tracking social credit for a user'''
+    user_id = peewee.BigIntegerField()
+    credit_amount = peewee.IntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
                               WikiPage, WarningMemberReason,
-                              UnejectTime, BannerPost])
+                              UnejectTime, BannerPost,
+                              SocialCredit])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'
