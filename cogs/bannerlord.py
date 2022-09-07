@@ -8,6 +8,7 @@ import requests
 from discord.ext import commands
 import validators
 
+import db
 import util
 
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
@@ -64,7 +65,13 @@ class Bannerlord(commands.Cog):
         await ctx.guild.edit(banner=image_req.content)
         await ctx.message.delete()
         await original_msg.pin()
-        # TODO: save pinned message in db and unpin when new message is pinned
+        with db.bot_db:
+            pins = db.BannerPost.select()
+            for pin in pins:
+                message_id = pin.message_id
+                pin_msg = await ctx.fetch_message(message_id)
+                if pin_msg:
+                    pin_msg.unpin()
 
 
 async def setup(client):

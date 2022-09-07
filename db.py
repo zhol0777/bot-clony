@@ -62,6 +62,11 @@ class UnejectTime(BaseModel):
     uneject_epoch_time = peewee.BigIntegerField()
 
 
+class BannerPost(BaseModel):
+    '''simple way to track message pinned for banner so it can be unpinned later'''
+    message_id = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
