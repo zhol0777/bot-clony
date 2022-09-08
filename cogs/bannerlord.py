@@ -71,7 +71,8 @@ class Bannerlord(commands.Cog):
                 message_id = pin.message_id
                 pin_msg = await ctx.fetch_message(message_id)
                 if pin_msg:
-                    pin_msg.unpin()
+                    await pin_msg.unpin()
+                pin.delete_instance()
 
 
 async def setup(client):

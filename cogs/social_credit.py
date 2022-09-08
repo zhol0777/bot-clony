@@ -6,8 +6,7 @@ from discord.ext import commands
 import db
 import util
 
-HELPER_ROLE = os.getenv('HELPER_ROLE')
-MOD_ROLE = os.getenv('MOD_ROLE')
+SOCIAL_CREDIT_ROLE = os.getenv('SOCIAL_CREDIT_ROLE', 'Taobao Aide')
 
 
 class SocialCredit(commands.Cog):
@@ -19,7 +18,7 @@ class SocialCredit(commands.Cog):
     # this is all spaghetti code because command groups weren't working for
     # some inexplicable reason. my apologies to anyone who has to read this
     # later. -zhol
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(SOCIAL_CREDIT_ROLE)
     async def socialcredit(self, ctx, *args):
         '''
         general socialcredit operations: read, add, remove

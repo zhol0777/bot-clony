@@ -115,7 +115,7 @@ class Wiki(commands.Cog):
         '''
         with db.bot_db:
             pages = db.WikiPage.select()
-            page_listing = '\n'.join(p.shortname for p in pages)
+            page_listing = '\n'.join(sorted(p.shortname for p in pages))
             await ctx.channel.send(
                 "```"
                 "Available pages:\n"
