@@ -52,7 +52,7 @@ class Eject(commands.Cog):
                                   'ejected', reason=eject_reason)
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(HELPER_ROLE)
     async def uneject(self, ctx: commands.Context, *args):
         '''
         Usage: !uneject [@ user tag]
