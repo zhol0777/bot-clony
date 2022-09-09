@@ -48,6 +48,8 @@ Mod Commands:
   update        Run git pull before restarting bot
                 Usage: !update
   banner        Make the picture in a kb-show-and-tell message banner
+  unejectloopstart
+                Restarts temp eject monitoring loop
 '''
 
 

@@ -39,10 +39,12 @@ class Eject(commands.Cog):
             ejected_member = await ctx.guild.fetch_member(ejected_user.id)
             if isinstance(ejected_member, discord.Member):
                 with db.bot_db:
-                    db.RoleAssignment.create(
-                        user_id=ejected_user.id,
-                        role_name='ejected'
-                    )
+                    if not db.RoleAssignment.get_or_none(user_id=ejected_user.id,
+                                                         role_name='ejected'):
+                        db.RoleAssignment.create(
+                            user_id=ejected_user.id,
+                            role_name='ejected'
+                        )
 
         else:
             ejected_user_id = util.get_id_from_tag(args[0])
@@ -99,7 +101,9 @@ class Eject(commands.Cog):
             await ctx.channel.send(f'lol ejected\neject will be lifted at approx. <t:{lift_time}:f>')
             if sleep_time_s < LOOP_TIME:
                 await asyncio.sleep(sleep_time_s)
-                await util.remove_role(ejected_member, user_id, 'ejected')
+                if not db.RoleAssignment.get_or_none(user_id=user_id,
+                                                     role_name='ejected'):
+                    await util.remove_role(ejected_member, user_id, 'ejected')
             else:
                 db.UnejectTime.create(
                     user_id=user_id,
@@ -124,11 +128,12 @@ class Eject(commands.Cog):
             for temp_eject_entry in entries:
                 if current_time > temp_eject_entry.uneject_epoch_time:
                     ejected_member = await self.guild.fetch_member(temp_eject_entry.user_id)
-                    log.debug('Remove eject role for %s', ejected_member.display_name)
+                    if not db.RoleAssignment.get_or_none(user_id=temp_eject_entry.user_id,
+                                                         role_name='ejected'):
+                        await util.remove_role(ejected_member,
+                                               temp_eject_entry.user_id,
+                                               'ejected')
                     temp_eject_entry.delete_instance()
-                    await util.remove_role(ejected_member,
-                                           temp_eject_entry.user_id,
-                                           'ejected')
 
 
 async def setup(client):
