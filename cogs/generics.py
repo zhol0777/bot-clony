@@ -18,6 +18,11 @@ class Generics(commands.Cog):
         await ctx.channel.send('https://mechkeys.me/VENDORS.html',
                                reference=reply_message)
 
+    @commands.command()
+    async def notathing(self, ctx):
+        ''''''
+        await ctx.channel.send('the odds that this is a real thing are looking slim')
+
 
 async def setup(client):
     '''setup'''
