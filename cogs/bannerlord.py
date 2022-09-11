@@ -73,7 +73,7 @@ class Bannerlord(commands.Cog):
                 if pin_msg:
                     await pin_msg.unpin()
                 pin.delete_instance()
-            db.BannerPost.create(message_id=original_msg.message_id)
+            db.BannerPost.create(message_id=ctx.message.reference.message_id)
 
 
 async def setup(client):
