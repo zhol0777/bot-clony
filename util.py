@@ -60,6 +60,7 @@ async def get_reply_message(ctx, original) -> discord.Message:
     return original
 
 
+# TODO: handle via role IDs
 async def apply_role(member: discord.Member, user_id: int,
                      role_name: str, reason: str = None,
                      enter_in_db: bool = True) -> None:
@@ -75,6 +76,7 @@ async def apply_role(member: discord.Member, user_id: int,
                 )
 
 
+# TODO: handle via role IDs
 async def remove_role(member: discord.Member, user_id: int,
                       role_name: str) -> None:
     '''Remove a role from a member, and remove it from db'''

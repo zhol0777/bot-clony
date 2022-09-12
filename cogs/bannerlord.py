@@ -8,6 +8,7 @@ import requests
 from discord.ext import commands
 import validators
 
+import db
 import util
 
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
@@ -26,6 +27,7 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
+        # TODO: handle with channel ID
         if ctx.channel.name != 'kb-show-and-tell':
             await util.handle_error(ctx, '!banner can only be used in kb-show-and-tell')
             return
@@ -64,7 +66,15 @@ class Bannerlord(commands.Cog):
         await ctx.guild.edit(banner=image_req.content)
         await ctx.message.delete()
         await original_msg.pin()
-        # TODO: save pinned message in db and unpin when new message is pinned
+        with db.bot_db:
+            pins = db.BannerPost.select()
+            for pin in pins:
+                message_id = pin.message_id
+                pin_msg = await ctx.fetch_message(message_id)
+                if pin_msg:
+                    await pin_msg.unpin()
+                pin.delete_instance()
+            db.BannerPost.create(message_id=ctx.message.reference.message_id)
 
 
 async def setup(client):

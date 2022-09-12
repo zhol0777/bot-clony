@@ -28,6 +28,9 @@ Helper Commands:
                        !ejectwarn [reason...] (as reply)
                        !ejectwarn list [@ user tag]
                        !ejectwarn delete [reason ID]
+  unejectloopstart
+                Start async time monitoring loop for unejects
+                Usage: !unejectloopstart
   slowmode      Activate slowmode in help channels
                 Usage: !slowmode [interval]
   wiki          Usage: Define a wiki page by a shortcut:
@@ -45,6 +48,8 @@ Mod Commands:
   update        Run git pull before restarting bot
                 Usage: !update
   banner        Make the picture in a kb-show-and-tell message banner
+  unejectloopstart
+                Restarts temp eject monitoring loop
 '''
 
 
@@ -56,10 +61,12 @@ class Help(commands.Cog):
     @commands.command()
     async def help2(self, ctx: commands.Context, *args):
         '''Help info'''
+        print(ctx.message.channel.id)
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                    and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID', '0')):
+                    and ctx.message.channel.id in [int(os.getenv('HELPER_CHAT_ID', '0')),
+                                                   1016088275443785759]:
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
             if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
                     and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID', '0')):
@@ -71,7 +78,8 @@ class Help(commands.Cog):
             if command in line:
                 help_msg += f'{line}\n'
         if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                and ctx.message.channel.id == int(os.getenv('HELPER_CHAT_ID', '0')):
+                and ctx.message.channel.id in [int(os.getenv('HELPER_CHAT_ID', '0')),
+                                               1016088275443785759]:
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'

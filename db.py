@@ -54,11 +54,32 @@ class WikiRootUrl(BaseModel):
     domain = peewee.CharField()  # https://mechkeys.me/
 
 
+class UnejectTime(BaseModel):
+    '''basic entry for a user ID and when they will be unejected
+       so that instead of running async waits, loop through db entries
+       every minute'''
+    user_id = peewee.BigIntegerField()
+    uneject_epoch_time = peewee.BigIntegerField()
+
+
+class BannerPost(BaseModel):
+    '''simple way to track message pinned for banner so it can be unpinned later'''
+    message_id = peewee.BigIntegerField()
+
+
+class SocialCredit(BaseModel):
+    '''tracking social credit for a user'''
+    user_id = peewee.BigIntegerField()
+    credit_amount = peewee.IntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
-                              WikiPage, WarningMemberReason])
+                              WikiPage, WarningMemberReason,
+                              UnejectTime, BannerPost,
+                              SocialCredit])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'

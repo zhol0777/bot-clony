@@ -12,7 +12,7 @@ install: venv install-requirements source
 start: source
 	python3 ./main.py
 
-lint: flake8 mypy pylint
+lint: flake8 pylint mypy
 
 flake8:
 	flake8 cogs/ db.py main.py util.py

@@ -36,11 +36,16 @@ class Wiki(commands.Cog):
             await ctx.message.delete()
 
         with db.bot_db:
-            page_name = ctx.message.content.split()[1]
+            try:
+                page_name = ctx.message.content.split()[1]
+            except IndexError:
+                await self.listall(ctx)
+                return
             wiki_page = db.WikiPage.get_or_none(shortname=page_name)
             if not wiki_page:
                 await ctx.channel.send(f"Page {page_name} does not exist!",
                                        reference=reply_message)
+                await self.listall(ctx)
                 return
             if wiki_page.goes_to_root_domain:
                 wiki_domain = db.WikiRootUrl.get_or_none(indicator='primary')
@@ -115,11 +120,12 @@ class Wiki(commands.Cog):
         '''
         with db.bot_db:
             pages = db.WikiPage.select()
-            page_listing = '\n'.join(p.shortname for p in pages)
+            page_listing = '\n'.join(sorted(p.shortname for p in pages))
             await ctx.channel.send(
                 "```"
+                "Usage: !wiki [page]\n\n"
                 "Available pages:\n"
-                f"{page_listing}"
+                f"{page_listing}\n"
                 "```"
             )
 
