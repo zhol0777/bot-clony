@@ -35,13 +35,14 @@ class Wiki(commands.Cog):
         if reply_message != ctx.message:
             await ctx.message.delete()
 
+        if len(ctx.message.content.split()) < 2:
+            await self.listall(ctx)
+            return
+
         with db.bot_db:
-            try:
-                page_name = ctx.message.content.split()[1]
-            except IndexError:
-                await self.listall(ctx)
-                return
+            page_name = ctx.message.content.split()[1]
             wiki_page = db.WikiPage.get_or_none(shortname=page_name)
+
             if not wiki_page:
                 await ctx.channel.send(f"Page {page_name} does not exist!",
                                        reference=reply_message)
