@@ -27,6 +27,7 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
+        # TODO: handle with channel ID
         if ctx.channel.name != 'kb-show-and-tell':
             await util.handle_error(ctx, '!banner can only be used in kb-show-and-tell')
             return

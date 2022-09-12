@@ -12,7 +12,7 @@ class Sanitize(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command()
+    @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context):
         '''
         Usage: !sanitize [url1] [url2] ...

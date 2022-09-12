@@ -7,7 +7,6 @@ import os
 import time
 
 from discord.ext import commands, tasks
-import discord
 
 import db
 import util
@@ -23,35 +22,6 @@ class Eject(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.guild = None
-
-    @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def eject(self, ctx: commands.Context, *args):
-        '''
-        Usage: !eject [@ user tag] [reason...]
-               [as message reply] !eject [reason...]
-        Listens for eject and only records the eject in db'''
-        if ctx.message.reference is not None:
-            # replying to someone who is about to be ejected
-            original_msg = await ctx.fetch_message(
-                ctx.message.reference.message_id)
-            ejected_user = original_msg.author
-            ejected_member = await ctx.guild.fetch_member(ejected_user.id)
-            if isinstance(ejected_member, discord.Member):
-                with db.bot_db:
-                    if not db.RoleAssignment.get_or_none(user_id=ejected_user.id,
-                                                         role_name='ejected'):
-                        db.RoleAssignment.create(
-                            user_id=ejected_user.id,
-                            role_name='ejected'
-                        )
-
-        else:
-            ejected_user_id = util.get_id_from_tag(args[0])
-            eject_reason = ' '.join(args[1:]) if len(args) >= 2 else ''
-            ejected_member = await ctx.guild.fetch_member(ejected_user_id)
-            await util.apply_role(ejected_member, ejected_user_id,
-                                  'ejected', reason=eject_reason)
 
     @commands.command()
     @commands.has_any_role(HELPER_ROLE)
@@ -95,6 +65,7 @@ class Eject(commands.Cog):
             sleep_time_s *= (60 * 60 * 24 * 7)
 
         lift_time = int(time.time()) + sleep_time_s
+        # TODO: handle via role IDs
         with db.bot_db:
             await util.apply_role(ejected_member, user_id, 'ejected',
                                   ' '.join(args), False)
