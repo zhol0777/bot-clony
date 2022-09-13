@@ -3,24 +3,16 @@ automate making server banners
 '''
 
 import os
+import requests
 
 from discord.ext import commands
-import discord
-import requests
 import validators
 
 import db
 import util
 
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
-BANNERLORD_CHANNEL = os.getenv('BANNERLORD_CHANNEL', 'kb-show-and-tell')
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
-
-BAD_MESSAGE_TEXT = '''
-kb-show-and-tell messages should contain attachments of pictures of keyboards.
-Please create a thread to add comments to someone's build.
-If you believe this message was sent in error, please contact <@688959322708901907>
-to fix it.'''
 
 
 class Bannerlord(commands.Cog):
@@ -36,8 +28,8 @@ class Bannerlord(commands.Cog):
         usage: [as a reply] !banner [# picture in reply message]
         '''
         # TODO: handle with channel ID
-        if ctx.channel.name != BANNERLORD_CHANNEL:
-            await util.handle_error(ctx, f'!banner can only be used in {BANNERLORD_CHANNEL}')
+        if ctx.channel.name != 'kb-show-and-tell':
+            await util.handle_error(ctx, '!banner can only be used in kb-show-and-tell')
             return
         attachment_index = 0 if len(args) < 1 else (int(args[0]) - 1)
         if ctx.message.reference is None:
@@ -83,22 +75,6 @@ class Bannerlord(commands.Cog):
                     await pin_msg.unpin()
                 pin.delete_instance()
             db.BannerPost.create(message_id=ctx.message.reference.message_id)
-
-    @commands.Cog.listener()
-    async def on_message(self, message):
-        '''delete any bunk message in bannerlord channel'''
-        if message.channel.name != BANNERLORD_CHANNEL:
-            return
-        if message.attachments:
-            return
-        for word in message.content.split():
-            if validators.url(word):
-                return
-        if discord.utils.get(message.author.roles, name=BANNERLORD_ROLE):
-            return
-        dm_channel = await message.author.create_dm()
-        await dm_channel.send(BAD_MESSAGE_TEXT)
-        await message.delete()
 
 
 async def setup(client):
