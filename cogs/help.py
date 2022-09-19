@@ -52,6 +52,12 @@ Mod Commands:
                 Restarts temp eject monitoring loop
 '''
 
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
+ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
+MOD_CHAT_ID = int(os.getenv('MOD_CHAT_ID', '0'))
+HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
+
 
 class Help(commands.Cog):
     '''Display help information per-function'''
@@ -64,12 +70,12 @@ class Help(commands.Cog):
         print(ctx.message.channel.id)
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
-            if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                    and ctx.message.channel.id in [int(os.getenv('HELPER_CHAT_ID', '0')),
-                                                   1016088275443785759]:
+            if discord.utils.get(ctx.message.author.roles, name=HELPER_ROLE) \
+                    and ctx.message.channel.id in [HELPER_CHAT_ID,
+                                                   ZHOLBOT_CHANNEL_ID]:
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
-            if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                    and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID', '0')):
+            if discord.utils.get(ctx.message.author.roles, name=MOD_ROLE) \
+                    and ctx.message.channel.id == MOD_CHAT_ID:
                 await ctx.channel.send(f'```{MOD_COMMANDS}```')
             return
         command = args[0]
@@ -77,14 +83,14 @@ class Help(commands.Cog):
         for line in GENERAL_COMMANDS.split('\n'):
             if command in line:
                 help_msg += f'{line}\n'
-        if discord.utils.get(ctx.message.author.roles, name=os.getenv('HELPER_ROLE')) \
-                and ctx.message.channel.id in [int(os.getenv('HELPER_CHAT_ID', '0')),
-                                               1016088275443785759]:
+        if discord.utils.get(ctx.message.author.roles, name=HELPER_ROLE) \
+                and ctx.message.channel.id in [HELPER_CHAT_ID,
+                                               ZHOLBOT_CHANNEL_ID]:
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
-        if discord.utils.get(ctx.message.author.roles, name=os.getenv('MOD_ROLE')) \
-                and ctx.message.channel.id == int(os.getenv('MOD_CHAT_ID', '0')):
+        if discord.utils.get(ctx.message.author.roles, name=MOD_ROLE) \
+                and ctx.message.channel.id == MOD_CHAT_ID:
             for line in MOD_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
