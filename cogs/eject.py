@@ -44,9 +44,8 @@ class Eject(commands.Cog):
         else:
             user_id = util.get_id_from_tag(args[0])
         with db.bot_db:
-            db.RoleAssignment.delete().where(
-                (db.RoleAssignment.user_id == user_id) &
-                (db.RoleAssignment.role_name == 'ejected')
+            db.UnejectTime.delete().where(
+                db.UnejectTime.user_id == user_id
             ).execute()
 
     @commands.command()
@@ -104,7 +103,7 @@ class Eject(commands.Cog):
                 await asyncio.sleep(sleep_time_s)
                 await util.remove_role(ejected_member, user_id, 'ejected')
                 channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
-                await channel.send(f"removing temp eject for <@{user_id}.>\n"
+                await channel.send(f"removing temp eject for <@{user_id}>.\n"
                                    "if this is erroneous, please re-apply eject role and ask zhol for debug.")
             else:
                 db.UnejectTime.create(
@@ -134,7 +133,7 @@ class Eject(commands.Cog):
                 if current_time > temp_eject_entry.uneject_epoch_time:
                     ejected_member = await self.guild.fetch_member(temp_eject_entry.user_id)
                     channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
-                    await channel.send(f"removing temp eject for <@{temp_eject_entry.user_id}.>\n"
+                    await channel.send(f"removing temp eject for <@{temp_eject_entry.user_id}>.\n"
                                        "if this is erroneous, please re-apply eject role and ask zhol for debug.")
                     await util.remove_role(ejected_member,
                                            temp_eject_entry.user_id,
