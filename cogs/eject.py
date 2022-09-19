@@ -83,7 +83,7 @@ class Eject(commands.Cog):
         with db.bot_db:
             if db.RoleAssignment.get_or_none(user_id=user_id,
                                              role_name='ejected'):
-                ctx.channel.send("User already ejected. No temp eject will be placed.")
+                await ctx.channel.send("User already ejected. No temp eject will be placed.")
                 return
             sleep_time_s = util.get_id_from_tag(sleep_time)
             if sleep_time.endswith('m'):
