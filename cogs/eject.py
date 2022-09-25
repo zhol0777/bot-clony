@@ -80,8 +80,9 @@ class Eject(commands.Cog):
             ejected_member = await ctx.guild.fetch_member(user_id)
 
         with db.bot_db:
+            temp_ejected = db.UnejectTime.get_or_none(user_id=user_id)
             if db.RoleAssignment.get_or_none(user_id=user_id,
-                                             role_name='ejected'):
+                                             role_name='ejected') and not temp_ejected:
                 await ctx.channel.send("User already ejected. No temp eject will be placed.")
                 return
             sleep_time_s = util.get_id_from_tag(sleep_time)
@@ -98,26 +99,30 @@ class Eject(commands.Cog):
             # TODO: handle via role IDs
             await util.apply_role(ejected_member, user_id, 'ejected',
                                   ' '.join(args), False)
-            await ctx.channel.send(f'lol ejected\neject will be lifted at approx. <t:{lift_time}:f>')
-            if sleep_time_s < LOOP_TIME:
-                await asyncio.sleep(sleep_time_s)
-                await util.remove_role(ejected_member, user_id, 'ejected')
-                channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
-                await channel.send(f"removing temp eject for <@{user_id}>.\n"
-                                   "if this is erroneous, please re-apply eject role and ask zhol for debug.")
-            else:
-                if db.UnejectTime.get_or_none(user_id=user_id):
-                    db.UnejectTime.update(
-                        uneject_epoch_time=lift_time
-                    ).where(
-                        (db.UnejectTime.user_id == user_id) &
-                        (db.UnejectTime.uneject_epoch_time < lift_time)
-                    )
+            if not temp_ejected:
+                await ctx.channel.send(f'lol ejected\neject will be lifted at approx. <t:{lift_time}:f>')
+                if sleep_time_s < LOOP_TIME:
+                    await asyncio.sleep(sleep_time_s)
+                    await util.remove_role(ejected_member, user_id, 'ejected')
+                    channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
+                    await channel.send(f"removing temp eject for <@{user_id}>.\n"
+                                       "if this is erroneous, please re-apply eject role and ask zhol for debug.")
                 else:
                     db.UnejectTime.create(
                         user_id=user_id,
                         uneject_epoch_time=lift_time
                     )
+            else:
+                db.UnejectTime.update(
+                    uneject_epoch_time=lift_time
+                ).where(
+                    (db.UnejectTime.user_id == user_id) &
+                    (db.UnejectTime.uneject_epoch_time < lift_time)
+                ).execute()
+                if lift_time > temp_ejected.uneject_epoch_time:
+                    await ctx.channel.send(f'temp eject will be extended to <t:{lift_time}:f>')
+                else:
+                    await ctx.channel.send('temp eject time will not be extended')
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
