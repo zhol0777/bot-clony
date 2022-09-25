@@ -24,7 +24,7 @@ mypy:
 	mypy cogs/*.py db.py main.py util.py
 
 docker-build:
-	docker build -t bot-clony .
+	docker build --no-cache -t bot-clony .
 
 docker-run:
 	docker-compose up -d

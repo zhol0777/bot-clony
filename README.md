@@ -25,7 +25,10 @@ I want more features.
 4. `pip install -U -r requirements.txt`
 5. `python3 ./main.py`
 
-or, you build with docker and let 'er rip.
+or, you build with docker like this
+
+3. `docker build --no-cache -t bot-clony .`
+4. `docker-compose up -d`
 
 Maybe it also runs on heroku. I don't know, I just followed some guide I found
 on Medium to prepare it for that.

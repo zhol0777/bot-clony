@@ -16,7 +16,6 @@ import util
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
 MAX_IMAGE_SIZE = (10240 * 1024)
-REDUCED_IMAGE_WIDTH = 1000
 
 
 class Bannerlord(commands.Cog):
@@ -26,7 +25,7 @@ class Bannerlord(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(BANNERLORD_ROLE)
-    async def banner(self, ctx: commands.Context,  *args):
+    async def banner(self, ctx: commands.Context, *args):
         '''
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
@@ -67,27 +66,48 @@ class Bannerlord(commands.Cog):
             await util.handle_error(ctx, 'Attempt to download {attachment_url} '
                                          'resulted in HTTP {image_req.status_code}')
             return
-        image_content = image_req.content
-        if len(image_content) >= MAX_IMAGE_SIZE:
-            # have to shrink down image due to API limits
-            image_stream = BytesIO(image_content)
-            image_obj = Image.open(image_stream)
-            width, height = image_obj.size
-            reduced_image_height = int(REDUCED_IMAGE_WIDTH * (width/height))
-            new_image = image_obj.resize((REDUCED_IMAGE_WIDTH, reduced_image_height), Image.LANCZOS)
-            image_content = new_image.tobytes()
+        image_content = reduce_image_size_if_necessary(image_req.content)
+
         await ctx.guild.edit(banner=image_content)
         await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:
-            pins = db.BannerPost.select()
-            for pin in pins:
-                message_id = pin.message_id
-                pin_msg = await ctx.fetch_message(message_id)
-                if pin_msg:
-                    await pin_msg.unpin()
-                pin.delete_instance()
+            await self.clear_old_banner_pins(ctx)
             db.BannerPost.create(message_id=ctx.message.reference.message_id)
+
+    async def clear_old_banner_pins(self, ctx: commands.Context):
+        '''
+        latest bannered board gets pinned, and pin is tracked in BannerPost table
+        on new banner, go through old pinned post(s) to un-pin
+        '''
+        pins = db.BannerPost.select()
+        for pin in pins:
+            message_id = pin.message_id
+            pin_msg = await ctx.fetch_message(message_id)
+            if pin_msg:
+                await pin_msg.unpin()
+            pin.delete_instance()
+
+
+def reduce_image_size_if_necessary(image_content: bytes) -> bytes:
+    '''
+    discord API sets a limit for 1MB for image for the banner
+    I am too lazy to write something that does the math on how much an image
+    should be shrunk while retaining maximum resolution, so instead we can
+    recursively shrink the image until it reaches a reasonable size
+    0.7 is a nice number, close to (1/math.sqrt(2)), halves total number of
+    pixels in the image for each passthrough to keep number of reductions
+    fairly reasonable without overkilling resolution
+    '''
+    if len(image_content) >= MAX_IMAGE_SIZE:
+        image_obj = Image.open(BytesIO(image_content))
+        width, height = image_obj.size
+        image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)
+        buf = BytesIO()
+        image_obj.save(buf, format='JPEG')
+        image_content = buf.getvalue()
+        return reduce_image_size_if_necessary(image_content)
+    return image_content
 
 
 async def setup(client):

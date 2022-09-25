@@ -39,8 +39,8 @@ class Wiki(commands.Cog):
             await self.listall(ctx)
             return
 
+        page_name = ctx.message.content.split()[1]
         with db.bot_db:
-            page_name = ctx.message.content.split()[1]
             wiki_page = db.WikiPage.get_or_none(shortname=page_name)
 
             if not wiki_page:

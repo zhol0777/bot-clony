@@ -9,6 +9,12 @@ import discord
 
 import db
 
+BOT_SONY_COMMAND_LIST = [
+    'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
+    'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
+    'lifealert', 'trade', 'vote', 'flashsales', 'help'
+]
+
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
     '''

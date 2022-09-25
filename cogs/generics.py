@@ -23,6 +23,12 @@ class Generics(commands.Cog):
         '''explanation that we cant have what we want all the time'''
         await ctx.channel.send('the odds that this is a real thing are looking slim')
 
+    @commands.command()
+    async def bestgamingswitch(self, ctx):
+        '''point out what the best gaming switch is'''
+        await ctx.channel.send('the best switch for gaming is a nintendo switch')
+        await ctx.message.delete()
+
 
 async def setup(client):
     '''setup'''
