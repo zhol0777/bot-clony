@@ -6,5 +6,6 @@ Pillow
 pylint
 python-dotenv
 requests
+types-Pillow
 types-requests
 validators
