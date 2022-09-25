@@ -22,3 +22,13 @@ pylint:
 
 mypy:
 	mypy cogs/*.py db.py main.py util.py
+
+docker-build:
+	docker build -t bot-clony .
+
+docker-run:
+	docker-compose up -d
+
+container-restart:
+	docker-compose down
+	docker-compose up -d

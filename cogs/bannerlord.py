@@ -2,10 +2,12 @@
 automate making server banners
 '''
 
+from io import BytesIO
 import os
 import requests
 
 from discord.ext import commands
+from PIL import Image
 import validators
 
 import db
@@ -13,6 +15,8 @@ import util
 
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
+MAX_IMAGE_SIZE = (10240 * 1024)
+REDUCED_IMAGE_WIDTH = 1000
 
 
 class Bannerlord(commands.Cog):
@@ -63,7 +67,16 @@ class Bannerlord(commands.Cog):
             await util.handle_error(ctx, 'Attempt to download {attachment_url} '
                                          'resulted in HTTP {image_req.status_code}')
             return
-        await ctx.guild.edit(banner=image_req.content)
+        image_content = image_req.content
+        if len(image_content) >= MAX_IMAGE_SIZE:
+            # have to shrink down image due to API limits
+            image_stream = BytesIO(image_content)
+            image_obj = Image.open(image_stream)
+            width, height = image_obj.size
+            reduced_image_height = int(REDUCED_IMAGE_WIDTH * (width/height))
+            new_image = image_obj.resize((REDUCED_IMAGE_WIDTH, reduced_image_height), Image.LANCZOS)
+            image_content = new_image.tobytes()
+        await ctx.guild.edit(banner=image_content)
         await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:

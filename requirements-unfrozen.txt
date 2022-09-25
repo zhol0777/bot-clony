@@ -2,6 +2,7 @@ discord.py
 flake8
 mypy
 peewee
+Pillow
 pylint
 python-dotenv
 requests
