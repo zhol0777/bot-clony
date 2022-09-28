@@ -102,8 +102,8 @@ class Bannerlord(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         '''delete any bunk message in bannerlord channel'''
-        if isinstance(message.channel, discord.DMChannel):
-            # avoid error messages caused by DM responses
+        if isinstance(message.channel, (discord.DMChannel, discord.Thread)):
+            # avoid error messages caused by DM responses or etc.
             return
         if message.channel.name != BANNERLORD_CHANNEL:
             return
