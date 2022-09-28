@@ -61,7 +61,7 @@ class Eject(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def tempeject(self, ctx: commands.Context,  # pylint: disable=keyword-arg-before-vararg
+    async def tempeject(self, ctx: commands.Context,  # pylint: disable=keyword-arg-before-vararg,too-many-branches
                         tag: str, sleep_time: str = '0', *args):
         '''
         Usage:  !tempeject [@ user tag] [time] [reason...]
@@ -100,7 +100,8 @@ class Eject(commands.Cog):
             await util.apply_role(ejected_member, user_id, 'ejected',
                                   ' '.join(args), False)
             if not temp_ejected:
-                await ctx.channel.send(f'lol ejected\neject will be lifted at approx. <t:{lift_time}:f>')
+                await ctx.channel.send(f'lol ejected <@{user_id}\n>'
+                                       f'eject will be lifted at approx. <t:{lift_time}:f>')
                 if sleep_time_s < LOOP_TIME:
                     await asyncio.sleep(sleep_time_s)
                     await util.remove_role(ejected_member, user_id, 'ejected')
