@@ -16,6 +16,9 @@ Generics:
   wiki          Provide link from community wiki
                 Usage: !wiki [page name]
                        !wiki listall
+  remindme      Reminds a user at a later time of something
+                Usage: !remindme [time] [reason]
+                   ex. !remindme 1850300 fumo sale
 '''
 
 HELPER_COMMANDS = '''

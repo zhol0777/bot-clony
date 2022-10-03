@@ -73,13 +73,21 @@ class SocialCredit(BaseModel):
     credit_amount = peewee.IntegerField()
 
 
+class Reminder(BaseModel):
+    '''tracking a reminder and when to send'''
+    user_id = peewee.BigIntegerField()
+    reminder_epoch_time = peewee.BigIntegerField()
+    reason = peewee.CharField()
+    message_url = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
-                              SocialCredit])
+                              SocialCredit, Reminder])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'
