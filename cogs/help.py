@@ -42,6 +42,7 @@ Helper Commands:
                        !wiki define root [url]
                        Delete a wiki page
                        !wiki delete [shortname]
+  forcegoogle   Usage: [reply] !forcegoogle
 '''
 
 MOD_COMMANDS = '''
@@ -98,6 +99,19 @@ class Help(commands.Cog):
                 if command in line:
                     help_msg += f'{line}\n'
         await ctx.channel.send(f'```{help_msg}```')
+
+    @commands.command()
+    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    # https://www.google.com/search?q=how+do+i+lube+stabs
+    async def forcegoogle(self, ctx: commands.Context):
+        '''passive aggressive reminder that some questions can be answered with google'''
+        await ctx.message.delete()
+        if ctx.message.reference is None:
+            return
+        reply_message = await ctx.fetch_message(ctx.message.reference.message_id)
+        search_string = '+'.join(reply_message.content.split())
+        send_msg_content = f'https://google.com/search?q={search_string}'
+        await ctx.channel.send(send_msg_content, reference=reply_message)
 
 
 async def setup(client):
