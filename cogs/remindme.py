@@ -52,11 +52,8 @@ class RemindMe(commands.Cog):
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
         await ctx.message.delete()
-        for guild in self.client.guilds:
-            if guild.id == int(os.getenv('SERVER_ID', '0')):
-                self.guild = guild
-                self.send_reminders.start()  # pylint: disable=no-member
-                await dm_channel.send('reminder monitoring loop start')
+        self.send_reminders.start()  # pylint: disable=no-member
+        await dm_channel.send('reminder monitoring loop start')
 
     @tasks.loop(seconds=60)
     async def send_reminders(self):
