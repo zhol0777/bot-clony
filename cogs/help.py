@@ -6,6 +6,8 @@ import os
 from discord.ext import commands
 import discord
 
+import util
+
 GENERAL_COMMANDS = '''
 Generics:
   help2         Posts all this
@@ -102,15 +104,29 @@ class Help(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
-    # https://www.google.com/search?q=how+do+i+lube+stabs
     async def forcegoogle(self, ctx: commands.Context):
         '''passive aggressive reminder that some questions can be answered with google'''
-        await ctx.message.delete()
-        if ctx.message.reference is None:
-            return
-        reply_message = await ctx.fetch_message(ctx.message.reference.message_id)
-        search_string = '+'.join(reply_message.content.split())
-        send_msg_content = f'https://google.com/search?q={search_string}'
+        source = 'https://google.com/search?q='
+        await self.force_search(ctx, source)
+
+    @commands.command()
+    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    async def forceduckduckgo(self, ctx: commands.Context):
+        '''passive aggressive reminder that some questions can be answered with duckduckgo'''
+        source = 'https://duckduckgo.com/?q='
+        await self.force_search(ctx, source)
+
+    async def force_search(self, ctx, source):
+        '''make search force-search commands generic'''
+        if ctx.message.reference:
+            await ctx.message.delete()
+            reply_message = await util.get_reply_message(ctx, ctx.message)
+            reply_message_content = reply_message.content
+        else:
+            reply_message = ctx.message
+            reply_message_content = ' '.join(ctx.message.content.split()[1:])
+        search_string = '+'.join(reply_message_content.split())
+        send_msg_content = f'<{source}{search_string}>'
         await ctx.channel.send(send_msg_content, reference=reply_message)
 
 
