@@ -134,8 +134,11 @@ class Eject(commands.Cog):
         for guild in self.client.guilds:
             if guild.id == int(os.getenv('SERVER_ID', '0')):
                 self.guild = guild
-                self.undo_temp_eject.start()  # pylint: disable=no-member
-                await dm_channel.send('temp eject monitoring loop started')
+                try:
+                    self.undo_temp_eject.start()  # pylint: disable=no-member
+                    await dm_channel.send('temp eject monitoring loop started')
+                except RuntimeError:
+                    await dm_channel.send('temp eject monitoring loop already running')
 
     @tasks.loop(seconds=LOOP_TIME)
     async def undo_temp_eject(self):

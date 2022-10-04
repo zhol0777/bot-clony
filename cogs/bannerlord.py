@@ -120,7 +120,10 @@ class Bannerlord(commands.Cog):
             # bannerlord is announcing banner of the day
             return
         dm_channel = await message.author.create_dm()
-        await dm_channel.send(BAD_MESSAGE_TEXT)
+        try:
+            await dm_channel.send(BAD_MESSAGE_TEXT)
+        except AttributeError:
+            pass
         await message.delete()
 
 

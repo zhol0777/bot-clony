@@ -37,7 +37,7 @@ class RemindMe(commands.Cog):
                 wait_time_s *= (60 * 60 * 24)
             elif wait_time.endswith('w'):
                 wait_time_s *= (60 * 60 * 24 * 7)
-            elif wait_time.endswith('y'):  #    
+            elif wait_time.endswith('y'):  # thanks jymv
                 wait_time_s *= (60 * 60 * 24 * 365)
 
             alert_time = int(time.time()) + wait_time_s
@@ -57,8 +57,11 @@ class RemindMe(commands.Cog):
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
         await ctx.message.delete()
-        self.send_reminders.start()  # pylint: disable=no-member
-        await dm_channel.send('reminder monitoring loop start')
+        try:
+            self.send_reminders.start()  # pylint: disable=no-member
+            await dm_channel.send('reminder monitoring loop start')
+        except RuntimeError:
+            await dm_channel.send('reminder monitoring loop already started')
 
     @tasks.loop(seconds=60)
     async def send_reminders(self):
@@ -72,7 +75,9 @@ class RemindMe(commands.Cog):
                     channel = await reminded_user.create_dm()
                     embed = discord.Embed(color=discord.Colour.orange())
                     embed.set_author(name="Reminder")
-                    # embed.add_field(name="Reason", value=str(reminder.reason))
+                    reason = str(reminder.reason) if reminder.reason else 'No Reason Provided'
+                    embed.add_field(name="Reason", value=reason)
+                    embed.add_field(name="Time", value=f'<t:{reminder.reminder_epoch_time}:f>')
                     embed.add_field(name="Message link", value=str(reminder.message_url))
                     await channel.send(embed=embed)
                     reminder.delete_instance()
