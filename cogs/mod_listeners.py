@@ -72,7 +72,7 @@ class ModListeners(commands.Cog):
             # may be possible to just reference wiki page
             # TODO: a lot of this is just copied-pasted from cogs/wiki.py, should
             # be made more modular
-            command = ctx.message.content.strip(self.client.command_prefix)
+            command = ctx.message.content.strip(self.client.command_prefix).split()[0]
             # avoid running with bot-sony
             if command in util.BOT_SONY_COMMAND_LIST:
                 return
