@@ -33,4 +33,3 @@ async def load_extensions():
 
 asyncio.run(load_extensions())
 bot.run(DISCORD_TOKEN)
-log.warning("I am ready.")

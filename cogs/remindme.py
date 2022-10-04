@@ -27,13 +27,18 @@ class RemindMe(commands.Cog):
         Usage:  !remindme [wait_time] [reason...]
         '''
         with db.bot_db:
-            wait_time_s = util.get_id_from_tag(wait_time)
+            try:
+                wait_time_s = util.get_id_from_tag(wait_time)
+            except ValueError:
+                await util.handle_error(ctx, self.remindme.__doc__)
             if wait_time.endswith('h'):
                 wait_time_s *= (60 * 60)
             elif wait_time.endswith('d'):
                 wait_time_s *= (60 * 60 * 24)
             elif wait_time.endswith('w'):
                 wait_time_s *= (60 * 60 * 24 * 7)
+            elif wait_time.endswith('y'):  #    
+                wait_time_s *= (60 * 60 * 24 * 365)
 
             alert_time = int(time.time()) + wait_time_s
 
@@ -67,7 +72,7 @@ class RemindMe(commands.Cog):
                     channel = await reminded_user.create_dm()
                     embed = discord.Embed(color=discord.Colour.orange())
                     embed.set_author(name="Reminder")
-                    embed.add_field(name="Reason", value=str(reminder.reason))
+                    # embed.add_field(name="Reason", value=str(reminder.reason))
                     embed.add_field(name="Message link", value=str(reminder.message_url))
                     await channel.send(embed=embed)
                     reminder.delete_instance()
