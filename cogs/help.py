@@ -102,7 +102,7 @@ class Help(commands.Cog):
                     help_msg += f'{line}\n'
         await ctx.channel.send(f'```{help_msg}```')
 
-    @commands.command()
+    @commands.command(aliases=['lmgtfy'])
     @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
     async def forcegoogle(self, ctx: commands.Context):
         '''passive aggressive reminder that some questions can be answered with google'''
