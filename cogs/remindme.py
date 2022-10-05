@@ -1,6 +1,7 @@
 '''
 DM a user a reminder of something they needed to be reminded of
 '''
+import asyncio
 import os
 import time
 
@@ -40,15 +41,26 @@ class RemindMe(commands.Cog):
             elif wait_time.endswith('y'):  # thanks jymv
                 wait_time_s *= (60 * 60 * 24 * 365)
 
+            if len(args) > 0:
+                reason = ' '.join(args)
+            else:
+                reason = 'No reason provided'
+
             alert_time = int(time.time()) + wait_time_s
 
-            db.Reminder.create(
-                user_id=ctx.message.author.id,
-                reminder_epoch_time=alert_time,
-                reason=' '.join(args),
-                message_url=ctx.message.jump_url
-            )
-            await ctx.channel.send(f'Will send reminder on <t:{alert_time}:f>')
+            if wait_time_s > LOOP_TIME:
+                db.Reminder.create(
+                    user_id=ctx.message.author.id,
+                    reminder_epoch_time=alert_time,
+                    reason=reason,
+                    message_url=ctx.message.jump_url
+                )
+                await ctx.channel.send(f'Will send reminder near <t:{alert_time}:f>')
+            else:
+                await ctx.channel.send(f'Will send reminder near <t:{alert_time}:f>')
+                await asyncio.sleep(wait_time_s)
+                await self.dm_reminder(ctx.message.author, reason, alert_time,
+                                       ctx.message.jump_url)
 
     # TODO: make loop start commands generic through util function
     @commands.command()
@@ -72,15 +84,20 @@ class RemindMe(commands.Cog):
             for reminder in reminders:
                 if current_time > reminder.reminder_epoch_time:
                     reminded_user = await self.client.fetch_user(reminder.user_id)
-                    channel = await reminded_user.create_dm()
-                    embed = discord.Embed(color=discord.Colour.orange())
-                    embed.set_author(name="Reminder")
                     reason = str(reminder.reason) if reminder.reason else 'No Reason Provided'
-                    embed.add_field(name="Reason", value=reason)
-                    embed.add_field(name="Time", value=f'<t:{reminder.reminder_epoch_time}:f>')
-                    embed.add_field(name="Message link", value=str(reminder.message_url))
-                    await channel.send(embed=embed)
+                    await self.dm_reminder(reminded_user, reason, reminder.reminder_epoch_time,
+                                           reminder.message_url)
                     reminder.delete_instance()
+
+    async def dm_reminder(self, reminded_user: discord.User, reason: str, reminder_time: int, message_url: str) -> None:
+        '''front-end for sending the reminder between reminders in or outside of db'''
+        channel = await reminded_user.create_dm()
+        embed = discord.Embed(color=discord.Colour.orange())
+        embed.set_author(name="Reminder")
+        embed.add_field(name="Reason", value=reason)
+        embed.add_field(name="Time", value=f'<t:{reminder_time}:f>')
+        embed.add_field(name="Message link", value=str(message_url))
+        await channel.send(embed=embed)
 
 
 async def setup(client):
