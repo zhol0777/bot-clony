@@ -1,6 +1,7 @@
 '''
 Generic commands that provide simple responses
 '''
+import re
 import os
 
 from discord.ext import commands
@@ -125,6 +126,7 @@ class Help(commands.Cog):
         else:
             reply_message = ctx.message
             reply_message_content = ' '.join(ctx.message.content.split()[1:])
+        reply_message_content = re.sub(r'\W+', '', reply_message_content)  # thanks powwu
         search_string = '+'.join(reply_message_content.split())
         send_msg_content = f'<{source}{search_string}>'
         await ctx.channel.send(send_msg_content, reference=reply_message)
