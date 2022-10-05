@@ -9,6 +9,12 @@ from discord.ext import commands
 
 MOD_ROLE = os.getenv('MOD_ROLE')
 
+BOOTSTRAP_REMINDER = '''
+Please start up the task loops by running
+`!unejectloopstart` and `!startreminderloop`
+within the server after reboot/restart have completed
+'''
+
 
 class Reboot(commands.Cog):
     '''Cog to reboot this thing when it needs to'''
@@ -22,6 +28,8 @@ class Reboot(commands.Cog):
         Usage: !reboot
         Reboot bot
         '''
+        dm_channel = await ctx.message.author.create_dm()
+        await dm_channel.send(BOOTSTRAP_REMINDER)
         await ctx.message.delete()
         os.execv(sys.executable, ['python'] + sys.argv)
 
