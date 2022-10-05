@@ -40,6 +40,8 @@ class Reboot(commands.Cog):
         Usage: !update
         git pull, then bot reboot
         '''
+        dm_channel = await ctx.message.author.create_dm()
+        await dm_channel.send(BOOTSTRAP_REMINDER)
         await ctx.message.delete()
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
         os.execv(sys.executable, ['python'] + sys.argv)
