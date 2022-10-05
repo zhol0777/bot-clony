@@ -79,7 +79,7 @@ class Bannerlord(commands.Cog):
             return
         image_content = reduce_image_size_if_necessary(image_req.content)
 
-        await ctx.guild.edit(banner=image_content)
+        await ctx.guild.edit(banner=image_content, splash=image_content)
         await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:
