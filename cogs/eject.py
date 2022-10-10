@@ -100,7 +100,7 @@ class Eject(commands.Cog):
             await util.apply_role(ejected_member, user_id, 'ejected',
                                   ' '.join(args), False)
             if not temp_ejected:
-                await ctx.channel.send(f'lol ejected <@{user_id}\n>'
+                await ctx.channel.send(f'lol ejected <@{user_id}>\n'
                                        f'eject will be lifted at approx. <t:{lift_time}:f>')
                 if sleep_time_s < LOOP_TIME:
                     await asyncio.sleep(sleep_time_s)
