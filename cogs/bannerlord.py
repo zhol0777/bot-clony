@@ -41,6 +41,8 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
+        dm_channel = await ctx.message.author.create_dm()
+        status_message = await dm_channel.send('Starting banner upload process!')
         # TODO: handle with channel ID
         if ctx.channel.name != BANNERLORD_CHANNEL:
             await util.handle_error(ctx, f'!banner can only be used in {BANNERLORD_CHANNEL}')
@@ -53,33 +55,46 @@ class Bannerlord(commands.Cog):
         original_msg = await ctx.fetch_message(
             ctx.message.reference.message_id)
         if not original_msg.attachments:
-            # odd chance they're using an image embed?
-            words = original_msg.content.split()
+            await status_message.edit(content='No attachments found searching embeds for image...')
             image_url_list = []
-            for word in words:
-                if validators.url(word) and \
-                        word.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                    image_url_list.append(word)
-            attachment_url = image_url_list[attachment_index]
-            if image_url_list:
+            for embed in original_msg.embeds:
+                if embed.thumbnail and embed.thumbnail.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                    image_url_list.append(embed.thumbnail.url)
+                else:
+                    if embed.image and embed.image.url and \
+                            embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                        image_url_list.append(embed.image.url)
+            try:
+                attachment_url = image_url_list[attachment_index]
+            except IndexError:
                 await util.handle_error(ctx,
-                                        'no valid attachments for banner found')
-                return
+                                        'no valid attachments for banner found with that index')
         else:
-            attachment = original_msg.attachments[attachment_index]
+            try:
+                attachment = original_msg.attachments[attachment_index]
+            except IndexError:
+                await util.handle_error(ctx,
+                                        'no valid attachments for banner found with that index')
             attachment_url = attachment.url
             if not attachment_url.lower().endswith(VALID_IMAGE_EXTENSIONS):
                 await util.handle_error(ctx,
                                         f'intended image name {attachment_url} does not '
                                         'end in {VALID_IMAGE_EXTENSIONS}')
+        await status_message.edit(content="found banner! downloading...")
         image_req = requests.get(attachment_url, timeout=30)
+        await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
             await util.handle_error(ctx, 'Attempt to download {attachment_url} '
                                          'resulted in HTTP {image_req.status_code}')
             return
-        image_content = reduce_image_size_if_necessary(image_req.content)
+        image_content = image_req.content
+        if image_size_needs_reduction(image_content):
+            await status_message.edit(content='shrinking image down for banner, please wait a moment')
+            image_content = reduced_image(image_content)
 
+        await status_message.edit(content='banner uploading...')
         await ctx.guild.edit(banner=image_content, splash=image_content)
+        await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:
@@ -94,10 +109,12 @@ class Bannerlord(commands.Cog):
         pins = db.BannerPost.select()
         for pin in pins:
             message_id = pin.message_id
-            pin_msg = await ctx.fetch_message(message_id)
-            if pin_msg:
-                await pin_msg.unpin()
             pin.delete_instance()
+            try:
+                pin_msg = await ctx.fetch_message(message_id)
+                await pin_msg.unpin()
+            except discord.errors.NotFound:
+                pass
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -127,7 +144,12 @@ class Bannerlord(commands.Cog):
         await message.delete()
 
 
-def reduce_image_size_if_necessary(image_content: bytes) -> bytes:
+def image_size_needs_reduction(image_content: bytes) -> bool:
+    '''return true if image is too big to be banner'''
+    return len(image_content) >= MAX_IMAGE_SIZE
+
+
+def reduced_image(image_content: bytes) -> bytes:
     '''
     discord API sets a limit for 1MB for image for the banner
     I am too lazy to write something that does the math on how much an image
@@ -137,14 +159,14 @@ def reduce_image_size_if_necessary(image_content: bytes) -> bytes:
     pixels in the image for each passthrough to keep number of reductions
     fairly reasonable without overkilling resolution
     '''
-    if len(image_content) >= MAX_IMAGE_SIZE:
+    if image_size_needs_reduction(image_content):
         image_obj = Image.open(BytesIO(image_content))
         width, height = image_obj.size
         image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)
         buf = BytesIO()
         image_obj.save(buf, format='JPEG')
         image_content = buf.getvalue()
-        return reduce_image_size_if_necessary(image_content)
+        return reduced_image(image_content)
     return image_content
 
 

@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 MOD_CHAT_CHANNEL_NAME = os.getenv('MOD_CHAT')
 # TODO: handle via role IDs
-MONITORED_ROLES = ['ejected', 'evicted', 'deported', 'Razer Hate']
+MONITORED_ROLES = ['ejected', 'evicted', 'deported', 'Razer Hate', 'embed fail']
 
 
 class ModListeners(commands.Cog):
