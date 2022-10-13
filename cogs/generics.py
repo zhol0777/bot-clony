@@ -1,9 +1,14 @@
 '''
 Generic commands that provide simple responses
 '''
+import os
+
 from discord.ext import commands
 
 import util
+
+MOD_ROLE = os.getenv('MOD_ROLE')
+HELPER_ROLE = os.getenv('HELPER_ROLE')
 
 
 class Generics(commands.Cog):
@@ -28,6 +33,17 @@ class Generics(commands.Cog):
         '''point out what the best gaming switch is'''
         await ctx.channel.send('the best switch for gaming is a nintendo switch')
         await ctx.message.delete()
+
+    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    @commands.command(aliases=['say'])
+    async def parrot(self, ctx):
+        '''parrot a message back'''
+        if len(ctx.message.content.split()) <= 1:
+            return
+        content = ' '.join(ctx.message.content.split()[1:])
+        await ctx.message.delete()
+        await ctx.message.channel.send(content)
+    
 
 
 async def setup(client):
