@@ -1,8 +1,8 @@
 version: "3"
 services:
-  bot-clony:
-    container_name: bot-clony
-    image: bot-clony
+  bannerbot:
+    container_name: bannerbot
+    image: bannerbot
     # user: 1000:1000 # should be owner of volumes
     restart: always
     volumes:

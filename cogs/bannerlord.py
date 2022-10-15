@@ -16,12 +16,12 @@ import db
 import util
 
 BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
-BANNERLORD_CHANNEL = os.getenv('BANNERLORD_CHANNEL', 'kb-show-and-tell')
+BANNERLORD_CHANNEL = os.getenv('BANNERLORD_CHANNEL', 'pictures')
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
 MAX_IMAGE_SIZE = (10240 * 1024)
 
-BAD_MESSAGE_TEXT = '''
-kb-show-and-tell messages should contain attachments of pictures of keyboards.
+BAD_MESSAGE_TEXT = f'''
+{BANNERLORD_CHANNEL} messages should contain attachments of pictures of keyboards.
 Please create a thread to add comments to someone's build.
 If you believe this message was sent in error, please contact <@688959322708901907>
 to debug it.'''
@@ -41,19 +41,20 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
+        reply_reference = ctx.message.reference
         dm_channel = await ctx.message.author.create_dm()
+        await ctx.message.delete()
         status_message = await dm_channel.send('Starting banner upload process!')
         # TODO: handle with channel ID
         if ctx.channel.name != BANNERLORD_CHANNEL:
             await util.handle_error(ctx, f'!banner can only be used in {BANNERLORD_CHANNEL}')
             return
         attachment_index = 0 if len(args) < 1 else (int(args[0]) - 1)
-        if ctx.message.reference is None:
+        if reply_reference is None:
             await util.handle_error(ctx,
                                     '!banner must be used as a reply')
             return
-        original_msg = await ctx.fetch_message(
-            ctx.message.reference.message_id)
+        original_msg = await ctx.fetch_message(reply_reference.message_id)
         if not original_msg.attachments:
             await status_message.edit(content='No attachments found searching embeds for image...')
             image_url_list = []
@@ -95,11 +96,10 @@ class Bannerlord(commands.Cog):
         await status_message.edit(content='banner uploading...')
         await ctx.guild.edit(banner=image_content, splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
-        await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:
             await self.clear_old_banner_pins(ctx)
-            db.BannerPost.create(message_id=ctx.message.reference.message_id)
+            db.BannerPost.create(message_id=reply_reference.message_id)
 
     async def clear_old_banner_pins(self, ctx: commands.Context):
         '''

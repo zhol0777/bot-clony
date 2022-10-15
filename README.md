@@ -1,21 +1,13 @@
-# bot-clony
+# bannerlordbot
 
 ## What is this?
 
-A companion of bot-sony for the MechKeys discord.
-It's not done yet.
+A stripped-down version of bot-clony for other servers that only sets
+banner.
 
 ## Why re-write it?
 
-I want more features.
-
-* New commands
-  * !deport, !uneject
-  * Reapply eject/deport/evict on re-join
-  * !sanitize
-* More helper commands
-  * Define links to wiki (by default is https://mechkeys.me)
-  * Modify slow-mode command
+Kok thought it would be a good idea for the 40's server to have.
 
 ## How do I run this?
 
@@ -27,38 +19,15 @@ I want more features.
 
 or, you build with docker like this
 
-3. `docker build --no-cache -t bot-clony .`
+3. `docker build --no-cache -t bannerbot .`
 4. `docker-compose up -d`
 
 Maybe it also runs on heroku. I don't know, I just followed some guide I found
 on Medium to prepare it for that.
 
-## TODO
+## How do I use it?
 
-* Try out pypy
-* Migrate to pycord/hikari/whatever
-* features
-    * commands
-      * all users (verified)
-        * ~~!help2~~
-        * ~~!wiki (page)~~
-          * ~~ex. !wiki stabs, !wiki lube~~
-          * ~~!wiki listall~~
-        * ~~!sanitize~~
-      * helpers
-        * ~~!eject~~
-          * ~~!ejectwarn~~
-          * ~~!uneject~~
-          * ~~!tempeject~~
-        * ~~!wiki define*~~
-          * ~~!wiki define page stabs STABILIZERS.html~~
-          * ~~!wiki define root https://mechkeys.me~~
-        * ~~!slowmode \[interval\]~~
-      * mods
-        * ~~!reboot~~
-          * ~~!update~~
-    * listeners etc.
-      * ~~attempted role-evasion~~
-    * db integration
-      * ~~roles renewal~~
-      * ~~wiki page locations~~
+Bannerlord replies to a message in the channel where banner images are chosen
+with `!banner` for the first/only image in a post, or `!banner {image number}`
+to pick out a specific image from a post with multiple embeds. `!banner 3` for
+the third image in a post, and so on.
