@@ -22,9 +22,8 @@ class Sanitize(commands.Cog):
         reply_message = await util.get_reply_message(ctx, ctx.message)
         sanitized_message, needs_sanitizing = util.sanitize_message(
             reply_message.content)
-        sanitized_message = discord.utils.escape_mentions(sanitized_message)
         if needs_sanitizing:
-            await ctx.channel.send(sanitized_message, reference=reply_message)
+            await ctx.channel.send(sanitized_message, reference=reply_message, mention_author=False)
             await ctx.channel.send("Stop leaving trackers in your URLs!\n"
                                    "<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>")
 
