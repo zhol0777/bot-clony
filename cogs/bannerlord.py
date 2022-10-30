@@ -141,6 +141,8 @@ class Bannerlord(commands.Cog):
             await dm_channel.send(BAD_MESSAGE_TEXT)
         except AttributeError:
             pass
+        except discord.errors.Forbidden:
+            pass  # user won't accept message from bot
         await message.delete()
 
 
