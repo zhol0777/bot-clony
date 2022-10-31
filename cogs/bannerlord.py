@@ -41,20 +41,19 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
-        reply_reference = ctx.message.reference
         dm_channel = await ctx.message.author.create_dm()
-        await ctx.message.delete()
         status_message = await dm_channel.send('Starting banner upload process!')
         # TODO: handle with channel ID
         if ctx.channel.name != BANNERLORD_CHANNEL:
             await util.handle_error(ctx, f'!banner can only be used in {BANNERLORD_CHANNEL}')
             return
         attachment_index = 0 if len(args) < 1 else (int(args[0]) - 1)
-        if reply_reference is None:
+        if ctx.message.reference is None:
             await util.handle_error(ctx,
                                     '!banner must be used as a reply')
             return
-        original_msg = await ctx.fetch_message(reply_reference.message_id)
+        original_msg = await ctx.fetch_message(
+            ctx.message.reference.message_id)
         if not original_msg.attachments:
             await status_message.edit(content='No attachments found searching embeds for image...')
             image_url_list = []
@@ -96,10 +95,11 @@ class Bannerlord(commands.Cog):
         await status_message.edit(content='banner uploading...')
         await ctx.guild.edit(banner=image_content, splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
+        await ctx.message.delete()
         await original_msg.pin()
         with db.bot_db:
             await self.clear_old_banner_pins(ctx)
-            db.BannerPost.create(message_id=reply_reference.message_id)
+            db.BannerPost.create(message_id=ctx.message.reference.message_id)
 
     async def clear_old_banner_pins(self, ctx: commands.Context):
         '''
@@ -141,6 +141,8 @@ class Bannerlord(commands.Cog):
             await dm_channel.send(BAD_MESSAGE_TEXT)
         except AttributeError:
             pass
+        except discord.errors.Forbidden:
+            pass  # user won't accept message from bot
         await message.delete()
 
 
