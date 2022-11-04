@@ -2,6 +2,7 @@
 import os
 
 from discord.ext import commands
+from cogs.eject import MOD_ROLE, HELPER_ROLE
 
 import db
 import util
@@ -18,7 +19,7 @@ class SocialCredit(commands.Cog):
     # this is all spaghetti code because command groups weren't working for
     # some inexplicable reason. my apologies to anyone who has to read this
     # later. -zhol
-    @commands.has_any_role(SOCIAL_CREDIT_ROLE)
+    @commands.has_any_role(SOCIAL_CREDIT_ROLE, HELPER_ROLE, MOD_ROLE)
     async def socialcredit(self, ctx, *args):
         '''
         general socialcredit operations: read, add, remove
