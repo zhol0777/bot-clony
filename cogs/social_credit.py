@@ -2,12 +2,13 @@
 import os
 
 from discord.ext import commands
-from cogs.eject import MOD_ROLE, HELPER_ROLE
 
 import db
 import util
 
 SOCIAL_CREDIT_ROLE = os.getenv('SOCIAL_CREDIT_ROLE', 'Taobao Aide')
+HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE = os.getenv('MOD_ROLE')
 
 
 class SocialCredit(commands.Cog):
@@ -20,6 +21,7 @@ class SocialCredit(commands.Cog):
     # some inexplicable reason. my apologies to anyone who has to read this
     # later. -zhol
     @commands.has_any_role(SOCIAL_CREDIT_ROLE, HELPER_ROLE, MOD_ROLE)
+    @commands.command()
     async def socialcredit(self, ctx, *args):
         '''
         general socialcredit operations: read, add, remove
