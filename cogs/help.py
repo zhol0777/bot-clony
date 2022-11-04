@@ -12,7 +12,7 @@ import util
 GENERAL_COMMANDS = '''
 Generics:
   help2         Posts all this
-  sanitize      Sanitize messages with URLs with trackers
+  sanitize      Sanitize messages with URLs with extra URL parameters
                 Usage: !sanitize [url1] [url2] ...
                        !sanitize (as reply)
   newvendors       Posts the vendors list
@@ -26,26 +26,36 @@ Generics:
 
 HELPER_COMMANDS = '''
 Helper Commands:
-  eject         Usage: !eject [@ user tag] [reason...]
-                       !eject [reason...] (as reply)
-  uneject       Usage: !uneject [@ user tag]
-  tempeject     Usage: !tempeject [@ user tag] [time] [reason...]
-  ejectwarn     Usage: !ejectwarn [@ user tag] [reason...]
-                       !ejectwarn [reason...] (as reply)
-                       !ejectwarn list [@ user tag]
-                       !ejectwarn delete [reason ID]
+  eject         Usage:  !eject [@ user tag] [reason...]
+                        !eject [reason...] (as reply)
+  uneject       Usage:  !uneject [@ user tag]
+  tempeject     Usage:  !tempeject [@ user tag] [time] [reason...]
+  ejectwarn     Usage:  !ejectwarn [@ user tag] [reason...]
+                        !ejectwarn [reason...] (as reply)
+                        !ejectwarn list [@ user tag]
+                        !ejectwarn delete [reason ID]
   unejectloopstart
                 Start async time monitoring loop for unejects
-                Usage: !unejectloopstart
+                Usage:  !unejectloopstart
   slowmode      Activate slowmode in help channels
-                Usage: !slowmode [interval]
-  wiki          Usage: Define a wiki page by a shortcut:
-                       !wiki define page [shortname] [url]
-                       Define the wiki root domain:
-                       !wiki define root [url]
-                       Delete a wiki page
-                       !wiki delete [shortname]
-  forcegoogle   Usage: [reply] !forcegoogle
+                Usage:  !slowmode [interval]
+  socialcredit
+                Social credit adding or removing from users
+                Usage:  !socialcredit [user tag]
+                [reply] !socialcredit
+
+                        !socialcredit add [user tag] [amount]
+                [reply] !socialcredit add [amount]
+
+                        !socialcredit remove [user tag] [amount]
+                [reply] !socialcredit remove [amount]
+  wiki          Usage:  Define a wiki page by a shortcut:
+                        !wiki define page [shortname] [url]
+                        Define the wiki root domain:
+                        !wiki define root [url]
+                        Delete a wiki page
+                        !wiki delete [shortname]
+  forcegoogle   Usage:  [reply] !forcegoogle
 '''
 
 MOD_COMMANDS = '''
@@ -56,7 +66,9 @@ Mod Commands:
                 Usage: !update
   banner        Make the picture in a kb-show-and-tell message banner
   unejectloopstart
-                Restarts temp eject monitoring loop
+                Restarts temp eject monitoring task loop
+  startreminderloop
+                Restarts/starts reminder task loop
 '''
 
 HELPER_ROLE = os.getenv('HELPER_ROLE')
