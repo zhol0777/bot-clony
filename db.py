@@ -70,7 +70,7 @@ class BannerPost(BaseModel):
 class SocialCredit(BaseModel):
     '''tracking social credit for a user'''
     user_id = peewee.BigIntegerField()
-    credit_amount = peewee.IntegerField()
+    credit_amount = peewee.FloatField()
 
 
 class Reminder(BaseModel):

@@ -43,10 +43,10 @@ class SocialCredit(commands.Cog):
                     ctx.message.reference.message_id)
                 relevant_user = original_msg.author
                 user_id = relevant_user.id
-                amount = int(args[1])
+                amount = float(args[1])
             else:
                 user_id = util.get_id_from_tag(args[1])
-                amount = int(args[2])
+                amount = float(args[2])
         else:
             if ctx.message.reference is not None:
                 # replying to someone who is about to be ejected
