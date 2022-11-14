@@ -6,7 +6,7 @@ import logging
 import os
 import time
 
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks  # type: ignore
 
 import db
 import util

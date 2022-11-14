@@ -87,7 +87,7 @@ async def remove_role(member: discord.Member, user_id: int,
                       role_name: str) -> None:
     '''Remove a role from a member, and remove it from db'''
     role = discord.utils.get(member.guild.roles, name=role_name)
-    await member.remove_roles(role)
+    await member.remove_roles(role)  # type: ignore
     with db.bot_db:
         db.RoleAssignment.delete().where(
             (db.RoleAssignment.user_id == user_id) &

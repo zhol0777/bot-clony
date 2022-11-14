@@ -1,7 +1,6 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
-import discord
 from discord.ext import commands
 
 import util

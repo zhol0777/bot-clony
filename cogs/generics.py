@@ -43,7 +43,6 @@ class Generics(commands.Cog):
         content = ' '.join(ctx.message.content.split()[1:])
         await ctx.message.delete()
         await ctx.message.channel.send(content)
-    
 
 
 async def setup(client):
