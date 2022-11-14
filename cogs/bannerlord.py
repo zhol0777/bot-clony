@@ -166,7 +166,12 @@ def reduced_image(image_content: bytes) -> bytes:
         width, height = image_obj.size
         image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)
         buf = BytesIO()
-        image_obj.save(buf, format='JPEG')
+        try:
+            image_obj.save(buf, format='JPEG')
+        except (KeyError, OSError):
+            # OSError: cannot write mode RGBA as JPEG
+            image_obj = image_obj.convert('RGB')
+            image_obj.save(buf, format='JPEG')
         image_content = buf.getvalue()
         return reduced_image(image_content)
     return image_content
