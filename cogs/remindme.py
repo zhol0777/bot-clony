@@ -32,12 +32,16 @@ class RemindMe(commands.Cog):
                 wait_time_s = util.get_id_from_tag(wait_time)
             except ValueError:
                 await util.handle_error(ctx, self.remindme.__doc__)
+            if wait_time.endswith('m'):
+                wait_time_s *= 60
             if wait_time.endswith('h'):
                 wait_time_s *= (60 * 60)
             elif wait_time.endswith('d'):
                 wait_time_s *= (60 * 60 * 24)
             elif wait_time.endswith('w'):
                 wait_time_s *= (60 * 60 * 24 * 7)
+            elif wait_time.endswith('M'):
+                wait_time_s *= (60 * 60 * 24 * 30)
             elif wait_time.endswith('y'):  # thanks jymv
                 wait_time_s *= (60 * 60 * 24 * 365)
 

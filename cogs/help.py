@@ -20,8 +20,9 @@ Generics:
                 Usage: !wiki [page name]
                        !wiki listall
   remindme      Reminds a user at a later time of something
-                Usage: !remindme [time] [reason]
+                Usage: !remindme [time h:hour m:minute d:day w:week M:month y:year] [reason]
                    ex. !remindme 1850300 fumo sale
+                       !remindme 30d develop better help messages
 '''
 
 HELPER_COMMANDS = '''
