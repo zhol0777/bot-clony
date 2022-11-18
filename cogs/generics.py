@@ -38,9 +38,16 @@ class Generics(commands.Cog):
     @commands.command(aliases=['say'])
     async def parrot(self, ctx):
         '''parrot a message back'''
+        reply_message = await util.get_reply_message(ctx, ctx.message)
         if len(ctx.message.content.split()) <= 1:
             return
         content = ' '.join(ctx.message.content.split()[1:])
+        if ctx.message.reference is not None:
+            reply_message = await util.get_reply_message(ctx, ctx.message)
+            await ctx.message.delete()
+            await ctx.message.channel.send(content, reference=reply_message,
+                                           mention_author=False)
+            return
         await ctx.message.delete()
         await ctx.message.channel.send(content)
 
