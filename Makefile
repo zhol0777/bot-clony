@@ -32,3 +32,9 @@ docker-run:
 container-restart:
 	docker-compose down
 	docker-compose up -d
+
+install-unfrozen:
+	python3 -m pip install -U -r requirements-unfrozen.txt
+
+update-requirements: update-requirements
+	pip freeze > requirements.txt
