@@ -14,7 +14,7 @@ import util
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
+MOD_CHAT_ID = int(os.getenv('MOD_CHAT_ID', '0'))
 # TODO: handle via role IDs
 MONITORED_ROLES = ['ejected', 'evicted', 'deported', 'Razer Hate', 'embed fail']
 

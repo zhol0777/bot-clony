@@ -10,10 +10,9 @@ from discord.ext import commands
 
 import util
 
-HELPER_ROLE = os.getenv("HELPER_ROLE")
-MOD_ROLE = os.getenv("MOD_ROLE")
-
 SLOWMODE_CHANNELS = [190327462087884811, 766335071590023247]
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class SlowMode(commands.Cog):
@@ -40,7 +39,7 @@ class SlowMode(commands.Cog):
         }
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def slowmode(self, ctx: commands.Context, interval_str: str):
         """Activate slowmode in help channels"""
         interval = util.get_id_from_tag(interval_str)
@@ -52,7 +51,7 @@ class SlowMode(commands.Cog):
             await ctx.channel.send("Slow it down!")
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def autoslow(
         self, ctx: commands.Context, messages: str, delay: Optional[str] = None
     ):

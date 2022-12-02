@@ -1,6 +1,7 @@
 '''
 DM a user a reminder of something they needed to be reminded of
 '''
+from typing import Union
 import asyncio
 import os
 import time
@@ -12,7 +13,7 @@ import db
 import util
 
 LOOP_TIME = 60
-MOD_ROLE = os.getenv('MOD_ROLE')
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class RemindMe(commands.Cog):
@@ -80,7 +81,8 @@ class RemindMe(commands.Cog):
                                            reminder.message_url)
                     reminder.delete_instance()
 
-    async def dm_reminder(self, reminded_user: discord.User, reason: str, reminder_time: int, message_url: str) -> None:
+    async def dm_reminder(self, reminded_user: Union[discord.User, discord.Member],
+                          reason: str, reminder_time: int, message_url: str) -> None:
         '''front-end for sending the reminder between reminders in or outside of db'''
         channel = await reminded_user.create_dm()
         embed = discord.Embed(color=discord.Colour.orange())

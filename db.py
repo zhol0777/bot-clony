@@ -98,6 +98,11 @@ class BannedUser(BaseModel):
     user_id = peewee.BigIntegerField(unique=True)
 
 
+class SanitizedChannel(BaseModel):
+    '''only channel ID is tracked if auto-sanitizer should be run there'''
+    channel_id = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -106,7 +111,7 @@ def create_tables():
                               UnejectTime, BannerPost,
                               SocialCredit, Reminder,
                               SuspiciousUser, KickedUser,
-                              BannedUser])
+                              BannedUser, SanitizedChannel])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'

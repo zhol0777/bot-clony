@@ -12,8 +12,8 @@ import db
 import util
 
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
-HELPER_ROLE = os.getenv('HELPER_ROLE')
-MOD_ROLE = os.getenv('MOD_ROLE')
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 log = logging.getLogger(__name__)
 
 
@@ -23,7 +23,7 @@ class MemberWarning(commands.Cog):
         self.client = client
 
     @commands.group()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def ejectwarn(self, ctx: commands.Context):
         '''
         Usage: !ejectwarn [@ user tag] [reason...]
@@ -34,9 +34,9 @@ class MemberWarning(commands.Cog):
                 ctx.invoked_subcommand.name in ['list', 'delete']:
             return
         args = ctx.message.content.split()
-        if ctx.message.reference is not None:
+        if ctx.message.reference and ctx.message.reference.message_id:
             # replying to someone who is about to be ejected
-            reply_message = await util.get_reply_message(ctx, ctx.message)
+            reply_message = await util.get_reply_message(ctx.message)
             message_url = reply_message.jump_url
             original_msg = await ctx.fetch_message(
                 ctx.message.reference.message_id)
@@ -50,7 +50,7 @@ class MemberWarning(commands.Cog):
                     for_eject=True,
                     for_ban=False
                 )
-            await ctx.channel.send("stop being a punk",
+            await ctx.channel.send("hey, cool it",
                                    reference=reply_message)
         else:
             user_id = util.get_id_from_tag(args[1])
@@ -63,10 +63,10 @@ class MemberWarning(commands.Cog):
                     for_eject=True,
                     for_ban=False
                 )
-            await ctx.channel.send("stop being a punk")
+            await ctx.channel.send("hey, cool it")
 
-    @ejectwarn.command()
-    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    @ejectwarn.command()  # type: ignore
+    @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     async def list(self, ctx: commands.Context, user_id_tag: str):
         '''
         Usage: !ejectwarn list [@ user tag]
@@ -93,9 +93,9 @@ class MemberWarning(commands.Cog):
             embed.add_field(name="Message link", value=str(warning.message_url))
             await channel.send(embed=embed)
 
-    @ejectwarn.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def delete(self, _: commands.Context, reason_id: int):
+    @ejectwarn.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def delete(self, ctx: commands.Context, reason_id: int):
         '''
         Usage: !ejectwarn delete [warning reason ID]
         delete a warning from a user per reason_id
@@ -104,6 +104,7 @@ class MemberWarning(commands.Cog):
             warning_reason = db.WarningMemberReason.get_by_id(reason_id)
             if warning_reason:
                 warning_reason.delete_instance()
+                await ctx.channel.send("Reason deleted")
 
 
 async def setup(client):
