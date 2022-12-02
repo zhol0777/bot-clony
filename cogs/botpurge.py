@@ -54,14 +54,14 @@ class BotPurger(commands.Cog):
         await ctx.channel.send('BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                f'I am trash man\n{count} KICKED BOTS')
 
-    # @commands.Cog.listener()
-    # async def on_member_join(self, member):
-    #     '''kick suspiciously new account if it cannot verify within 30 minutes'''
-    #     account_age = datetime.today() - member.created_at.replace(tzinfo=None)
-    #     if account_age < timedelta(days=62):
-    #         await asyncio.sleep(1800)
-    #         if not discord.utils.get(member.roles, name='Verified'):
-    #             await member.kick(reason="Account is suspiciously young, not verifying within 30 minutes")
+    @commands.Cog.listener()
+    async def on_member_join(self, member):
+        '''kick suspiciously new account if it cannot verify within 30 minutes'''
+        account_age = datetime.today() - member.created_at.replace(tzinfo=None)
+        if account_age < timedelta(days=62):
+            await asyncio.sleep(3600)
+            if not discord.utils.get(member.roles, name='Verified'):
+                await member.kick(reason="Account is suspiciously young, not verifying within 1 hour")
 
 
 async def setup(client):
