@@ -15,7 +15,7 @@ import discord
 
 log = logging.getLogger(__name__)
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
-MOD_CHAT_CHANNEL_NAME = os.getenv('MOD_CHAT')
+MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 LIMIT = 1500
 
 
@@ -29,7 +29,7 @@ class BotPurger(commands.Cog):
     async def botpurge(self, ctx: commands.Context):
         '''looks through past 1500 messages in the member-join-announcement channel to kick
         those suspected of being a bot'''
-        if ctx.channel.name != MOD_CHAT_CHANNEL_NAME:
+        if ctx.channel.id != MOD_CHAT_ID:
             await ctx.message.delete()
             return
         await ctx.channel.send("starting kicking...")
