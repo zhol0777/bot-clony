@@ -29,16 +29,15 @@ class BotPurger(commands.Cog):
     async def botpurge(self, ctx: commands.Context):
         '''looks through past 1500 messages in the member-join-announcement channel to kick
         those suspected of being a bot'''
-        if ctx.channel.id != MOD_CHAT_ID:
-            await ctx.message.delete()
-            return
-        await ctx.channel.send("starting kicking...")
+        dm_channel = await ctx.message.author.create_dm()
+        await dm_channel.send("starting kicking...")
         count = 0
         message_count = 0
         botland_channel = self.client.get_channel(258268147486818304)
         async for message in botland_channel.history(limit=LIMIT):
             message_count += 1
-            log.warning("%s/%s joins", message_count, LIMIT)
+            if message_count % 50 == 0:
+                log.warning("%s/%s joins", message_count, LIMIT)
             account_age = datetime.today() - message.author.created_at.replace(tzinfo=None)
             try:
                 member = await ctx.guild.fetch_member(message.author.id)
@@ -51,7 +50,7 @@ class BotPurger(commands.Cog):
                 pass
             except Exception:  # pylint: disable=broad-except
                 log.exception("something went wrong here")
-        await ctx.channel.send('BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
+        await dm_channel.send('BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                f'I am trash man\n{count} KICKED BOTS')
 
     @commands.Cog.listener()
