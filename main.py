@@ -5,6 +5,7 @@ Run this to run bot-clony
 import asyncio
 import logging
 import os
+import sys
 
 from discord.ext import commands
 from dotenv import load_dotenv
@@ -32,4 +33,7 @@ async def load_extensions():
             await bot.load_extension(f"cogs.{filename[:-3]}")
 
 asyncio.run(load_extensions())
+if not DISCORD_TOKEN:
+    log.error("DISCORD_TOKEN os env not found, exiting")
+    sys.exit(1)
 bot.run(DISCORD_TOKEN)

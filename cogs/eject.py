@@ -11,9 +11,9 @@ from discord.ext import commands, tasks  # type: ignore
 import db
 import util
 
-HELPER_ROLE = os.getenv('HELPER_ROLE')
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
-MOD_ROLE = os.getenv('MOD_ROLE')
 LOOP_TIME = 60
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Eject(commands.Cog):
         self.guild = None
 
     @commands.command()
-    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     async def eject(self, ctx: commands.Context, *args):
         '''
         bot-sony handles eject role assignment.
@@ -34,8 +34,7 @@ class Eject(commands.Cog):
         Usage:  !eject [@ user tag] [reason...]
         [reply] !eject [reason...]
         '''
-
-        if ctx.message.reference is not None:
+        if ctx.message.reference and ctx.message.reference.message_id:
             # replying to someone who is about to be ejected
             original_msg = await ctx.fetch_message(
                 ctx.message.reference.message_id)
@@ -49,25 +48,28 @@ class Eject(commands.Cog):
             ).execute()
 
     @commands.command()
-    @commands.has_any_role(HELPER_ROLE)
+    @commands.has_any_role(HELPER_ROLE_ID)
     async def uneject(self, ctx: commands.Context, *args):
         '''
         Usage: !uneject [@ user tag]
         Uneject a user
         '''
-        user_id = util.get_id_from_tag(args[0])
-        ejected_member = await ctx.guild.fetch_member(user_id)
-        await util.remove_role(ejected_member, user_id, 'ejected')
+        if ctx.guild:
+            user_id = util.get_id_from_tag(args[0])
+            ejected_member = await ctx.guild.fetch_member(user_id)
+            await util.remove_role(ejected_member, user_id, 'ejected')
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def tempeject(self, ctx: commands.Context,  # pylint: disable=keyword-arg-before-vararg,too-many-branches
                         tag: str, sleep_time: str = '0', *args):
         '''
         Usage:  !tempeject [@ user tag] [time] [reason...]
         [reply] !tempeject [time] [reason...]
         '''
-        if ctx.message.reference is not None:
+        if not ctx.guild:
+            return
+        if ctx.message.reference and ctx.message.reference.message_id:
             # replying to someone who is about to be ejected
             original_msg = await ctx.fetch_message(
                 ctx.message.reference.message_id)
@@ -126,7 +128,7 @@ class Eject(commands.Cog):
                     await ctx.channel.send('temp eject time will not be extended')
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def unejectloopstart(self, ctx):  # pylint: disable=unused-argument
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
@@ -148,14 +150,16 @@ class Eject(commands.Cog):
             entries = db.UnejectTime.select()
             for temp_eject_entry in entries:
                 if current_time > temp_eject_entry.uneject_epoch_time:
-                    channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
-                    await channel.send(f"removing temp eject for <@{temp_eject_entry.user_id}>.\n"
-                                       "if this is erroneous, please re-apply eject role and ask zhol for debug.")
                     ejected_member = await self.guild.fetch_member(temp_eject_entry.user_id)
                     await util.remove_role(ejected_member,
                                            temp_eject_entry.user_id,
                                            'ejected')
                     temp_eject_entry.delete_instance()
+                    channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
+                    if not channel:
+                        return
+                    await channel.send(f"removing temp eject for <@{temp_eject_entry.user_id}>.\n"
+                                       "if this is erroneous, please re-apply eject role and ask zhol for debug.")
 
 
 async def setup(client):

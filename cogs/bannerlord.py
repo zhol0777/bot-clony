@@ -15,10 +15,10 @@ import validators
 import db
 import util
 
-BANNERLORD_ROLE = os.getenv('BANNERLORD_ROLE', 'bannerlord')
-BANNERLORD_CHANNEL = os.getenv('BANNERLORD_CHANNEL', 'kb-show-and-tell')
+BANNERLORD_ROLE_ID = int(os.getenv('BANNERLORD_ROLE_ID', '0'))
+BANNERLORD_CHANNEL_ID = int(os.getenv('BANNERLORD_CHANNEL_ID', '0'))
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
-MAX_IMAGE_SIZE = (10240 * 1024)
+MAX_IMAGE_SIZE = (1024 * 1024 * 10)
 
 BAD_MESSAGE_TEXT = '''
 kb-show-and-tell messages should contain attachments of pictures of keyboards.
@@ -35,7 +35,7 @@ class Bannerlord(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role(BANNERLORD_ROLE)
+    @commands.has_any_role(BANNERLORD_ROLE_ID)
     async def banner(self, ctx: commands.Context, *args):
         '''
         make the message this replies to banner!
@@ -43,14 +43,12 @@ class Bannerlord(commands.Cog):
         '''
         dm_channel = await ctx.message.author.create_dm()
         status_message = await dm_channel.send('Starting banner upload process!')
-        # TODO: handle with channel ID
-        if ctx.channel.name != BANNERLORD_CHANNEL:
-            await util.handle_error(ctx, f'!banner can only be used in {BANNERLORD_CHANNEL}')
+        if ctx.channel.id != BANNERLORD_CHANNEL_ID:
+            await util.handle_error(ctx, '!banner can only be used in banner channel')
             return
         attachment_index = 0 if len(args) < 1 else (int(args[0]) - 1)
-        if ctx.message.reference is None:
-            await util.handle_error(ctx,
-                                    '!banner must be used as a reply')
+        if ctx.message.reference is None or ctx.message.reference.message_id is None:
+            await util.handle_error(ctx, '!banner must be used as a reply')
             return
         original_msg = await ctx.fetch_message(
             ctx.message.reference.message_id)
@@ -58,7 +56,7 @@ class Bannerlord(commands.Cog):
             await status_message.edit(content='No attachments found searching embeds for image...')
             image_url_list = []
             for embed in original_msg.embeds:
-                if embed.thumbnail and embed.thumbnail.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                if embed.thumbnail and str(embed.thumbnail.url).lower().endswith(VALID_IMAGE_EXTENSIONS):
                     image_url_list.append(embed.thumbnail.url)
                 else:
                     if embed.image and embed.image.url and \
@@ -81,7 +79,7 @@ class Bannerlord(commands.Cog):
                                         f'intended image name {attachment_url} does not '
                                         'end in {VALID_IMAGE_EXTENSIONS}')
         await status_message.edit(content="found banner! downloading...")
-        image_req = requests.get(attachment_url, timeout=30)
+        image_req = requests.get(str(attachment_url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
             await util.handle_error(ctx, 'Attempt to download {attachment_url} '
@@ -93,13 +91,13 @@ class Bannerlord(commands.Cog):
             image_content = reduced_image(image_content)
 
         await status_message.edit(content='banner uploading...')
-        await ctx.guild.edit(banner=image_content, splash=image_content)
+        await ctx.guild.edit(banner=image_content, splash=image_content)  # type: ignore
         await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()
-        await original_msg.pin()
         with db.bot_db:
             await self.clear_old_banner_pins(ctx)
             db.BannerPost.create(message_id=ctx.message.reference.message_id)
+        await original_msg.pin()
 
     async def clear_old_banner_pins(self, ctx: commands.Context):
         '''
@@ -122,7 +120,7 @@ class Bannerlord(commands.Cog):
         if isinstance(message.channel, (discord.DMChannel, discord.Thread)):
             # avoid error messages caused by DM responses or etc.
             return
-        if message.channel.name != BANNERLORD_CHANNEL:
+        if message.channel.id != BANNERLORD_CHANNEL_ID:
             return
         if message.type == discord.MessageType.thread_created:
             # ignore thread creation
@@ -133,7 +131,7 @@ class Bannerlord(commands.Cog):
         for word in message.content.split():
             if validators.url(word):
                 return
-        if discord.utils.get(message.author.roles, name=BANNERLORD_ROLE):
+        if util.user_has_role_from_id(message.author, BANNERLORD_ROLE_ID):
             # bannerlord is announcing banner of the day
             return
         try:

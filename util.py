@@ -1,7 +1,7 @@
 '''
 Utility functions shared across cogs
 '''
-from typing import Any, Tuple
+from typing import Any, Tuple, Optional, Union
 
 from discord.ext import commands
 import validators
@@ -59,16 +59,16 @@ def get_id_from_tag(tag: str) -> int:
     return int(''.join([char for char in list(tag) if char.isdigit()]))
 
 
-async def get_reply_message(ctx, original) -> discord.Message:
+async def get_reply_message(message: discord.Message) -> discord.Message:
     '''Find the message that bot will reply to later'''
-    if ctx.message.reference is not None:
-        original = await ctx.fetch_message(ctx.message.reference.message_id)
-    return original
+    if message.reference is not None and message.reference.message_id:
+        message = await message.channel.fetch_message(message.reference.message_id)
+    return message
 
 
 # TODO: handle via role IDs
 async def apply_role(member: discord.Member, user_id: int,
-                     role_name: str, reason: str = None,
+                     role_name: str, reason: Optional[str] = None,
                      enter_in_db: bool = True) -> None:
     '''Apply a role to a member, and mark it in db'''
     role = discord.utils.get(member.guild.roles, name=role_name)
@@ -95,8 +95,17 @@ async def remove_role(member: discord.Member, user_id: int,
         ).execute()
 
 
-async def handle_error(ctx: commands.Context, error_message: str):
+async def handle_error(ctx: commands.Context, error_message: Optional[str]):
     '''send an error message to a user when they misuse a command'''
-    channel = await ctx.message.author.create_dm()
-    await channel.send(error_message)
-    await ctx.message.delete()
+    if error_message:
+        channel = await ctx.message.author.create_dm()
+        await channel.send(error_message)
+        await ctx.message.delete()
+
+
+def user_has_role_from_id(author: Union[discord.Member, discord.abc.User],
+                          role_id: int) -> bool:
+    '''determine if message author has corresponding role ID'''
+    if hasattr(author, 'roles'):
+        return bool(discord.utils.get(author.roles, id=role_id))
+    return False

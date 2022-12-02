@@ -7,7 +7,7 @@ import sys
 
 from discord.ext import commands
 
-MOD_ROLE = os.getenv('MOD_ROLE')
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 BOOTSTRAP_REMINDER = '''
 Please start up the task loops by running
@@ -22,7 +22,7 @@ class Reboot(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_role(MOD_ROLE)
+    @commands.has_role(MOD_ROLE_ID)
     async def reboot(self, ctx: commands.Context):
         '''
         Usage: !reboot
@@ -34,7 +34,7 @@ class Reboot(commands.Cog):
         os.execv(sys.executable, ['python'] + sys.argv)
 
     @commands.command()
-    @commands.has_role(MOD_ROLE)
+    @commands.has_role(MOD_ROLE_ID)
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update

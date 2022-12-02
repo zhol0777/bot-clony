@@ -81,13 +81,19 @@ class Reminder(BaseModel):
     message_url = peewee.BigIntegerField()
 
 
+class SanitizedChannel(BaseModel):
+    '''only channel ID is tracked if auto-sanitizer should be run there'''
+    channel_id = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
-                              SocialCredit, Reminder])
+                              SocialCredit, Reminder,
+                              SanitizedChannel])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'

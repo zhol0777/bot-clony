@@ -8,8 +8,8 @@ import discord
 
 import util
 
-HELPER_ROLE = os.getenv('HELPER_ROLE')
-MOD_ROLE = os.getenv('MOD_ROLE')
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class SlowMode(commands.Cog):
@@ -18,7 +18,7 @@ class SlowMode(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def slowmode(self, ctx: commands.Context, interval_str: str):
         '''Activate slowmode in help channels'''
         # TODO: check against channel ID instead of name

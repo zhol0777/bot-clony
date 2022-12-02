@@ -11,8 +11,8 @@ import validators
 import db
 import util
 
-HELPER_ROLE = os.getenv('HELPER_ROLE')
-MOD_ROLE = os.getenv('MOD_ROLE')
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class Wiki(commands.Cog):
@@ -29,7 +29,7 @@ class Wiki(commands.Cog):
         if ctx.invoked_subcommand and \
                 ctx.invoked_subcommand.name in ['define', 'listall', 'delete']:
             return
-        reply_message = await util.get_reply_message(ctx, ctx.message)
+        reply_message = await util.get_reply_message(ctx.message)
 
         # avoid reply being pinged twice
         if reply_message != ctx.message:
@@ -58,9 +58,9 @@ class Wiki(commands.Cog):
             else:
                 await ctx.channel.send(wiki_page.page, reference=reply_message)
 
-    @wiki.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def define(self, ctx: commands.context, *args):
+    @wiki.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def define(self, ctx: commands.Context, *args):
         '''
         Usage: !wiki define page [shortname] [url/subdirectory]
                !wiki define wiki_domain_root [url]
@@ -100,9 +100,9 @@ class Wiki(commands.Cog):
                 await ctx.channel.send(f"Root wiki made: <{root_url}>")
                 return
 
-    @wiki.command()
-    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def delete(self, ctx: commands.context, shortname: str):
+    @wiki.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def delete(self, ctx: commands.Context, shortname: str):
         '''
         Usage: !wiki delete [shortname]
         Delete wiki pages by shortname
@@ -113,8 +113,8 @@ class Wiki(commands.Cog):
                 db_page.delete_instance()
                 await ctx.channel.send(f"Page {shortname} deleted from BotDB")
 
-    @wiki.command()
-    async def listall(self, ctx: commands.context):
+    @wiki.command()  # type: ignore
+    async def listall(self, ctx: commands.Context):
         '''
         Usage: !wiki listall
         List all available wiki pages
@@ -122,7 +122,7 @@ class Wiki(commands.Cog):
         with db.bot_db:
             pages = db.WikiPage.select()
             page_listing = '\n'.join(sorted(p.shortname for p in pages))
-            await ctx.channel.send(
+            await ctx.message.channel.send(
                 "```"
                 "Usage: !wiki [page]\n\n"
                 "Available pages:\n"

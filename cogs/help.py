@@ -5,7 +5,6 @@ import re
 import os
 
 from discord.ext import commands
-import discord
 
 import util
 
@@ -72,8 +71,8 @@ Mod Commands:
                 Restarts/starts reminder task loop
 '''
 
-HELPER_ROLE = os.getenv('HELPER_ROLE')
-MOD_ROLE = os.getenv('MOD_ROLE')
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
+HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
 MOD_CHAT_ID = int(os.getenv('MOD_CHAT_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
@@ -87,14 +86,13 @@ class Help(commands.Cog):
     @commands.command()
     async def help2(self, ctx: commands.Context, *args):
         '''Help info'''
-        print(ctx.message.channel.id)
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
-            if discord.utils.get(ctx.message.author.roles, name=HELPER_ROLE) \
+            if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID) \
                     and ctx.message.channel.id in [HELPER_CHAT_ID,
                                                    ZHOLBOT_CHANNEL_ID]:
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
-            if discord.utils.get(ctx.message.author.roles, name=MOD_ROLE) \
+            if util.user_has_role_from_id(ctx.message.author, MOD_ROLE_ID) \
                     and ctx.message.channel.id == MOD_CHAT_ID:
                 await ctx.channel.send(f'```{MOD_COMMANDS}```')
             return
@@ -103,13 +101,15 @@ class Help(commands.Cog):
         for line in GENERAL_COMMANDS.split('\n'):
             if command in line:
                 help_msg += f'{line}\n'
-        if discord.utils.get(ctx.message.author.roles, name=HELPER_ROLE) \
+        if not hasattr(ctx.message.author, 'roles'):
+            return
+        if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID) \
                 and ctx.message.channel.id in [HELPER_CHAT_ID,
                                                ZHOLBOT_CHANNEL_ID]:
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'
-        if discord.utils.get(ctx.message.author.roles, name=MOD_ROLE) \
+        if util.user_has_role_from_id(ctx.message.author, MOD_ROLE_ID) \
                 and ctx.message.channel.id == MOD_CHAT_ID:
             for line in MOD_COMMANDS.split('\n'):
                 if command in line:
@@ -117,14 +117,14 @@ class Help(commands.Cog):
         await ctx.channel.send(f'```{help_msg}```')
 
     @commands.command(aliases=['lmgtfy'])
-    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     async def forcegoogle(self, ctx: commands.Context):
         '''passive aggressive reminder that some questions can be answered with google'''
         source = 'https://google.com/search?q='
         await self.force_search(ctx, source)
 
     @commands.command()
-    @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
+    @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     async def forceduckduckgo(self, ctx: commands.Context):
         '''passive aggressive reminder that some questions can be answered with duckduckgo'''
         source = 'https://duckduckgo.com/?q='
@@ -134,7 +134,7 @@ class Help(commands.Cog):
         '''make search force-search commands generic'''
         if ctx.message.reference:
             await ctx.message.delete()
-            reply_message = await util.get_reply_message(ctx, ctx.message)
+            reply_message = await util.get_reply_message(ctx.message)
             reply_message_content = reply_message.content
         else:
             reply_message = ctx.message
