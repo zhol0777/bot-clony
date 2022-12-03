@@ -39,7 +39,7 @@ class BotPurger(commands.Cog):
         async for message in botland_channel.history(limit=LIMIT):
             message_count += 1
             if message_count % 50 == 0:
-                status_text = f'{message}/{LIMIT} joins analysed...'
+                status_text = f'{message_count}/{LIMIT} joins analysed...'
                 await status_message.edit(content=status_text)
             account_age = datetime.today() - message.author.created_at.replace(tzinfo=None)
             try:
@@ -61,7 +61,7 @@ class BotPurger(commands.Cog):
         '''kick suspiciously new account if it cannot verify within 30 minutes'''
         account_age = datetime.today() - member.created_at.replace(tzinfo=None)
         if account_age < timedelta(days=62):
-            await asyncio.sleep(3600)
+            await asyncio.sleep(1200)
             if not discord.utils.get(member.roles, name='Verified'):
                 await member.kick(reason="Account is suspiciously young, not verifying within 1 hour")
 
