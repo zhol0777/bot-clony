@@ -43,7 +43,7 @@ class BotPurger(commands.Cog):
         message_count = 0
         botland_channel = self.client.get_channel(258268147486818304)
         if ctx.message.content and len(ctx.message.content.split()) > 1:
-            msg_limit = int(ctx.message.content.split()[1])
+            msg_limit = util.get_id_from_tag(ctx.message.content)
         else:
             msg_limit = LIMIT
         async for message in botland_channel.history(limit=msg_limit):
@@ -51,12 +51,11 @@ class BotPurger(commands.Cog):
             if message_count % 50 == 0:
                 status_text = f'{message_count}/{LIMIT} joins analysed...'
                 await status_message.edit(content=status_text)
-            account_age = datetime.today() - message.author.created_at.replace(tzinfo=None)
             try:
                 member = await ctx.guild.fetch_member(message.author.id)
                 if member:
                     if not discord.utils.get(member.roles, name='Verified'):
-                        if account_age > BOT_BIRTHDAY:
+                        if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
                             count += 1
                             await ctx.guild.kick(message.author)
             except discord.errors.NotFound:
