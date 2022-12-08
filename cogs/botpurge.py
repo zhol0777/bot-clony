@@ -42,8 +42,10 @@ class BotPurger(commands.Cog):
         message_count = 0
         botland_channel = self.client.get_channel(258268147486818304)
         if ctx.message.content and len(ctx.message.content.split()) > 1:
-            LIMIT = int(ctx.message.content.split())[1]
-        async for message in botland_channel.history(limit=LIMIT):
+            msg_limit = int(ctx.message.content.split()[1])
+        else:
+            msg_limit = LIMIT
+        async for message in botland_channel.history(limit=msg_limit):
             message_count += 1
             if message_count % 50 == 0:
                 status_text = f'{message_count}/{LIMIT} joins analysed...'
