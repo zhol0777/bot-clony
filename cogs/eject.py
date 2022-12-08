@@ -7,7 +7,6 @@ import os
 import time
 
 from discord.ext import commands, tasks  # type: ignore
-import discord
 
 import db
 import util

@@ -98,14 +98,17 @@ class BotPurger(commands.Cog):
             for s_u in suspicious_users:
                 if (current_time - s_u.join_epoch_time) < 1200:
                     continue
-                user_to_kick = await self.guild.fetch_member(s_u.user_id)
-                if discord.utils.get(user_to_kick, name='Verified'):
-                    s_u.delete_instance()
-                    continue
                 try:
-                    await user_to_kick.kick(reason="Account is suspiciously young, "
-                                            "not verifying within 15 minutes")
-                except discord.errors.NotFound:
+                    user_to_kick = await self.guild.fetch_member(s_u.user_id)
+                    if discord.utils.get(user_to_kick.roles, name='Verified'):
+                        s_u.delete_instance()
+                        continue
+                    try:
+                        await user_to_kick.kick(reason="Account is suspiciously young, "
+                                                "not verifying within 15 minutes")
+                    except discord.errors.NotFound:
+                        pass
+                except Exception:
                     pass
                 s_u.delete_instance()
 
