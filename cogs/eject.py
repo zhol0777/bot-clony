@@ -7,6 +7,7 @@ import os
 import time
 
 from discord.ext import commands, tasks  # type: ignore
+import discord
 
 import db
 import util
@@ -22,7 +23,7 @@ class Eject(commands.Cog):
     '''Eject/uneject users'''
     def __init__(self, client):
         self.client = client
-        self.guild = None
+        self.guild: discord.Guild = None
 
     @commands.command()
     @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
@@ -129,7 +130,8 @@ class Eject(commands.Cog):
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def unejectloopstart(self, ctx):  # pylint: disable=unused-argument
         '''start uneject loop'''
-        self.guild, dm_channel = util.get_guild(ctx, self.client)
+        dm_channel = await ctx.message.author.create_dm()
+        self.guild = util.get_guild(ctx, self.client)
         try:
             self.undo_temp_eject.start()  # pylint: disable=no-member
             await dm_channel.send('temp eject monitoring loop started')

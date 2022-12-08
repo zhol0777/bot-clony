@@ -105,11 +105,11 @@ async def handle_error(ctx: commands.Context, error_message: str):
 
 async def get_guild(ctx: commands.Context, client):
     '''get primary guild needed by a cog based on OS environment'''
-    dm_channel = await ctx.message.author.create_dm()
     try:
         await ctx.message.delete()
     except discord.errors.Forbidden:
         pass
     for guild in client.guilds:
         if guild.id == int(os.getenv('SERVER_ID', '0')):
-            return guild, dm_channel
+            return guild
+    return None

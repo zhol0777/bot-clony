@@ -27,7 +27,7 @@ class BotPurger(commands.Cog):
     '''kick every account younger than a month'''
     def __init__(self, client):
         self.client = client
-        self.guild = None
+        self.guild: discord.Guild = None
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
@@ -69,7 +69,8 @@ class BotPurger(commands.Cog):
     @commands.has_any_role(MOD_ROLE_ID)
     async def startpurgeloop(self, ctx):  # pylint: disable=unused-argument
         '''start purgeloop loop'''
-        self.guild, dm_channel = util.get_guild(ctx, self.client)
+        dm_channel = await ctx.message.author.create_dm()
+        self.guild = util.get_guild(ctx, self.client)
         try:
             self.purge_loop_function.start()  # pylint: disable=no-member
             await dm_channel.send('purge loop started')
