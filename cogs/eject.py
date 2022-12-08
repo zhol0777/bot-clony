@@ -23,7 +23,7 @@ class Eject(commands.Cog):
     '''Eject/uneject users'''
     def __init__(self, client):
         self.client = client
-        self.guild: discord.Guild = None
+        self.guild = None
 
     @commands.command()
     @commands.has_any_role(HELPER_ROLE, MOD_ROLE)
@@ -132,6 +132,8 @@ class Eject(commands.Cog):
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
         self.guild = util.get_guild(ctx, self.client)
+        if not self.guild:
+            await dm_channel.send('error in finding and setting guild...')
         try:
             self.undo_temp_eject.start()  # pylint: disable=no-member
             await dm_channel.send('temp eject monitoring loop started')
