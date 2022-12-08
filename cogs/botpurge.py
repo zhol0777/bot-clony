@@ -21,6 +21,7 @@ MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 LIMIT = 1500
 LOOP_TIME = 60
+BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-10-01').toordinal())
 
 
 class BotPurger(commands.Cog):
@@ -55,7 +56,7 @@ class BotPurger(commands.Cog):
                 member = await ctx.guild.fetch_member(message.author.id)
                 if member:
                     if not discord.utils.get(member.roles, name='Verified'):
-                        if account_age > date.fromisoformat('2022-10-01'):
+                        if account_age > BOT_BIRTHDAY:
                             count += 1
                             await ctx.guild.kick(message.author)
             except discord.errors.NotFound:
@@ -80,7 +81,7 @@ class BotPurger(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         '''add suspiciously new account to monitoring database'''
-        if member.created_at.replace(tzinfo=None) > date.fromisoformat('2022-10-01'):
+        if member.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
             with db.bot_db:
                 db.SuspiciousUser.create(
                     user_id=member.id,
