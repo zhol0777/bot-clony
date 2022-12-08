@@ -131,7 +131,7 @@ class Eject(commands.Cog):
     async def unejectloopstart(self, ctx):  # pylint: disable=unused-argument
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
-        self.guild = util.get_guild(ctx, self.client)
+        self.guild = await util.get_guild(ctx, self.client)
         if not self.guild:
             await dm_channel.send('error in finding and setting guild...')
         try:
