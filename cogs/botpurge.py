@@ -5,24 +5,29 @@ less than 100 have roles
 these are all probably bots
 time to die
 '''
-from datetime import datetime, timedelta
-import asyncio
+from datetime import datetime, date
 import logging
 import os
+import time
 
-from discord.ext import commands
+from discord.ext import commands, tasks
 import discord
+
+import db
+import util
 
 log = logging.getLogger(__name__)
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 LIMIT = 1500
+LOOP_TIME = 60
 
 
 class BotPurger(commands.Cog):
     '''kick every account younger than a month'''
     def __init__(self, client):
         self.client = client
+        self.guild = None
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
@@ -36,6 +41,8 @@ class BotPurger(commands.Cog):
         count = 0
         message_count = 0
         botland_channel = self.client.get_channel(258268147486818304)
+        if ctx.message.content and len(ctx.message.content.split()) > 1:
+            LIMIT = int(ctx.message.content.split())[1]
         async for message in botland_channel.history(limit=LIMIT):
             message_count += 1
             if message_count % 50 == 0:
@@ -46,7 +53,7 @@ class BotPurger(commands.Cog):
                 member = await ctx.guild.fetch_member(message.author.id)
                 if member:
                     if not discord.utils.get(member.roles, name='Verified'):
-                        if account_age < timedelta(days=62):
+                        if account_age > date.fromisoformat('2022-10-01'):
                             count += 1
                             await ctx.guild.kick(message.author)
             except discord.errors.NotFound:
@@ -56,14 +63,46 @@ class BotPurger(commands.Cog):
         await status_message.edit(content='BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                           f'I am trash man\n{count} KICKED BOTS')
 
+    @commands.command()
+    @commands.has_any_role(MOD_ROLE_ID)
+    async def startpurgeloop(self, ctx):  # pylint: disable=unused-argument
+        '''start purgeloop loop'''
+        self.guild, dm_channel = util.get_guild(ctx, self.client)
+        try:
+            self.purge_loop_function.start()  # pylint: disable=no-member
+            await dm_channel.send('purge loop started')
+        except RuntimeError:
+            await dm_channel.send('purge loop already running')
+
     @commands.Cog.listener()
     async def on_member_join(self, member):
-        '''kick suspiciously new account if it cannot verify within 30 minutes'''
-        account_age = datetime.today() - member.created_at.replace(tzinfo=None)
-        if account_age < timedelta(days=62):
-            await asyncio.sleep(1200)
-            if not discord.utils.get(member.roles, name='Verified'):
-                await member.kick(reason="Account is suspiciously young, not verifying within 1 hour")
+        '''add suspiciously new account to monitoring database'''
+        if member.created_at.replace(tzinfo=None) > date.fromisoformat('2022-10-01'):
+            with db.bot_db:
+                db.SuspiciousUser.create(
+                    user_id=member.id,
+                    join_epoch_time=int(time.time())
+                )
+
+    @tasks.loop(seconds=LOOP_TIME)
+    async def purge_loop_function(self):
+        '''iterate through db of suspicious users and delete monitoring if they verify, kick if not'''
+        current_time = int(time.time())
+        with db.bot_db:
+            suspicious_users = db.SuspiciousUser.select()
+            for s_u in suspicious_users:
+                if (current_time - s_u.join_epoch_time) < 1200:
+                    continue
+                user_to_kick = await self.guild.fetch_member(s_u.user_id)
+                if discord.utils.get(user_to_kick, name='Verified'):
+                    s_u.delete_instance()
+                    continue
+                try:
+                    await user_to_kick.kick(reason="Account is suspiciously young, "
+                                            "not verifying within 15 minutes")
+                except discord.errors.NotFound:
+                    pass
+                s_u.delete_instance()
 
 
 async def setup(client):

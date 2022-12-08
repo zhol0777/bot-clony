@@ -2,6 +2,7 @@
 Utility functions shared across cogs
 '''
 from typing import Any, Tuple
+import os
 
 from discord.ext import commands
 import validators
@@ -100,3 +101,12 @@ async def handle_error(ctx: commands.Context, error_message: str):
     channel = await ctx.message.author.create_dm()
     await channel.send(error_message)
     await ctx.message.delete()
+
+
+async def get_guild(ctx: commands.Context, client):
+    '''get primary guild needed by a cog based on OS environment'''
+    dm_channel = await ctx.message.author.create_dm()
+    await ctx.message.delete()
+    for guild in client.guilds:
+        if guild.id == int(os.getenv('SERVER_ID', '0')):
+            return guild, dm_channel
