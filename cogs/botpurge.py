@@ -92,9 +92,12 @@ class BotPurger(commands.Cog):
                 await status_message.edit(content=status_text)
             if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
                 msg_count += 1
-                member = await ctx.guild.fetch_member(message.author.id)
-                if member:
-                    continue
+                try:
+                    member = await ctx.guild.fetch_member(message.author.id)
+                    if member and discord.utils.get(member.roles, name='Verified'):
+                        continue
+                except discord.errors.NotFound:
+                    pass
                 arrival_counter[message.author.id] += 1
                 if arrival_counter[message.author.id] > DEFAULT_LIMIT:
                     with db.bot_db:
