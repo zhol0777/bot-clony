@@ -67,7 +67,7 @@ class BotPurger(commands.Cog):
                                 ).on_conflict(
                                     conflict_target=[db.KickedUser.user_id],
                                     update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
-                                )
+                                ).execute()
             except discord.errors.NotFound:
                 pass
             except Exception:  # pylint: disable=broad-except
@@ -105,12 +105,12 @@ class BotPurger(commands.Cog):
                     with db.bot_db:
                         db.KickedUser.insert(
                             user_id=message.author.id,
-                            kick_count=1
+                            kick_count=arrival_counter[message.author.id]
                         ).on_conflict(
                             conflict_target=[db.KickedUser.user_id],
                             update={db.KickedUser.kick_count: max(db.KickedUser.kick_count,
                                                                   arrival_counter[message.author.id])}
-                        )
+                        ).execute()
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
@@ -168,7 +168,7 @@ class BotPurger(commands.Cog):
                             ).on_conflict(
                                 conflict_target=[db.KickedUser.user_id],
                                 update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
-                            )
+                            ).execute()
                     except discord.errors.NotFound:
                         pass
                 except Exception:
