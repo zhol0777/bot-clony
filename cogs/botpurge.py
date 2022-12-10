@@ -5,6 +5,7 @@ less than 100 have roles
 these are all probably bots
 time to die
 '''
+from collections import Counter
 from datetime import datetime, date
 import logging
 import os
@@ -73,6 +74,38 @@ class BotPurger(commands.Cog):
                 log.exception("something went wrong here")
         await status_message.edit(content='BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                           f'I am trash man\n{count} KICKED BOTS')
+
+    @commands.command()
+    @commands.has_any_role(MOD_ROLE_ID)
+    async def stalepurge(self, ctx, *args):
+        '''go through a bunch of messages'''
+        if not ctx.guild:
+            return
+        dm_channel = await ctx.message.author.create_dm()
+        status_message = await dm_channel.send("beginning the mega-purge...")
+        msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
+        msg_count = 1
+        arrival_counter = Counter()
+        async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
+            if msg_count % 50 == 0:
+                status_text = f'{msg_count}/{msg_limit} messages analysed...'
+                await status_message.edit(content=status_text)
+            if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
+                msg_count += 1
+                member = await ctx.guild.fetch_member(message.author.id)
+                if member:
+                    continue
+                arrival_counter[message.author.id] += 1
+                if arrival_counter[message.author.id] > DEFAULT_LIMIT:
+                    with db.bot_db:
+                        db.KickedUser.insert(
+                            user_id=message.author.id,
+                            kick_count=1
+                        ).on_conflict(
+                            conflict_target=[db.KickedUser.user_id],
+                            update={db.KickedUser.kick_count: max(db.KickedUser.kick_count,
+                                                                  arrival_counter[message.author.id])}
+                        )
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
