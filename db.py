@@ -87,6 +87,12 @@ class SuspiciousUser(BaseModel):
     join_epoch_time = peewee.BigIntegerField()
 
 
+class KickedUser(BaseModel):
+    '''tracking user that has been kicked three times for suspicious behavior'''
+    user_id = peewee.BigIntegerField()
+    kick_count = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -94,7 +100,7 @@ def create_tables():
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
                               SocialCredit, Reminder,
-                              SuspiciousUser])
+                              SuspiciousUser, KickedUser])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'

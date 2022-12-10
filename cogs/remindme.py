@@ -72,7 +72,10 @@ class RemindMe(commands.Cog):
     async def startreminderloop(self, ctx):  # pylint: disable=unused-argument
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.errors.Forbidden:
+            pass
         try:
             self.send_reminders.start()  # pylint: disable=no-member
             await dm_channel.send('reminder monitoring loop start')

@@ -19,9 +19,10 @@ import util
 log = logging.getLogger(__name__)
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
-LIMIT = 1500
+DEFAULT_LIMIT = 1500
 LOOP_TIME = 60
 BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-10-01').toordinal())
+MAX_KICKS_ALLOWED = 3
 
 
 class BotPurger(commands.Cog):
@@ -32,7 +33,7 @@ class BotPurger(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
-    async def botpurge(self, ctx: commands.Context):
+    async def botpurge(self, ctx: commands.Context, *args):
         '''looks through past 1500 messages in the member-join-announcement channel to kick
         those suspected of being a bot'''
         if not ctx.guild:
@@ -42,14 +43,14 @@ class BotPurger(commands.Cog):
         count = 0
         message_count = 0
         botland_channel = self.client.get_channel(258268147486818304)
-        if ctx.message.content and len(ctx.message.content.split()) > 1:
-            msg_limit = util.get_id_from_tag(ctx.message.content)
+        if len(args) > 0:
+            msg_limit = util.get_id_from_tag(args[0])
         else:
-            msg_limit = LIMIT
+            msg_limit = DEFAULT_LIMIT
         async for message in botland_channel.history(limit=msg_limit):
             message_count += 1
             if message_count % 50 == 0:
-                status_text = f'{message_count}/{LIMIT} joins analysed...'
+                status_text = f'{message_count}/{msg_limit} joins analysed...'
                 await status_message.edit(content=status_text)
             try:
                 member = await ctx.guild.fetch_member(message.author.id)
@@ -58,6 +59,14 @@ class BotPurger(commands.Cog):
                         if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
                             count += 1
                             await ctx.guild.kick(message.author)
+                            with db.bot_db:
+                                db.KickedUser.insert(
+                                    user_id=message.author.id,
+                                    kick_count=1
+                                ).on_conflict(
+                                    conflict_target=[db.KickedUser.user_id],
+                                    update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
+                                )
             except discord.errors.NotFound:
                 pass
             except Exception:  # pylint: disable=broad-except
@@ -83,7 +92,15 @@ class BotPurger(commands.Cog):
     async def on_member_join(self, member):
         '''add suspiciously new account to monitoring database'''
         if member.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
+            if 'EdwardHarrisS' in member.display_name:
+                await member.kick(reason="obvious bot")
             with db.bot_db:
+                possibly_kicked_user = db.KickedUser.get_or_none(user_id=member.id)
+                if possibly_kicked_user:
+                    if possibly_kicked_user.kick_count > MAX_KICKS_ALLOWED:
+                        # should we ban at this point?
+                        await member.kick(reason="Account has been kicked too frequently")
+                        return
                 db.SuspiciousUser.create(
                     user_id=member.id,
                     join_epoch_time=int(time.time())
@@ -106,6 +123,14 @@ class BotPurger(commands.Cog):
                     try:
                         await user_to_kick.kick(reason="Account is suspiciously young, "
                                                 "not verifying within 15 minutes")
+                        with db.bot_db:
+                            db.KickedUser.insert(
+                                user_id=user_to_kick.id,
+                                kick_count=1
+                            ).on_conflict(
+                                conflict_target=[db.KickedUser.user_id],
+                                update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
+                            )
                     except discord.errors.NotFound:
                         pass
                 except Exception:
