@@ -99,7 +99,9 @@ class BotPurger(commands.Cog):
                 except discord.errors.NotFound:
                     pass
                 arrival_counter[message.author.id] += 1
-                if arrival_counter[message.author.id] > DEFAULT_LIMIT:
+                if arrival_counter[message.author.id] > MAX_KICKS_ALLOWED \
+                        or 'EdwardHarrisS' in message.author.display_name:
+                    log.warning("account %s time to die", message.author.display_name)
                     with db.bot_db:
                         db.KickedUser.insert(
                             user_id=message.author.id,
