@@ -11,7 +11,7 @@ import logging
 import os
 import time
 
-from discord.ext import commands, tasks
+from discord.ext import commands, tasks  # type: ignore
 import discord
 
 import db
@@ -24,6 +24,8 @@ DEFAULT_LIMIT = 1500
 LOOP_TIME = 60
 BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-10-01').toordinal())
 MAX_KICKS_ALLOWED = 3
+BAN_REASON = 'User is banned under suspicion of being a bot: ' \
+             'Repeated server joins without passing verification'
 
 
 class BotPurger(commands.Cog):
@@ -99,7 +101,7 @@ class BotPurger(commands.Cog):
                 except discord.errors.NotFound:
                     pass
                 arrival_counter[message.author.id] += 1
-                if arrival_counter[message.author.id] > MAX_KICKS_ALLOWED \
+                if arrival_counter[message.author.id] >= MAX_KICKS_ALLOWED \
                         or 'EdwardHarrisS' in message.author.display_name:
                     log.warning("account %s time to die", message.author.display_name)
                     with db.bot_db:
@@ -111,6 +113,33 @@ class BotPurger(commands.Cog):
                             update={db.KickedUser.kick_count: max(db.KickedUser.kick_count,
                                                                   arrival_counter[message.author.id])}
                         ).execute()
+
+    @commands.command()
+    @commands.has_any_role((MOD_ROLE_ID))
+    async def greatpurge(self, ctx, *args):  # pylint: disable=unused-argument
+        '''ban any account that has rejoined after being kicked a certain number of times'''
+        kick_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
+        dm_channel = await ctx.message.author.create_dm()
+        status_message = await dm_channel.send(f"banning any account created after {str(BOT_BIRTHDAY)} "
+                                               f"with more than {kick_limit} kicks")
+        ban_count = 0
+        with db.bot_db:
+            kicked_users = db.KickedUser.select()
+            for kicked_user in kicked_users:
+                if kicked_user.kick_count >= kick_limit:
+                    # BAN TIME
+                    banned_user = await self.client.fetch_user(kicked_user.user_id)
+                    try:
+                        await ctx.guild.fetch_ban()
+                        continue
+                    except discord.errors.NotFound:
+                        pass
+                    except discord.errors.Forbidden:
+                        await util.handle_error(ctx, 'Bot does not have ban privilege')
+
+                    await ctx.guild.ban(banned_user, reason=BAN_REASON)
+                    ban_count += 1
+        await status_message.edit(content=f'{ban_count} users banned')
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
@@ -171,7 +200,7 @@ class BotPurger(commands.Cog):
                             ).execute()
                     except discord.errors.NotFound:
                         pass
-                except Exception:
+                except Exception:  # pylint: disable=broad-except
                     pass
                 s_u.delete_instance()
 
