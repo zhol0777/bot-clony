@@ -85,23 +85,29 @@ class BotPurger(commands.Cog):
         if not ctx.guild:
             return
         dm_channel = await ctx.message.author.create_dm()
-        status_message = await dm_channel.send("beginning the mega-purge...")
         msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
+        status_message = await dm_channel.send("analyzing {msg_limit} joins to populate kickeduser table...")
         msg_count = 1
         arrival_counter = Counter()
+        verified_user_ids = set()
+        unverified_user_ids = set()
         try:
             async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
+                if message.author.id in verified_user_ids:
+                    continue
                 if msg_count % 50 == 0:
                     status_text = f'{msg_count}/{msg_limit} messages analysed...'
                     await status_message.edit(content=status_text)
                 if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
                     msg_count += 1
                     try:
-                        member = await ctx.guild.fetch_member(message.author.id)
-                        if member and discord.utils.get(member.roles, name='Verified'):
-                            continue
+                        if message.author.id not in unverified_user_ids:
+                            member = await ctx.guild.fetch_member(message.author.id)
+                            if member and discord.utils.get(member.roles, name='Verified'):
+                                verified_user_ids.add(message.author.id)
+                                continue
                     except discord.errors.NotFound:
-                        pass
+                        unverified_user_ids.add(message.author.id)
                     arrival_counter[message.author.id] += 1
             with db.bot_db:
                 for user_id, kick_count in arrival_counter.items():
@@ -202,7 +208,7 @@ class BotPurger(commands.Cog):
             if arrival_count >= MAX_KICKS_ALLOWED:
                 ban_count += 1
                 suspicious_user = await self.client.fetch_user(user_id)
-                ctx.guild.ban(suspicious_user, reason=BAN_REASON, delete_message_days=7)
+                ctx.guild.ban(suspicious_user, reason=BAN_REASON)
                 confirmed_banned_user_ids.add(user_id)
         await status_message.edit(content=f'{ban_count} accounts banned')
         with db.bot_db:
@@ -237,14 +243,12 @@ class BotPurger(commands.Cog):
     async def on_member_join(self, member):
         '''add suspiciously new account to monitoring database'''
         if member.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
-            if 'EdwardHarrisS' in member.display_name:
-                await member.kick(reason="obvious bot")
             with db.bot_db:
                 possibly_kicked_user = db.KickedUser.get_or_none(user_id=member.id)
                 if possibly_kicked_user:
                     if possibly_kicked_user.kick_count > MAX_KICKS_ALLOWED:
-                        # should we ban at this point?
-                        await member.kick(reason="Account has been kicked too frequently")
+                        await member.ban(reason=BAN_REASON)
+                        possibly_kicked_user.delete_instance()
                         return
                 db.SuspiciousUser.create(
                     user_id=member.id,
