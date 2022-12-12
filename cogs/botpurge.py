@@ -246,7 +246,7 @@ class BotPurger(commands.Cog):
             with db.bot_db:
                 possibly_kicked_user = db.KickedUser.get_or_none(user_id=member.id)
                 if possibly_kicked_user:
-                    if possibly_kicked_user.kick_count > MAX_KICKS_ALLOWED:
+                    if possibly_kicked_user.kick_count >= MAX_KICKS_ALLOWED:
                         await member.ban(reason=BAN_REASON)
                         possibly_kicked_user.delete_instance()
                         return
@@ -270,8 +270,6 @@ class BotPurger(commands.Cog):
                         s_u.delete_instance()
                         continue
                     try:
-                        await user_to_kick.kick(reason="Account is suspiciously young, "
-                                                "not verifying within 15 minutes")
                         with db.bot_db:
                             db.KickedUser.insert(
                                 user_id=user_to_kick.id,
@@ -280,6 +278,11 @@ class BotPurger(commands.Cog):
                                 conflict_target=[db.KickedUser.user_id],
                                 update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
                             ).execute()
+                            if db.KickedUser.get_or_none(user_id=user_to_kick.id).kick_count >= MAX_KICKS_ALLOWED:
+                                user_to_kick.ban(reason=BAN_REASON)
+                                continue
+                            await user_to_kick.kick(reason="Account is suspiciously young, "
+                                                           "not verifying within 15 minutes")
                     except discord.errors.NotFound:
                         pass
                 except Exception:  # pylint: disable=broad-except
