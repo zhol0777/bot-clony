@@ -129,7 +129,7 @@ class BotPurger(commands.Cog):
                     # BAN TIME
                     banned_user = await self.client.fetch_user(kicked_user.user_id)
                     try:
-                        await ctx.guild.fetch_ban()
+                        await ctx.guild.fetch_ban(banned_user)
                         continue
                     except discord.errors.NotFound:
                         pass
