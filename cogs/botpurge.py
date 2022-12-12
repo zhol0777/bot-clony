@@ -164,7 +164,7 @@ class BotPurger(commands.Cog):
         verified_member_ids = set()
         unverified_member_ids = set()
         msg_count = 0
-        with db.bot_db():
+        with db.bot_db:
             for banned_user in db.BannedUser.select():
                 confirmed_banned_user_ids.add(banned_user.user_id)
         dm_channel = await ctx.message.author.create_dm()
@@ -205,7 +205,7 @@ class BotPurger(commands.Cog):
                 ctx.guild.ban(suspicious_user, reason=BAN_REASON, delete_message_days=7)
                 confirmed_banned_user_ids.add(user_id)
         await status_message.edit(content=f'{ban_count} accounts banned')
-        with db.bot_db():
+        with db.bot_db:
             db.BannedUser.insert_many(
                 list(confirmed_banned_user_ids),
                 fields=[db.BannedUser.user_id]
