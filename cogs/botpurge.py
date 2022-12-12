@@ -79,8 +79,8 @@ class BotPurger(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
-    async def stalepurge(self, ctx, *args):
-        '''go through a bunch of messages'''
+    async def populatekickedusertable(self, ctx, *args):
+        '''go through a bunch of messages and count how many times sus users have returned'''
         if not ctx.guild:
             return
         dm_channel = await ctx.message.author.create_dm()
@@ -103,7 +103,6 @@ class BotPurger(commands.Cog):
                 arrival_counter[message.author.id] += 1
                 if arrival_counter[message.author.id] >= MAX_KICKS_ALLOWED \
                         or 'EdwardHarrisS' in message.author.display_name:
-                    log.warning("account %s time to die", message.author.display_name)
                     with db.bot_db:
                         db.KickedUser.insert(
                             user_id=message.author.id,
@@ -139,6 +138,7 @@ class BotPurger(commands.Cog):
 
                     await ctx.guild.ban(banned_user, reason=BAN_REASON)
                     ban_count += 1
+                    kicked_user.delete_instance()
         await status_message.edit(content=f'{ban_count} users banned')
 
     @commands.command()
