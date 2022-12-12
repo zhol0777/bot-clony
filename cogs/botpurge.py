@@ -123,22 +123,25 @@ class BotPurger(commands.Cog):
                                                f"with more than {kick_limit} kicks")
         ban_count = 0
         with db.bot_db:
-            kicked_users = db.KickedUser.select()
-            for kicked_user in kicked_users:
-                if kicked_user.kick_count >= kick_limit:
-                    # BAN TIME
-                    banned_user = await self.client.fetch_user(kicked_user.user_id)
-                    try:
-                        await ctx.guild.fetch_ban(banned_user)
-                        continue
-                    except discord.errors.NotFound:
-                        pass
-                    except discord.errors.Forbidden:
-                        await util.handle_error(ctx, 'Bot does not have ban privilege')
-
-                    await ctx.guild.ban(banned_user, reason=BAN_REASON)
-                    ban_count += 1
+            kicked_users = db.KickedUser.select().where(db.KickedUser.kick_count >= kick_limit)
+            total_ban_count = kicked_users.count()
+            for kicked_user in kicked_users:  # pylint: disable=not-an-iterable
+                # BAN TIME
+                ban_count += 1
+                if ban_count % 50 == 0:
+                    await status_message.edit(content=f'{ban_count}/{total_ban_count} users to ban handled')
+                banned_user = await self.client.fetch_user(kicked_user.user_id)
+                try:
+                    await ctx.guild.fetch_ban(banned_user)
                     kicked_user.delete_instance()
+                    continue
+                except discord.errors.NotFound:
+                    pass
+                except discord.errors.Forbidden:
+                    await util.handle_error(ctx, 'Bot does not have ban privilege')
+
+                await ctx.guild.ban(banned_user, reason=BAN_REASON)
+                kicked_user.delete_instance()
         await status_message.edit(content=f'{ban_count} users banned')
 
     @commands.command()
