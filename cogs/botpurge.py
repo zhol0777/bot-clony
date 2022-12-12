@@ -208,7 +208,7 @@ class BotPurger(commands.Cog):
             if arrival_count >= MAX_KICKS_ALLOWED:
                 ban_count += 1
                 suspicious_user = await self.client.fetch_user(user_id)
-                ctx.guild.ban(suspicious_user, reason=BAN_REASON)
+                await ctx.guild.ban(suspicious_user, reason=BAN_REASON)
                 confirmed_banned_user_ids.add(user_id)
         await status_message.edit(content=f'{ban_count} accounts banned')
         with db.bot_db:
@@ -279,7 +279,7 @@ class BotPurger(commands.Cog):
                                 update={db.KickedUser.kick_count: db.KickedUser.kick_count + 1}
                             ).execute()
                             if db.KickedUser.get_or_none(user_id=user_to_kick.id).kick_count >= MAX_KICKS_ALLOWED:
-                                user_to_kick.ban(reason=BAN_REASON)
+                                await user_to_kick.ban(reason=BAN_REASON)
                                 continue
                             await user_to_kick.kick(reason="Account is suspiciously young, "
                                                            "not verifying within 15 minutes")
