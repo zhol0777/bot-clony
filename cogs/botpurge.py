@@ -10,6 +10,7 @@ from datetime import datetime, date
 import logging
 import os
 import time
+import traceback
 
 from discord.ext import commands, tasks  # type: ignore
 import discord
@@ -73,7 +74,7 @@ class BotPurger(commands.Cog):
             except discord.errors.NotFound:
                 pass
             except Exception:  # pylint: disable=broad-except
-                log.exception("something went wrong here")
+                util.handle_error(ctx, traceback.format_exc())
         await status_message.edit(content='BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                           f'I am trash man\n{count} KICKED BOTS')
 
@@ -88,30 +89,31 @@ class BotPurger(commands.Cog):
         msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
         msg_count = 1
         arrival_counter = Counter()
-        async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
-            if msg_count % 50 == 0:
-                status_text = f'{msg_count}/{msg_limit} messages analysed...'
-                await status_message.edit(content=status_text)
-            if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
-                msg_count += 1
-                try:
-                    member = await ctx.guild.fetch_member(message.author.id)
-                    if member and discord.utils.get(member.roles, name='Verified'):
-                        continue
-                except discord.errors.NotFound:
-                    pass
-                arrival_counter[message.author.id] += 1
-                if arrival_counter[message.author.id] >= MAX_KICKS_ALLOWED \
-                        or 'EdwardHarrisS' in message.author.display_name:
-                    with db.bot_db:
-                        db.KickedUser.insert(
-                            user_id=message.author.id,
-                            kick_count=arrival_counter[message.author.id]
-                        ).on_conflict(
-                            conflict_target=[db.KickedUser.user_id],
-                            update={db.KickedUser.kick_count: max(db.KickedUser.kick_count,
-                                                                  arrival_counter[message.author.id])}
-                        ).execute()
+        try:
+            async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
+                if msg_count % 50 == 0:
+                    status_text = f'{msg_count}/{msg_limit} messages analysed...'
+                    await status_message.edit(content=status_text)
+                if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
+                    msg_count += 1
+                    try:
+                        member = await ctx.guild.fetch_member(message.author.id)
+                        if member and discord.utils.get(member.roles, name='Verified'):
+                            continue
+                    except discord.errors.NotFound:
+                        pass
+                    arrival_counter[message.author.id] += 1
+            with db.bot_db:
+                for user_id, kick_count in arrival_counter.items():
+                    db.KickedUser.insert(
+                        user_id=user_id,
+                        kick_count=kick_count
+                    ).on_conflict(
+                        conflict_target=[db.KickedUser.user_id],
+                        update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
+                    ).execute()
+        except Exception:  # pylint: disable=broad-except
+            util.handle_error(ctx, traceback.format_exc())
 
     @commands.command()
     @commands.has_any_role((MOD_ROLE_ID))
@@ -140,9 +142,38 @@ class BotPurger(commands.Cog):
                 except discord.errors.Forbidden:
                     await util.handle_error(ctx, 'Bot does not have ban privilege')
 
-                await ctx.guild.ban(banned_user, reason=BAN_REASON)
+                await ctx.guild.ban(banned_user, reason=BAN_REASON, delete_message_days=7)
                 kicked_user.delete_instance()
         await status_message.edit(content=f'{ban_count} users banned')
+
+    @commands.command()
+    @commands.has_any_role((MOD_ROLE_ID))
+    async def greatpurge2(self, ctx, *args):  # pylint: disable=unused-argument
+        '''re-attempt great purge'''
+        if not ctx.guild:
+            return
+        msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
+        arrival_counter = Counter()
+        async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
+            if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
+                try:
+                    member = await ctx.guild.fetch_member(message.author.id)
+                    if member and discord.utils.get(member.roles, name='Verified'):
+                        continue
+                except discord.errors.NotFound:
+                    pass
+                arrival_counter[message.author.id] += 1
+        for user_id, arrival_count in arrival_counter.items():
+            suspicious_user = await self.client.fetch_user(user_id)
+            try:
+                await ctx.guild.fetch_ban(suspicious_user)
+                continue
+            except discord.errors.NotFound:
+                pass
+            except discord.errors.Forbidden:
+                await util.handle_error(ctx, 'Bot does not have ban privilege')
+            if arrival_count >= MAX_KICKS_ALLOWED:
+                await ctx.guild.ban(suspicious_user, reason=BAN_REASON, delete_message_days=7)
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
