@@ -93,6 +93,11 @@ class KickedUser(BaseModel):
     kick_count = peewee.BigIntegerField()
 
 
+class BannedUser(BaseModel):
+    '''tracking user banned by botpurge functionality to prevent fetch_ban() lookup'''
+    user_id = peewee.BigIntegerField(unique=True)
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -100,7 +105,8 @@ def create_tables():
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
                               SocialCredit, Reminder,
-                              SuspiciousUser, KickedUser])
+                              SuspiciousUser, KickedUser,
+                              BannedUser])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'

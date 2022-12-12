@@ -124,7 +124,10 @@ class BotPurger(commands.Cog):
         status_message = await dm_channel.send(f"banning any account created after {str(BOT_BIRTHDAY)} "
                                                f"with more than {kick_limit} kicks")
         ban_count = 0
+        confirmed_banned_user_ids = set()
         with db.bot_db:
+            for banned_user in db.BannedUser.select():
+                confirmed_banned_user_ids.add(banned_user.user_id)
             kicked_users = db.KickedUser.select().where(db.KickedUser.kick_count >= kick_limit)
             total_ban_count = kicked_users.count()
             for kicked_user in kicked_users:  # pylint: disable=not-an-iterable
@@ -135,45 +138,86 @@ class BotPurger(commands.Cog):
                 banned_user = await self.client.fetch_user(kicked_user.user_id)
                 try:
                     await ctx.guild.fetch_ban(banned_user)
+                    confirmed_banned_user_ids.add(kicked_user.user_id)
                     kicked_user.delete_instance()
                     continue
                 except discord.errors.NotFound:
                     pass
                 except discord.errors.Forbidden:
                     await util.handle_error(ctx, 'Bot does not have ban privilege')
-
                 await ctx.guild.ban(banned_user, reason=BAN_REASON, delete_message_days=7)
+                confirmed_banned_user_ids.add(kicked_user.user_id)
                 kicked_user.delete_instance()
+            db.BannedUser.insert_many(list(confirmed_banned_user_ids),
+                                      fields=[db.BannedUser.user_id]).on_conflict_ignore().execute()
         await status_message.edit(content=f'{ban_count} users banned')
 
     @commands.command()
     @commands.has_any_role((MOD_ROLE_ID))
     async def greatpurge2(self, ctx, *args):  # pylint: disable=unused-argument
-        '''re-attempt great purge'''
+        '''re-attempt great purge, fewer awaits'''
         if not ctx.guild:
             return
         msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
         arrival_counter = Counter()
+        confirmed_banned_user_ids = set()
+        verified_member_ids = set()
+        unverified_member_ids = set()
+        msg_count = 0
+        with db.bot_db():
+            for banned_user in db.BannedUser.select():
+                confirmed_banned_user_ids.add(banned_user.user_id)
+        dm_channel = await ctx.message.author.create_dm()
+        status_message = await dm_channel.send(f"banning any account created after {str(BOT_BIRTHDAY)} "
+                                               f"with more than {MAX_KICKS_ALLOWED} re-joins")
         async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
+            msg_count += 1
+            if msg_count % 50 == 0:
+                await status_message.edit(content=f'{msg_count}/{msg_limit} messages processed...')
+            if message.author.id in confirmed_banned_user_ids or message.author.id in verified_member_ids:
+                continue
             if message.author.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
                 try:
-                    member = await ctx.guild.fetch_member(message.author.id)
-                    if member and discord.utils.get(member.roles, name='Verified'):
-                        continue
+                    await ctx.guild.fetch_ban(message.author)
+                    confirmed_banned_user_ids.add(message.author.id)
+                    # message.delete()
+                    continue  # ignore every user already banned
                 except discord.errors.NotFound:
                     pass
+                except discord.errors.Forbidden:
+                    await util.handle_error(ctx, 'Bot does not have ban privilege')
+                    return
+                try:
+                    if message.author.id not in unverified_member_ids:
+                        member = await ctx.guild.fetch_member(message.author.id)
+                        if member and discord.utils.get(member.roles, name='Verified'):
+                            verified_member_ids.add(message.author.id)
+                            continue
+                except discord.errors.NotFound:
+                    unverified_member_ids.add(message.author.id)
                 arrival_counter[message.author.id] += 1
+        status_message = await dm_channel.send(f"looking through {len(arrival_counter)} accounts for bans...")
+        ban_count = 0
         for user_id, arrival_count in arrival_counter.items():
-            suspicious_user = await self.client.fetch_user(user_id)
-            try:
-                await ctx.guild.fetch_ban(suspicious_user)
-                continue
-            except discord.errors.NotFound:
-                pass
-            except discord.errors.Forbidden:
-                await util.handle_error(ctx, 'Bot does not have ban privilege')
             if arrival_count >= MAX_KICKS_ALLOWED:
-                await ctx.guild.ban(suspicious_user, reason=BAN_REASON, delete_message_days=7)
+                ban_count += 1
+                suspicious_user = await self.client.fetch_user(user_id)
+                ctx.guild.ban(suspicious_user, reason=BAN_REASON, delete_message_days=7)
+                confirmed_banned_user_ids.add(user_id)
+        await status_message.edit(content=f'{ban_count} accounts banned')
+        with db.bot_db():
+            db.BannedUser.insert_many(
+                list(confirmed_banned_user_ids),
+                fields=[db.BannedUser.user_id]
+            ).on_conflict_ignore().execute()
+            for user_id, kick_count in arrival_counter.items():
+                db.KickedUser.insert(
+                    user_id=user_id,
+                    kick_count=kick_count
+                ).on_conflict(
+                    conflict_target=[db.KickedUser.user_id],
+                    update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
+                ).execute()
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
