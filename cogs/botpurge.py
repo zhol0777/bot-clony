@@ -280,9 +280,9 @@ class BotPurger(commands.Cog):
                             ).execute()
                             if db.KickedUser.get_or_none(user_id=user_to_kick.id).kick_count >= MAX_KICKS_ALLOWED:
                                 await user_to_kick.ban(reason=BAN_REASON)
-                                continue
-                            await user_to_kick.kick(reason="Account is suspiciously young, "
-                                                           "not verifying within 15 minutes")
+                            else:
+                                await user_to_kick.kick(reason="Account is suspiciously young, "
+                                                               "not verifying within 15 minutes")
                     except discord.errors.NotFound:
                         pass
                 except Exception:  # pylint: disable=broad-except
