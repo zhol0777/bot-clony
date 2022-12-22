@@ -72,7 +72,10 @@ class RemindMe(commands.Cog):
     async def startreminderloop(self, ctx):  # pylint: disable=unused-argument
         '''start uneject loop'''
         dm_channel = await ctx.message.author.create_dm()
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except discord.errors.Forbidden:
+            pass
         try:
             self.send_reminders.start()  # pylint: disable=no-member
             await dm_channel.send('reminder monitoring loop start')
@@ -102,6 +105,14 @@ class RemindMe(commands.Cog):
         embed.add_field(name="Time", value=f'<t:{reminder_time}:f>')
         embed.add_field(name="Message link", value=str(message_url))
         await channel.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.send_reminders.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
 
 
 async def setup(client):

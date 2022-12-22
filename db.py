@@ -81,13 +81,32 @@ class Reminder(BaseModel):
     message_url = peewee.BigIntegerField()
 
 
+class SuspiciousUser(BaseModel):
+    '''tracking bogus user'''
+    user_id = peewee.BigIntegerField()
+    join_epoch_time = peewee.BigIntegerField()
+
+
+class KickedUser(BaseModel):
+    '''tracking user that has been kicked three times for suspicious behavior'''
+    user_id = peewee.BigIntegerField()
+    kick_count = peewee.BigIntegerField()
+
+
+class BannedUser(BaseModel):
+    '''tracking user banned by botpurge functionality to prevent fetch_ban() lookup'''
+    user_id = peewee.BigIntegerField(unique=True)
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
-                              SocialCredit, Reminder])
+                              SocialCredit, Reminder,
+                              SuspiciousUser, KickedUser,
+                              BannedUser])
         WikiRootUrl.get_or_create(
             indicator='primary',
             domain='https://mechkeys.me/'
