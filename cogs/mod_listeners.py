@@ -14,7 +14,7 @@ import util
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
-MOD_CHAT_CHANNEL_NAME = os.getenv('MOD_CHAT')
+MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 # TODO: handle via role IDs
 MONITORED_ROLES = ['ejected', 'evicted', 'deported', 'Razer Hate', 'embed fail']
 
@@ -27,6 +27,11 @@ class ModListeners(commands.Cog):
     @commands.Cog.listener()
     async def on_member_join(self, member):
         '''mostly reapply roles to returning users'''
+        # finlacoin compromised accounts
+        if member.display_name.lower() == 'finlacoin':
+            channel = self.client.get_channel(MOD_CHAT_ID)
+            await channel.send("finlacoin account detected, please check #botland")
+
         with db.bot_db:
             former_role_assignments = db.RoleAssignment.select().where(
                 db.RoleAssignment.user_id == member.id
