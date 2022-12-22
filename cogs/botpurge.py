@@ -74,7 +74,7 @@ class BotPurger(commands.Cog):
             except discord.errors.NotFound:
                 pass
             except Exception:  # pylint: disable=broad-except
-                util.handle_error(ctx, traceback.format_exc())
+                await util.handle_error(ctx, traceback.format_exc())
         await status_message.edit(content='BORN TO DIE\nSERVER IS A FUCK\n鬼神 Kick Em All 2022\n'
                                           f'I am trash man\n{count} KICKED BOTS')
 
@@ -160,7 +160,7 @@ class BotPurger(commands.Cog):
 
     @commands.command()
     @commands.has_any_role((MOD_ROLE_ID))
-    async def greatpurge2(self, ctx, *args):  # pylint: disable=unused-argument
+    async def greatpurge2(self, ctx, *args):  # pylint: disable=unused-argument,too-many-locals,too-many-branches
         '''re-attempt great purge, fewer awaits'''
         if not ctx.guild:
             return
@@ -186,7 +186,6 @@ class BotPurger(commands.Cog):
                 try:
                     await ctx.guild.fetch_ban(message.author)
                     confirmed_banned_user_ids.add(message.author.id)
-                    # message.delete()
                     continue  # ignore every user already banned
                 except discord.errors.NotFound:
                     pass
@@ -238,6 +237,15 @@ class BotPurger(commands.Cog):
             await dm_channel.send('purge loop started')
         except RuntimeError:
             await dm_channel.send('purge loop already running')
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.guild = await util.fetch_primary_guild(self.client)
+            self.purge_loop_function.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
 
     @commands.Cog.listener()
     async def on_member_join(self, member):

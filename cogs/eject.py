@@ -125,6 +125,15 @@ class Eject(commands.Cog):
                 else:
                     await ctx.channel.send('temp eject time will not be extended')
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.guild = await util.fetch_primary_guild(self.client)
+            self.undo_temp_eject.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
+
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
     async def unejectloopstart(self, ctx):  # pylint: disable=unused-argument

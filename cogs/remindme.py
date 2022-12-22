@@ -106,6 +106,14 @@ class RemindMe(commands.Cog):
         embed.add_field(name="Message link", value=str(message_url))
         await channel.send(embed=embed)
 
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.send_reminders.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
+
 
 async def setup(client):
     '''setup'''
