@@ -3,12 +3,12 @@ Cog to allow helpers to apply slowmode in help channels
 """
 import os
 
+import time
 from discord.ext import commands
 import discord
 
 import util
 
-import time
 
 HELPER_ROLE = os.getenv("HELPER_ROLE")
 MOD_ROLE = os.getenv("MOD_ROLE")
@@ -29,7 +29,7 @@ class SlowMode(commands.Cog):
         # How often slowmode is changed
         self.update_frequency = 30
 
-        self.SLOWMODE_CONFIG = {
+        self.slowmode_config = {
             # messages per self.update_frequency : slowmode delay
             5: 0,
             10: 1,
@@ -52,21 +52,22 @@ class SlowMode(commands.Cog):
             await ctx.channel.send("Slow it down!")
 
     def get_delay(self, message_count):
-        message_limits = sorted(self.SLOWMODE_CONFIG, reverse=True)
+        """Delay based on amount of messages"""
+        message_limits = sorted(self.slowmode_config, reverse=True)
         for limit in message_limits:
             if message_count >= limit:
-                return self.SLOWMODE_CONFIG[limit]
+                return self.slowmode_config[limit]
         return 0
 
     async def update_slowmode(self):
         """Gets slowmode delay and updates channel"""
-        if self.disabled == True:
+        if self.disabled is True:
             return
         new_channel_delays = {}
-        for channel_id in self.message_cache.keys():
+        for channel_id in self.message_cache.items():
             delay = self.get_delay(self.message_cache[channel_id])
-            if channel_id in previous_delays.keys():
-                if previous_delays[channel_id] == delay:
+            if channel_id in self.previous_delays:
+                if self.previous_delays[channel_id] == delay:
                     new_channel_delays[channel_id] = delay
                     continue
             channel = self.client.get_channel(channel_id)
@@ -74,15 +75,15 @@ class SlowMode(commands.Cog):
             new_channel_delays[channel_id] = delay
 
         self.last_updated = time.time()
-        previous_delays = new_channel_delays
+        self.previous_delays = new_channel_delays
 
-    @commands.event
+    @commands.Cog.listener()
     async def on_message(self, message):
         """Listen for messages in help channels"""
 
         channel_id = message.channel.id
 
-        if self.disabled == True:
+        if self.disabled is True:
             return
 
         if channel_id not in SLOWMODE_CHANNELS:
@@ -91,7 +92,7 @@ class SlowMode(commands.Cog):
         if time.time() >= self.last_updated + self.update_frequency:
             await self.update_slowmode()
 
-        if message.channel.id not in self.message_cache.keys():
+        if message.channel.id not in self.message_cache:
             self.message_cache[channel_id] = 1
             return
 
