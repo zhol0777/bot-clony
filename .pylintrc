@@ -224,6 +224,8 @@ ignore-signatures=yes
 # Minimum lines number of a similarity.
 min-similarity-lines=4
 
+disable=duplicate-code
+
 
 [DESIGN]
 

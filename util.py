@@ -2,6 +2,7 @@
 Utility functions shared across cogs
 '''
 from typing import Any, Tuple
+import os
 
 from discord.ext import commands
 import validators
@@ -59,7 +60,7 @@ def get_id_from_tag(tag: str) -> int:
     return int(''.join([char for char in list(tag) if char.isdigit()]))
 
 
-async def get_reply_message(ctx, original) -> discord.Message:
+async def get_reply_message(ctx, original: discord.Message) -> discord.Message:
     '''Find the message that bot will reply to later'''
     if ctx.message.reference is not None:
         original = await ctx.fetch_message(ctx.message.reference.message_id)
@@ -100,3 +101,23 @@ async def handle_error(ctx: commands.Context, error_message: str):
     channel = await ctx.message.author.create_dm()
     await channel.send(error_message)
     await ctx.message.delete()
+
+
+async def get_guild(ctx: commands.Context, client: discord.Client):
+    '''get primary guild needed by a cog based on OS environment'''
+    try:
+        await ctx.message.delete()
+    except discord.errors.Forbidden:
+        pass
+    for guild in client.guilds:
+        if guild.id == int(os.getenv('SERVER_ID', '0')):
+            return guild
+    return None
+
+
+async def fetch_primary_guild(client: discord.Client):
+    '''get the guild the bot is supposed to be running on primarily'''
+    guild_id = int(os.getenv('SERVER_ID', '0'))
+    guild = await client.fetch_guild(guild_id, with_counts=False)
+    if guild:
+        return guild

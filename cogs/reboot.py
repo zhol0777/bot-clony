@@ -6,12 +6,13 @@ import subprocess
 import sys
 
 from discord.ext import commands
+from discord.errors import Forbidden
 
 MOD_ROLE = os.getenv('MOD_ROLE')
 
 BOOTSTRAP_REMINDER = '''
 Please start up the task loops by running
-`!unejectloopstart` and `!startreminderloop`
+`!unejectloopstart` and `!startreminderloop` and `!startpurgeloop`
 within the server after reboot/restart have completed
 '''
 
@@ -42,7 +43,10 @@ class Reboot(commands.Cog):
         '''
         dm_channel = await ctx.message.author.create_dm()
         await dm_channel.send(BOOTSTRAP_REMINDER)
-        await ctx.message.delete()
+        try:
+            await ctx.message.delete()
+        except Forbidden:
+            pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
         os.execv(sys.executable, ['python'] + sys.argv)
 
