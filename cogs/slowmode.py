@@ -51,6 +51,24 @@ class SlowMode(commands.Cog):
             await ctx.channel.edit(slowmode_delay=interval)
             await ctx.channel.send("Slow it down!")
 
+    @commands.command()
+    @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
+    async def autoslow(self, ctx: commands.Context, messages: str, delay: str = None):
+        """Change auto slowmode timing"""
+        if messages.lower() == "off":
+            self.disabled = True
+            await ctx.channel.send("Disabled auto slowmode")
+        if messages.lower() == "on":
+            self.disabled = False
+            await ctx.channel.send("Enabled auto slowmode")
+        messages_int = util.get_id_from_tag(messages)
+        delay_int = util.get_id_from_tag(delay)
+        if messages_int in self.slowmode_config:
+            self.slowmode_config[messages_int] = delay_int
+            await ctx.channel.send(self.slowmode_config)
+        else:
+            await ctx.channel.send("Key not in dict")
+
     def get_delay(self, message_count):
         """Delay based on amount of messages"""
         message_limits = sorted(self.slowmode_config, reverse=True)
@@ -64,8 +82,8 @@ class SlowMode(commands.Cog):
         if self.disabled is True:
             return
         new_channel_delays = {}
-        for channel_id in self.message_cache.items():
-            delay = self.get_delay(self.message_cache[channel_id])
+        for channel_id, messages in self.message_cache.items():
+            delay = self.get_delay(messages)
             if channel_id in self.previous_delays:
                 if self.previous_delays[channel_id] == delay:
                     new_channel_delays[channel_id] = delay
