@@ -2,13 +2,13 @@
 Cog to allow helpers to apply slowmode in help channels
 """
 import os
-
 import time
-from discord.ext import commands
+from typing import Optional
+
 import discord
+from discord.ext import commands
 
 import util
-
 
 HELPER_ROLE = os.getenv("HELPER_ROLE")
 MOD_ROLE = os.getenv("MOD_ROLE")
@@ -53,7 +53,9 @@ class SlowMode(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE, HELPER_ROLE)
-    async def autoslow(self, ctx: commands.Context, messages: str, delay: str = None):
+    async def autoslow(
+        self, ctx: commands.Context, messages: str, delay: Optional[str] = None
+    ):
         """Change auto slowmode timing"""
         if messages.lower() == "off":
             self.disabled = True
@@ -62,8 +64,8 @@ class SlowMode(commands.Cog):
             self.disabled = False
             await ctx.channel.send("Enabled auto slowmode")
         messages_int = util.get_id_from_tag(messages)
-        delay_int = util.get_id_from_tag(delay)
-        if messages_int in self.slowmode_config:
+        if messages_int in self.slowmode_config and delay is not None:
+            delay_int = util.get_id_from_tag(delay)
             self.slowmode_config[messages_int] = delay_int
             await ctx.channel.send(self.slowmode_config)
         else:
