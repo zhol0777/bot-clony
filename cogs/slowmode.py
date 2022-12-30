@@ -24,7 +24,7 @@ class SlowMode(commands.Cog):
         self.message_cache = {}
         self.previous_delays = {}
         self.last_updated = 0
-        self.disabled = False
+        self.auto_update_slowmode = True
 
         # How often slowmode is changed
         self.update_frequency = 30
@@ -58,10 +58,10 @@ class SlowMode(commands.Cog):
     ):
         """Change auto slowmode timing"""
         if messages.lower() == "off":
-            self.disabled = True
+            self.auto_update_slowmode = False
             await ctx.channel.send("Disabled auto slowmode")
         if messages.lower() == "on":
-            self.disabled = False
+            self.auto_update_slowmode = True
             await ctx.channel.send("Enabled auto slowmode")
         messages_int = util.get_id_from_tag(messages)
         if messages_int in self.slowmode_config and delay is not None:
@@ -81,7 +81,7 @@ class SlowMode(commands.Cog):
 
     async def update_slowmode(self):
         """Gets slowmode delay and updates channel"""
-        if self.disabled is True:
+        if self.auto_update_slowmode is False:
             return
         new_channel_delays = {}
         for channel_id, messages in self.message_cache.items():
@@ -103,7 +103,7 @@ class SlowMode(commands.Cog):
 
         channel_id = message.channel.id
 
-        if self.disabled is True:
+        if self.auto_update_slowmode is False:
             return
 
         if channel_id not in SLOWMODE_CHANNELS:
