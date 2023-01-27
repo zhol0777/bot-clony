@@ -28,10 +28,13 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
     for word in msg:
         if validators.url(word):
             new_word = word.split('?')[0]
+            if 'amazon' in new_word:
+                new_word = new_word.split('ref=')[0]
             if 'aliexpress' in new_word and \
-                    not new_word.startswith('https://www.aliexpress.com'):
+                    not new_word.startswith('https://www.aliexpress.com') and \
+                    'a.aliexpress.com' not in new_word:
                 new_word = aliexpress_sanitize(new_word)
-            if word != new_word:
+            if word != new_word and not word.endswith('?'):
                 needs_sanitizing = True
                 sanitized_msg_word_list.append(f'<{new_word}>')
             else:

@@ -10,12 +10,6 @@ from discord.errors import Forbidden
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
-BOOTSTRAP_REMINDER = '''
-Please start up the task loops by running
-`!unejectloopstart` and `!startreminderloop` and `!startpurgeloop`
-within the server after reboot/restart have completed
-'''
-
 
 class Reboot(commands.Cog):
     '''Cog to reboot this thing when it needs to'''
@@ -29,8 +23,6 @@ class Reboot(commands.Cog):
         Usage: !reboot
         Reboot bot
         '''
-        dm_channel = await ctx.message.author.create_dm()
-        await dm_channel.send(BOOTSTRAP_REMINDER)
         await ctx.message.delete()
         os.execv(sys.executable, ['python'] + sys.argv)
 
@@ -41,8 +33,6 @@ class Reboot(commands.Cog):
         Usage: !update
         git pull, then bot reboot
         '''
-        dm_channel = await ctx.message.author.create_dm()
-        await dm_channel.send(BOOTSTRAP_REMINDER)
         try:
             await ctx.message.delete()
         except Forbidden:
