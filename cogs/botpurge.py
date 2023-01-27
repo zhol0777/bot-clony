@@ -224,20 +224,6 @@ class BotPurger(commands.Cog):
                     update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
                 ).execute()
 
-    @commands.command()
-    @commands.has_any_role(MOD_ROLE_ID)
-    async def startpurgeloop(self, ctx):  # pylint: disable=unused-argument
-        '''start purgeloop loop'''
-        dm_channel = await ctx.message.author.create_dm()
-        self.guild = await util.get_guild(ctx, self.client)
-        if not self.guild:
-            await dm_channel.send('error in finding and setting guild...')
-        try:
-            self.purge_loop_function.start()  # pylint: disable=no-member
-            await dm_channel.send('purge loop started')
-        except RuntimeError:
-            await dm_channel.send('purge loop already running')
-
     @commands.Cog.listener()
     async def on_ready(self):
         '''mostly to start task loop on bringup'''

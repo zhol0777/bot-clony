@@ -103,18 +103,6 @@ async def handle_error(ctx: commands.Context, error_message: str):
     await ctx.message.delete()
 
 
-async def get_guild(ctx: commands.Context, client: discord.Client):
-    '''get primary guild needed by a cog based on OS environment'''
-    try:
-        await ctx.message.delete()
-    except discord.errors.Forbidden:
-        pass
-    for guild in client.guilds:
-        if guild.id == int(os.getenv('SERVER_ID', '0')):
-            return guild
-    return None
-
-
 async def fetch_primary_guild(client: discord.Client):
     '''get the guild the bot is supposed to be running on primarily'''
     guild_id = int(os.getenv('SERVER_ID', '0'))

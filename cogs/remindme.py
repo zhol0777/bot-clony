@@ -66,22 +66,6 @@ class RemindMe(commands.Cog):
                 await self.dm_reminder(ctx.message.author, reason, alert_time,
                                        ctx.message.jump_url)
 
-    # TODO: make loop start commands generic through util function
-    @commands.command()
-    @commands.has_any_role(MOD_ROLE)
-    async def startreminderloop(self, ctx):  # pylint: disable=unused-argument
-        '''start uneject loop'''
-        dm_channel = await ctx.message.author.create_dm()
-        try:
-            await ctx.message.delete()
-        except discord.errors.Forbidden:
-            pass
-        try:
-            self.send_reminders.start()  # pylint: disable=no-member
-            await dm_channel.send('reminder monitoring loop start')
-        except RuntimeError:
-            await dm_channel.send('reminder monitoring loop already started')
-
     @tasks.loop(seconds=60)
     async def send_reminders(self):
         '''loop through db to see when to eject someone'''
