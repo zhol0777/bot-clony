@@ -77,9 +77,12 @@ class ModListeners(commands.Cog):
             # may be possible to just reference wiki page
             # TODO: a lot of this is just copied-pasted from cogs/wiki.py, should
             # be made more modular
-            command = ctx.message.content.strip(self.client.command_prefix).split()[0]
+            try:
+                command = ctx.message.content.strip(self.client.command_prefix).split()[0]
+            except IndexError:
+                return  # message with single exclamation mark or whatever prefix you use
             # avoid running with bot-sony
-            if command in util.BOT_SONY_COMMAND_LIST:
+            if command in util.IGNORE_COMMAND_LIST:
                 return
             with db.bot_db:
                 wiki_page = db.WikiPage.get_or_none(shortname=command)

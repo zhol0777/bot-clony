@@ -10,7 +10,7 @@ import discord
 
 import db
 
-BOT_SONY_COMMAND_LIST = [
+IGNORE_COMMAND_LIST = [
     'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
     'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
     'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'

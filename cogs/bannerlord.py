@@ -91,7 +91,8 @@ class Bannerlord(commands.Cog):
             image_content = reduced_image(image_content)
 
         await status_message.edit(content='banner uploading...')
-        await ctx.guild.edit(banner=image_content, splash=image_content)  # type: ignore
+        await ctx.guild.edit(banner=image_content, splash=image_content,  # type: ignore
+                             discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()
         with db.bot_db:

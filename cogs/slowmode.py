@@ -23,7 +23,7 @@ class SlowMode(commands.Cog):
         self.message_cache = {}
         self.previous_delays = {}
         self.last_updated = 0
-        self.auto_update_slowmode = True
+        self.auto_update_slowmode = False
 
         # How often slowmode is changed
         self.update_frequency = 30
@@ -31,11 +31,11 @@ class SlowMode(commands.Cog):
         self.slowmode_config = {
             # messages per self.update_frequency : slowmode delay
             5: 0,
-            10: 1,
-            20: 3,
-            30: 5,
-            40: 10,
-            50: 15,
+            10: 20,
+            20: 35,
+            30: 50,
+            40: 70,
+            50: 95,
         }
 
     @commands.command()
