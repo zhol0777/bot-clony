@@ -10,7 +10,7 @@ import db
 import util
 
 SCOLD_MESSAGE = '''
-Stop leaving trackers in your URLs!
+Beware of leaving trackers in your URLs!
 <https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>
 '''
 
@@ -44,6 +44,7 @@ class Sanitize(commands.Cog):
         Sanitizes URLs in messages it is told to
         '''
         await self.send_sanitized_message(ctx.message)
+        await ctx.message.delete()
 
     @commands.command()
     async def autosanitize(self, ctx, value: bool) -> None:
