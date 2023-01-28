@@ -32,6 +32,7 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
                 new_word = new_word.split('ref=')[0]
             if 'aliexpress' in new_word and \
                     not new_word.startswith('https://www.aliexpress.com') and \
+                    not new_word.startswith('https://aliexpress.com') and \
                     'a.aliexpress.com' not in new_word:
                 new_word = aliexpress_sanitize(new_word)
             if word != new_word and not word.endswith('?'):
