@@ -17,6 +17,8 @@ IGNORE_COMMAND_LIST = [
 ]
 
 EXCLUDED_DOMAINS = ['youtube.com', 'google.com']
+ALIEXPRESS_EXCLUSIONS = ['https://www.aliexpress.com', 'https://aliexpress.com',
+                         'https://m.aliexpress.com', 'https://a.aliexpress.com']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -33,9 +35,7 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             if 'amazon' in new_word:
                 new_word = new_word.split('ref=')[0]
             if 'aliexpress' in new_word and \
-                    not new_word.startswith('https://www.aliexpress.com') and \
-                    not new_word.startswith('https://aliexpress.com') and \
-                    'a.aliexpress.com' not in new_word:
+                    not any(new_word.startswith(ali_exclusion) for ali_exclusion in ALIEXPRESS_EXCLUSIONS):
                 new_word = aliexpress_sanitize(new_word)
             # TODO: domain specific sanitizing to retain necessary params, like ex. google
             if word != new_word and not word.endswith('?') and \
