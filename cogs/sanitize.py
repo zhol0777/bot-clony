@@ -10,7 +10,7 @@ import db
 import util
 
 SCOLD_MESSAGE = '''
-Beware of leaving trackers in your URLs!
+Beware of leaving trackers in your URLs! (Please complain to zhol to report false positives)
 <https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>
 '''
 
