@@ -16,9 +16,10 @@ IGNORE_COMMAND_LIST = [
     'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'
 ]
 
-EXCLUDED_DOMAINS = ['youtube.com', 'google.com']
+EXCLUDED_DOMAINS = ['youtube.com', 'google.com', 'youtu.be']
 ALIEXPRESS_EXCLUSIONS = ['https://www.aliexpress.com', 'https://aliexpress.com',
                          'https://m.aliexpress.com', 'https://a.aliexpress.com']
+ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -43,7 +44,8 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             # TODO: domain specific sanitizing to retain necessary params, like ex. google
             if word != new_word and not word.endswith('?') and \
                     not any(excluded_domain in word for excluded_domain in EXCLUDED_DOMAINS) and \
-                    not (len(url_params) == 1 and 'variant' in url_params[0]):
+                    not (len(url_params) == 1 and
+                         any(allowed_param in url_params[0] for allowed_param in ALLOWED_PARAMS)):
                 needs_sanitizing = True
                 sanitized_msg_word_list.append(f'<{new_word}>')
             else:
