@@ -16,7 +16,8 @@ IGNORE_COMMAND_LIST = [
     'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'
 ]
 
-EXCLUDED_DOMAINS = ['youtube.com', 'google.com', 'youtu.be', 'mechanicalkeyboards.com']
+EXCLUDED_DOMAINS = ['youtube.com', 'google.com', 'youtu.be', 'mechanicalkeyboards.com',
+                    'drop.com']
 ALIEXPRESS_EXCLUSIONS = ['https://www.aliexpress.com', 'https://aliexpress.com',
                          'https://m.aliexpress.com', 'https://a.aliexpress.com']
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds']
