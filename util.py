@@ -32,6 +32,9 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
     for word in msg:
         if validators.url(word):
             new_word = word.split('?')[0]
+            url_params = []
+            if len(word.split('?')) > 1:
+                url_params = word.split('?')[1].split('&')
             if 'amazon' in new_word:
                 new_word = new_word.split('ref=')[0]
             if 'aliexpress' in new_word and \
@@ -39,7 +42,8 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
                 new_word = aliexpress_sanitize(new_word)
             # TODO: domain specific sanitizing to retain necessary params, like ex. google
             if word != new_word and not word.endswith('?') and \
-                    not any(excluded_domain in word for excluded_domain in EXCLUDED_DOMAINS):
+                    not any(excluded_domain in word for excluded_domain in EXCLUDED_DOMAINS) and \
+                    not (len(url_params) == 1 and 'variant' in url_params[0]):
                 needs_sanitizing = True
                 sanitized_msg_word_list.append(f'<{new_word}>')
             else:
