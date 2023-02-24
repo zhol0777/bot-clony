@@ -7,6 +7,7 @@ import os
 import time
 
 from discord.ext import commands, tasks  # type: ignore
+from discord.errors import NotFound
 
 import db
 import util
@@ -140,20 +141,27 @@ class Eject(commands.Cog):
     async def undo_temp_eject(self):
         '''loop through db to see when to eject someone'''
         current_time = time.time()
+        channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
         with db.bot_db:
             entries = db.UnejectTime.select()
             for temp_eject_entry in entries:
                 if current_time > temp_eject_entry.uneject_epoch_time:
-                    ejected_member = await self.guild.fetch_member(temp_eject_entry.user_id)
-                    await util.remove_role(ejected_member,
-                                           temp_eject_entry.user_id,
-                                           'ejected')
+                    try:
+                        ejected_member = await self.guild.fetch_member(temp_eject_entry.user_id)
+                        await util.remove_role(ejected_member,
+                                               temp_eject_entry.user_id,
+                                               'ejected')
+                        await channel.send("removing temp eject for "
+                                           f"<@{temp_eject_entry.user_id}>.\nif this is erroneous,"
+                                           " please re-apply eject role and ask zhol for debug.")
+                    except NotFound:
+                        if channel:
+                            await channel.send("Temp eject cannot be removed for non-user "
+                                               f"<@{temp_eject_entry.user_id}>.\n, will remain "
+                                               "permanent on rejoin.")
                     temp_eject_entry.delete_instance()
-                    channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
                     if not channel:
-                        return
-                    await channel.send(f"removing temp eject for <@{temp_eject_entry.user_id}>.\n"
-                                       "if this is erroneous, please re-apply eject role and ask zhol for debug.")
+                        continue
 
 
 async def setup(client):
