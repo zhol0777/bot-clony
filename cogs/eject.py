@@ -157,7 +157,7 @@ class Eject(commands.Cog):
                     except NotFound:
                         if channel:
                             await channel.send("Temp eject cannot be removed for non-user "
-                                               f"<@{temp_eject_entry.user_id}>.\n, will remain "
+                                               f"<@{temp_eject_entry.user_id}> and will remain "
                                                "permanent on rejoin.")
                     temp_eject_entry.delete_instance()
                     if not channel:
