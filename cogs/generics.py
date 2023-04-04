@@ -4,6 +4,7 @@ Generic commands that provide simple responses
 import os
 
 from discord.ext import commands
+from discord import TextChannel
 
 import util
 
@@ -45,6 +46,11 @@ class Generics(commands.Cog):
             return
         await ctx.message.delete()
         await ctx.message.channel.send(content)
+
+    async def channeldescription(self, ctx):
+        '''print the channel description'''
+        if isinstance(ctx.channel, TextChannel):
+            await ctx.message.channel.send(ctx.channel.topic)
 
 
 async def setup(client):

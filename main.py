@@ -21,7 +21,7 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX,
+bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # type: ignore
                    intents=discord.Intents.all())
 bot.remove_command('help')
 

@@ -22,6 +22,8 @@ Generics:
                 Usage: !remindme [time h:hour m:minute d:day w:week M:month y:year] [reason]
                    ex. !remindme 1850300 fumo sale
                        !remindme 30d develop better help messages
+  channeldescription
+                Posts channel description
 '''
 
 HELPER_COMMANDS = '''
