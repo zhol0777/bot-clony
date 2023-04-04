@@ -47,9 +47,11 @@ class Generics(commands.Cog):
         await ctx.message.delete()
         await ctx.message.channel.send(content)
 
+    @commands.command()
     async def channeldescription(self, ctx):
         '''print the channel description'''
-        await ctx.message.channel.send(ctx.channel.topic)
+        if isinstance(ctx.channel, TextChannel):
+            await ctx.message.channel.send(ctx.channel.topic)
 
 
 async def setup(client):
