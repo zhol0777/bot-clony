@@ -49,8 +49,7 @@ class Generics(commands.Cog):
 
     async def channeldescription(self, ctx):
         '''print the channel description'''
-        if isinstance(ctx.channel, TextChannel):
-            await ctx.message.channel.send(ctx.channel.topic)
+        await ctx.message.channel.send(ctx.channel.topic)
 
 
 async def setup(client):
