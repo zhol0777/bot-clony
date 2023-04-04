@@ -112,7 +112,8 @@ def create_tables():
                               SocialCredit, Reminder,
                               SuspiciousUser, KickedUser,
                               BannedUser, SanitizedChannel])
-        WikiRootUrl.get_or_create(
-            indicator='primary',
-            domain='https://mechkeys.me/'
-        )
+        if not WikiRootUrl.select():
+            WikiRootUrl.get_or_create(
+                indicator='primary',
+                domain='https://mechkeys.me/'
+            )

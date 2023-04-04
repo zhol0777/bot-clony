@@ -18,7 +18,7 @@ import util
 BANNERLORD_ROLE_ID = int(os.getenv('BANNERLORD_ROLE_ID', '0'))
 BANNERLORD_CHANNEL_ID = int(os.getenv('BANNERLORD_CHANNEL_ID', '0'))
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
-MAX_IMAGE_SIZE = (1024 * 1024 * 10)
+MAX_IMAGE_SIZE = 1024 * 1024 * 10
 
 BAD_MESSAGE_TEXT = '''
 kb-show-and-tell messages should contain attachments of pictures of keyboards.
