@@ -24,9 +24,10 @@ MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 DEFAULT_LIMIT = 1500
 LOOP_TIME = 60
 BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-09-01').toordinal())
-MAX_KICKS_ALLOWED = 3
+MAX_KICKS_ALLOWED = 5
 BAN_REASON = 'User is banned under suspicion of being a bot: ' \
              'Repeated server joins without passing verification'
+MAX_TIME_TO_VERIFY = 3600  # seconds
 
 
 class BotPurger(commands.Cog):
@@ -256,7 +257,7 @@ class BotPurger(commands.Cog):
         with db.bot_db:
             suspicious_users = db.SuspiciousUser.select()
             for s_u in suspicious_users:
-                if (current_time - s_u.join_epoch_time) < 1200:
+                if (current_time - s_u.join_epoch_time) < MAX_TIME_TO_VERIFY:
                     continue
                 try:
                     user_to_kick = await self.guild.fetch_member(s_u.user_id)
