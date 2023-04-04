@@ -83,7 +83,9 @@ class Wiki(commands.Cog):
                     goes_to_root_domain=goes_to_root_domain
                 ).on_conflict(
                     conflict_target=[db.WikiPage.shortname],
-                    update={db.WikiPage.page: page}
+                    update={db.WikiPage.page: page,
+                            db.WikiPage.goes_to_root_domain:
+                            goes_to_root_domain}
                 ).execute()
                 await ctx.channel.send(
                     f"!wiki {shortname} -> <{page}>")
