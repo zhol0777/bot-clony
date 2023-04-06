@@ -16,11 +16,7 @@ IGNORE_COMMAND_LIST = [
     'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'
 ]
 
-EXCLUDED_DOMAINS = ['youtube.com', 'google.com', 'youtu.be', 'mechanicalkeyboards.com',
-                    'drop.com']
-ALIEXPRESS_EXCLUSIONS = ['https://www.aliexpress.com', 'https://aliexpress.com',
-                         'https://m.aliexpress.com', 'https://a.aliexpress.com']
-ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds']
+ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -33,27 +29,33 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
 
     for word in msg:
         if validators.url(word):
-            new_word = word.split('?')[0]
-            url_params = []
-            if len(word.split('?')) > 1:
-                url_params = word.split('?')[1].split('&')
-            if 'amazon' in new_word:
-                new_word = new_word.split('ref=')[0]
-            if 'aliexpress' in new_word and \
-                    not any(new_word.startswith(ali_exclusion) for ali_exclusion in ALIEXPRESS_EXCLUSIONS):
-                new_word = aliexpress_sanitize(new_word)
-            # TODO: domain specific sanitizing to retain necessary params, like ex. google
-            if word != new_word and not word.endswith('?') and \
-                    not any(excluded_domain in word for excluded_domain in EXCLUDED_DOMAINS) and \
-                    not (len(url_params) == 1 and
-                         any(allowed_param in url_params[0] for allowed_param in ALLOWED_PARAMS)):
+            sanitized_word = sanitize_word(word)
+            if sanitized_word != word:
                 needs_sanitizing = True
-                sanitized_msg_word_list.append(f'<{new_word}>')
-            else:
-                sanitized_msg_word_list.append(f'<{word}>')
+            sanitized_msg_word_list.append(sanitized_word)
         else:
             sanitized_msg_word_list.append(word)
     return ' '.join(sanitized_msg_word_list), needs_sanitizing
+
+
+def sanitize_word(word: str) -> str:
+    '''remove unnecessary url parameters from a url'''
+    new_word = word.split('?')[0]
+    url_params = []
+    if len(word.split('?')) > 1:
+        url_params = word.split('?')[1].split('&')
+    if 'amazon.' in new_word:
+        new_word = new_word.split('ref=')[0]
+    for param in url_params:
+        for allowed_param in ALLOWED_PARAMS:
+            if param.startswith(f'{allowed_param}='):
+                if not new_word.endswith('?'):
+                    new_word += '?'
+                new_word = f'{new_word}{param}'
+    # TODO: domain specific sanitizing to retain necessary params, like ex. google
+    if word != new_word and (word.endswith('?') or (len(url_params) == 1)):
+        return word
+    return new_word
 
 
 def aliexpress_sanitize(url: str) -> str:
