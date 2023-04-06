@@ -5,7 +5,6 @@ from typing import Any, Tuple, Optional, Union
 import os
 
 from discord.ext import commands
-from url_cleaner import UrlCleaner
 import validators
 import discord
 
@@ -17,6 +16,12 @@ IGNORE_COMMAND_LIST = [
     'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'
 ]
 
+EXCLUDED_DOMAINS = ['youtube.com', 'google.com', 'youtu.be', 'mechanicalkeyboards.com',
+                    'drop.com']
+ALIEXPRESS_EXCLUSIONS = ['https://www.aliexpress.com', 'https://aliexpress.com',
+                         'https://m.aliexpress.com', 'https://a.aliexpress.com']
+ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds']
+
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
     '''
@@ -25,14 +30,23 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
     needs_sanitizing = False
     msg = ''.join(args).split()
     sanitized_msg_word_list = []
-    url_cleaner = UrlCleaner()
 
     for word in msg:
         if validators.url(word):
-            if 'amazon' in word:
-                new_word = word.split('ref=')[0]
-            new_word = url_cleaner.clean(word)
-            if word != new_word:
+            new_word = word.split('?')[0]
+            url_params = []
+            if len(word.split('?')) > 1:
+                url_params = word.split('?')[1].split('&')
+            if 'amazon' in new_word:
+                new_word = new_word.split('ref=')[0]
+            if 'aliexpress' in new_word and \
+                    not any(new_word.startswith(ali_exclusion) for ali_exclusion in ALIEXPRESS_EXCLUSIONS):
+                new_word = aliexpress_sanitize(new_word)
+            # TODO: domain specific sanitizing to retain necessary params, like ex. google
+            if word != new_word and not word.endswith('?') and \
+                    not any(excluded_domain in word for excluded_domain in EXCLUDED_DOMAINS) and \
+                    not (len(url_params) == 1 and
+                         any(allowed_param in url_params[0] for allowed_param in ALLOWED_PARAMS)):
                 needs_sanitizing = True
                 sanitized_msg_word_list.append(f'<{new_word}>')
             else:

@@ -8,5 +8,4 @@ python-dotenv
 requests
 types-Pillow
 types-requests
-url-cleaner
 validators
