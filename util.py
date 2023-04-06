@@ -51,11 +51,11 @@ def sanitize_word(word: str) -> str:
             if param.startswith(f'{allowed_param}='):
                 if not new_word.endswith('?'):
                     new_word += '?'
-                new_word = f'{new_word}{param}'
+                new_word += f'{param}&'
+    if new_word.endswith('&'):
+        new_word = new_word[:-1]  # trim remaining
     # TODO: domain specific sanitizing to retain necessary params, like ex. google
-    if word != new_word and (word.endswith('?') or (len(url_params) == 1)):
-        return word
-    return new_word
+    return word if word.endswith('?') else new_word
 
 
 def aliexpress_sanitize(url: str) -> str:
