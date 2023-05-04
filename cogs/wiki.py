@@ -13,6 +13,8 @@ import util
 
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
+ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
+HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 
 
 class Wiki(commands.Cog):
@@ -132,6 +134,82 @@ class Wiki(commands.Cog):
             )
 
 
+class Silly(commands.Cog):
+    '''command'''
+    def __init__(self, client):
+        self.client = client
+
+    @commands.group()
+    async def silly(self, ctx: commands.Context):
+        "like wiki, but dumber"
+        if ctx.invoked_subcommand and \
+                ctx.invoked_subcommand.name in ['define', 'listall', 'delete']:
+            return
+
+        shortname = ctx.message.content.split()[1]
+        with db.bot_db:
+            if silly_page := db.SillyPage.get_or_none(shortname=shortname):
+                await ctx.channel.send(silly_page.response_text)
+
+    @silly.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def define(self, ctx: commands.Context, *args):
+        '''
+        Usage: !silly define [shortname] [response text]
+        Define individual silly responses
+        '''
+        try:
+            shortname, response_text = args[0], ' '.join(args[1:])
+        except IndexError:
+            await ctx.channel.send("Shortname and/or response text not provided in definition command")
+            return
+        with db.bot_db:
+            db.SillyPage.insert(
+                shortname=shortname,
+                response_text=response_text
+            ).on_conflict(
+                conflict_target=[db.SillyPage.shortname],
+                update={db.SillyPage.response_text: response_text}
+            ).execute()
+            await ctx.channel.send(
+                f"!silly {shortname} -> {response_text}"
+            )
+
+    @silly.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def delete(self, ctx: commands.Context, shortname: str):
+        '''
+        Usage: !silly delete [shortname]
+        Delete silly responses by shortname
+        '''
+        with db.bot_db:
+            db_page = db.SillyPage.get(db.WikiPage.shortname == shortname)
+            if db_page:
+                db_page.delete_instance()
+                await ctx.channel.send(f"Response {shortname} deleted from BotDB")
+
+    @silly.command()  # type: ignore
+    @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
+    async def listall(self, ctx: commands.Context):
+        '''
+        Usage: !silly listall
+        List all available programmable joke responses
+        '''
+        if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID):
+            if ctx.message.channel.id in [HELPER_CHAT_ID, ZHOLBOT_CHANNEL_ID]:
+                with db.bot_db:
+                    pages = db.SillyPage.select()
+                    page_listing = '\n'.join(sorted(p.shortname for p in pages))
+                    await ctx.message.channel.send(
+                        "```"
+                        "Usage: !silly [page]\n\n"
+                        "Available pages:\n"
+                        f"{page_listing}\n"
+                        "```"
+                    )
+
+
 async def setup(client):
     '''add cog'''
     await client.add_cog(Wiki(client))
+    await client.add_cog(Silly(client))

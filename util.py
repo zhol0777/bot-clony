@@ -13,7 +13,7 @@ import db
 IGNORE_COMMAND_LIST = [
     'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
     'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
-    'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61'
+    'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61', ''
 ]
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic']
@@ -54,10 +54,10 @@ def sanitize_word(word: str) -> str:
                 new_word += f'{param}&'
     if new_word.endswith('&'):
         new_word = new_word[:-1]  # trim remaining
-    # TODO: domain specific sanitizing to retain necessary params, like ex. google
     return word if word.endswith('?') else new_word
 
 
+# TODO: deprecate
 def aliexpress_sanitize(url: str) -> str:
     '''
     Convert bogus aliexpress url (which already has URL params *stripped*)

@@ -43,6 +43,16 @@ class WikiPage(BaseModel):
     goes_to_root_domain = peewee.BooleanField()
 
 
+class SillyPage(BaseModel):
+    '''pages for silly text responses that aren't technically wiki pages
+    :param page: page/link posted
+    :param shortname: sub-command used to invoke posting the page,
+                      ex. !wiki stabs -> https://mechkeys.me/STABILIZERS.html
+    '''
+    response_text = peewee.CharField()  # haha heres a funny response
+    shortname = peewee.CharField(unique=True)  # stabs or switches
+
+
 class WikiRootUrl(BaseModel):
     '''table to define the domain for the community wiki
     :param indicator: indicates which row is the true root domain
@@ -111,7 +121,8 @@ def create_tables():
                               UnejectTime, BannerPost,
                               SocialCredit, Reminder,
                               SuspiciousUser, KickedUser,
-                              BannedUser, SanitizedChannel])
+                              BannedUser, SanitizedChannel,
+                              SillyPage])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',

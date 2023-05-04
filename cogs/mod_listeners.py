@@ -85,17 +85,17 @@ class ModListeners(commands.Cog):
             if command in util.IGNORE_COMMAND_LIST:
                 return
             with db.bot_db:
-                wiki_page = db.WikiPage.get_or_none(shortname=command)
-                if not wiki_page:
-                    return
-                if wiki_page.goes_to_root_domain:
-                    wiki_domain = db.WikiRootUrl.get_or_none(indicator='primary')
-                    if not wiki_domain:
-                        return
-                    url = urljoin(wiki_domain.domain, wiki_page.page)
-                    await ctx.channel.send(f"{url}")
-                else:
-                    await ctx.channel.send(wiki_page.page)
+                if wiki_page := db.WikiPage.get_or_none(shortname=command):
+                    if wiki_page.goes_to_root_domain:
+                        wiki_domain = db.WikiRootUrl.get_or_none(indicator='primary')
+                        if not wiki_domain:
+                            return
+                        url = urljoin(wiki_domain.domain, wiki_page.page)
+                        await ctx.channel.send(f"{url}")
+                    else:
+                        await ctx.channel.send(wiki_page.page)
+                if silly_page := db.SillyPage.get_or_none(shortname=command):
+                    await ctx.channel.send(silly_page.response_text)
             return
         log.exception('Exception in command %s:', ctx.command)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

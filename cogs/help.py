@@ -17,6 +17,7 @@ Generics:
   newvendors       Posts the vendors list
   wiki          Provide link from community wiki
                 Usage: !wiki [page name]
+                       ![page name]
                        !wiki listall
   remindme      Reminds a user at a later time of something
                 Usage: !remindme [time h:hour m:minute d:day w:week M:month y:year] [reason]
@@ -58,6 +59,15 @@ Helper Commands:
                         Delete a wiki page
                         !wiki delete [shortname]
   forcegoogle   Usage:  [reply] !forcegoogle
+  silly         Usage:  !silly define [shortname] [response text...]
+                        !silly delete [shortname]
+                        !silly [shortname]
+                        ![shortname]
+  decide        Usage:  !decide sonnet75 obliterated75 gmmkpro q1 m1
+  autosanitize  Usage:  Enable auto-sanitizer in a help channel:
+                        !autosanitize true
+                        Disable auto-sanitizer in a help channel:
+                        !autosanitize false
 '''
 
 MOD_COMMANDS = '''
