@@ -28,11 +28,16 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
     sanitized_msg_word_list = []
 
     for word in msg:
+        # remove carats that disable embed but can also stop url from
+        # being recognized as link
+        if word.startswith('<') and word.endswith('>'):
+            word = word[1:-1]
         if validators.url(word):
             sanitized_word = sanitize_word(word)
             if sanitized_word != word:
                 needs_sanitizing = True
-            sanitized_msg_word_list.append(sanitized_word)
+            # also remove embed
+            sanitized_msg_word_list.append(f"<{sanitized_word}>")
         else:
             sanitized_msg_word_list.append(word)
     return ' '.join(sanitized_msg_word_list), needs_sanitizing
