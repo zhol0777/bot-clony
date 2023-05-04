@@ -42,8 +42,10 @@ class Decide(commands.Cog):
         """
         Usage: !decide sonnet75 obliterated75 gmmkpro q1 m1
         """
+        if ':' in ' '.join(args):
+            args = ''.join(''.join(args).split(':')[1:]).split()
         if ',' in ' '.join(args):
-            args = ' '.join(args).split(',')
+            args = ''.join(args).split(',')
         await ctx.channel.send(DISCLAIMER)
         loading_message = await ctx.channel.send("Calculating decision...")
         await asyncio.sleep(randint(2, 5))
