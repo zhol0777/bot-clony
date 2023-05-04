@@ -31,8 +31,8 @@ EXCUSES: list[str] = [
 ]
 
 
-class Generics(commands.Cog):
-    '''Cog to provide very generic accounts'''
+class Decide(commands.Cog):
+    '''Cog to make generic decisions as a joke'''
     def __init__(self, client):
         self.client = client
 
@@ -49,3 +49,8 @@ class Generics(commands.Cog):
             await loading_message.edit(content=EXCUSES[randrange(0, len(EXCUSES))])
         await loading_message.edit(content="**BZZZZT DECISION HAS BEEN MADE**\n"
                                    f"{rand_choice(args)}")
+
+
+async def setup(client):
+    '''setup'''
+    await client.add_cog(Decide(client))
