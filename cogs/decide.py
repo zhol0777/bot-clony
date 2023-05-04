@@ -44,9 +44,10 @@ class Decide(commands.Cog):
         """
         await ctx.channel.send(DISCLAIMER)
         loading_message = await ctx.channel.send("Calculating decision...")
+        await asyncio.sleep(randint(2, 5))
         for _ in range(0, randint(0, 6)):
-            await asyncio.sleep(randint(2, 5))
             await loading_message.edit(content=EXCUSES[randrange(0, len(EXCUSES))])
+            await asyncio.sleep(randint(2, 5))
         await loading_message.edit(content="**BZZZZT DECISION HAS BEEN MADE**\n"
                                    f"{rand_choice(args)}")
 

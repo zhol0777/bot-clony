@@ -183,7 +183,7 @@ class Silly(commands.Cog):
         Delete silly responses by shortname
         '''
         with db.bot_db:
-            db_page = db.SillyPage.get(db.WikiPage.shortname == shortname)
+            db_page = db.SillyPage.get(db.SillyPage.shortname == shortname)
             if db_page:
                 db_page.delete_instance()
                 await ctx.channel.send(f"Response {shortname} deleted from BotDB")
