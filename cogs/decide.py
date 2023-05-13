@@ -42,10 +42,13 @@ class Decide(commands.Cog):
         """
         Usage: !decide sonnet75 obliterated75 gmmkpro q1 m1
         """
+        choice_args = None
         if ':' in ' '.join(args):
-            args = ''.join(''.join(args).split(':')[1:]).split()
+            choice_args = ''.join(''.join(args).split(':')[1:]).split()
         if ',' in ' '.join(args):
-            args = ' '.join(args).split(',')
+            choice_args = ' '.join(args).split(',')
+        if not choice_args:
+            return
         await ctx.channel.send(DISCLAIMER)
         loading_message = await ctx.channel.send("Calculating decision...")
         await asyncio.sleep(randint(2, 5))
@@ -53,7 +56,7 @@ class Decide(commands.Cog):
             await loading_message.edit(content=EXCUSES[randrange(0, len(EXCUSES))])
             await asyncio.sleep(randint(2, 5))
         await loading_message.edit(content="**BZZZZT DECISION HAS BEEN MADE**\n"
-                                   f"{rand_choice(args)}")
+                                   f"{rand_choice(choice_args)}")
 
 
 async def setup(client):

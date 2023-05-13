@@ -34,7 +34,6 @@ class Generics(commands.Cog):
     @commands.command(aliases=['say'])
     async def parrot(self, ctx):
         '''parrot a message back'''
-        reply_message = await util.get_reply_message(ctx.message)
         if len(ctx.message.content.split()) <= 1:
             return
         content = ' '.join(ctx.message.content.split()[1:])
@@ -52,6 +51,14 @@ class Generics(commands.Cog):
         '''print the channel description'''
         if isinstance(ctx.channel, TextChannel):
             await ctx.message.channel.send(ctx.channel.topic)
+
+    @commands.command()
+    async def mechmarket(self, ctx: commands.Context, *args):
+        '''response for people who will not do price checks themselves'''
+        search_string = "%20".join(args)
+        mechmarket_url = "<https://old.reddit.com/r/mechmarket/search/?q=flair%3Aselling%20" + \
+                         f"{search_string}&sort=new>"
+        await ctx.message.channel.send(mechmarket_url)
 
 
 async def setup(client):
