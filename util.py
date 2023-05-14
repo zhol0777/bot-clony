@@ -17,7 +17,7 @@ IGNORE_COMMAND_LIST = [
 ]
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
-                  'quality', 'size', 'width', 'height', 'feature']
+                  'quality', 'size', 'width', 'height', 'feature', 'p', 'l']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
