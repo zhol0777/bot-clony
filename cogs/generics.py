@@ -57,7 +57,7 @@ class Generics(commands.Cog):
         '''response for people who will not do price checks themselves'''
         search_string = "%20".join(args)
         mechmarket_url = "<https://old.reddit.com/r/mechmarket/search/?q=flair%3Aselling%20" + \
-                         f"{search_string}&sort=new>"
+                         f"{search_string}&sort=new&restrict_sr=on>"
         await ctx.message.channel.send(mechmarket_url)
 
 
