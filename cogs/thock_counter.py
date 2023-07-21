@@ -57,12 +57,16 @@ class ThockCount(commands.Cog):
         '''increment thock-counter'''
         if message.author.bot:
             return
-        if THOCK not in message.content or message.content.startswith(COMMAND_NAME):
+        if THOCK not in message.content.lower() or message.content.lower().startswith(COMMAND_NAME):
             return
         if self.is_tracking(message.channel.id):
+            counter = 0
+            for word in message.content.lower().split():
+                if THOCK in word:
+                    counter += 1
             with db.bot_db:
                 db.ThockTrackingChannel.update(
-                        counter=db.ThockTrackingChannel.counter + 1).where(
+                        counter=db.ThockTrackingChannel.counter + counter).where(
                             db.ThockTrackingChannel.channel_id == message.channel.id
                         ).execute()
             try:
