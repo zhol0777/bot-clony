@@ -62,7 +62,7 @@ class ThockCount(commands.Cog):
         if self.is_tracking(message.channel.id):
             counter = 0
             for word in message.content.lower().split():
-                if THOCK in word:
+                if word.startswith(THOCK):
                     counter += 1
             with db.bot_db:
                 db.ThockTrackingChannel.update(
