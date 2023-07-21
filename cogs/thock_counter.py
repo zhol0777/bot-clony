@@ -64,16 +64,17 @@ class ThockCount(commands.Cog):
             for word in message.content.lower().split():
                 if word.startswith(THOCK):
                     counter += 1
-            with db.bot_db:
-                db.ThockTrackingChannel.update(
-                        counter=db.ThockTrackingChannel.counter + counter).where(
-                            db.ThockTrackingChannel.channel_id == message.channel.id
-                        ).execute()
-            try:
-                await message.add_reaction(THOCK_EMOTE)
-            except discord.errors.HTTPException:
-                # above is an emoji specific to mechkeys
-                pass
+            if counter > 0:
+                with db.bot_db:
+                    db.ThockTrackingChannel.update(
+                            counter=db.ThockTrackingChannel.counter + counter).where(
+                                db.ThockTrackingChannel.channel_id == message.channel.id
+                            ).execute()
+                try:
+                    await message.add_reaction(THOCK_EMOTE)
+                except discord.errors.HTTPException:
+                    # above is an emoji specific to mechkeys
+                    pass
 
     @lru_cache  # set max_size if server has more than 128 channels
     def is_tracking(self, message_channel_id: int) -> bool:
