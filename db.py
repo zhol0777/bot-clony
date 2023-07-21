@@ -47,7 +47,7 @@ class SillyPage(BaseModel):
     '''pages for silly text responses that aren't technically wiki pages
     :param page: page/link posted
     :param shortname: sub-command used to invoke posting the page,
-                      ex. !wiki stabs -> https://mechkeys.me/STABILIZERS.html
+                      ex. !silly foo -> "bar"
     '''
     response_text = peewee.CharField()  # haha heres a funny response
     shortname = peewee.CharField(unique=True)  # stabs or switches
@@ -113,6 +113,12 @@ class SanitizedChannel(BaseModel):
     channel_id = peewee.BigIntegerField()
 
 
+class ThockTrackingChannel(BaseModel):
+    '''only channel ID is tracked if thock tracker should be run there'''
+    channel_id = peewee.BigIntegerField()
+    counter = peewee.BigIntegerField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -122,7 +128,7 @@ def create_tables():
                               SocialCredit, Reminder,
                               SuspiciousUser, KickedUser,
                               BannedUser, SanitizedChannel,
-                              SillyPage])
+                              SillyPage, ThockTrackingChannel])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',

@@ -8,9 +8,9 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
+from consts import HELP_CHANNEL_IDS
 import util
 
-SLOWMODE_CHANNELS = [190327462087884811, 766335071590023247]
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
@@ -45,7 +45,7 @@ class SlowMode(commands.Cog):
         interval = util.get_id_from_tag(interval_str)
         if (
             isinstance(ctx.channel, discord.TextChannel)
-            and ctx.channel.id in SLOWMODE_CHANNELS
+            and ctx.channel.id in HELP_CHANNEL_IDS
         ):
             await ctx.channel.edit(slowmode_delay=interval)
             await ctx.channel.send("Slow it down!")
@@ -105,7 +105,7 @@ class SlowMode(commands.Cog):
         if self.auto_update_slowmode is False:
             return
 
-        if channel_id not in SLOWMODE_CHANNELS:
+        if channel_id not in HELP_CHANNEL_IDS:
             return
 
         if time.time() >= self.last_updated + self.update_frequency:
