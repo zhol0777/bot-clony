@@ -8,15 +8,15 @@ import os
 
 from discord.ext import commands
 from PIL import Image
-import discord
+# import discord
 import requests
-import validators
+# import validators
 
-import db
+# import db
 import util
 
 BANNERLORD_ROLE_ID = int(os.getenv('BANNERLORD_ROLE_ID', '0'))
-BANNERLORD_CHANNEL_ID = int(os.getenv('BANNERLORD_CHANNEL_ID', '0'))
+# BANNERLORD_CHANNEL_ID = int(os.getenv('BANNERLORD_CHANNEL_ID', '0'))
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
 MAX_IMAGE_SIZE = 1024 * 1024 * 10
 
@@ -43,9 +43,9 @@ class Bannerlord(commands.Cog):
         '''
         dm_channel = await ctx.message.author.create_dm()
         status_message = await dm_channel.send('Starting banner upload process!')
-        if ctx.channel.id != BANNERLORD_CHANNEL_ID:
-            await util.handle_error(ctx, '!banner can only be used in banner channel')
-            return
+        # if ctx.channel.id != BANNERLORD_CHANNEL_ID:
+        #     await util.handle_error(ctx, '!banner can only be used in banner channel')
+        #     return
         attachment_index = 0 if len(args) < 1 else (int(args[0]) - 1)
         if ctx.message.reference is None or ctx.message.reference.message_id is None:
             await util.handle_error(ctx, '!banner must be used as a reply')
@@ -95,25 +95,25 @@ class Bannerlord(commands.Cog):
                              discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()
-        with db.bot_db:
-            await self.clear_old_banner_pins(ctx)
-            db.BannerPost.create(message_id=ctx.message.reference.message_id)
-        await original_msg.pin()
+        # with db.bot_db:
+        #     await self.clear_old_banner_pins(ctx)
+        #     db.BannerPost.create(message_id=ctx.message.reference.message_id)
+        # await original_msg.pin()
 
-    async def clear_old_banner_pins(self, ctx: commands.Context):
-        '''
-        latest bannered board gets pinned, and pin is tracked in BannerPost table
-        on new banner, go through old pinned post(s) to un-pin
-        '''
-        pins = db.BannerPost.select()
-        for pin in pins:
-            message_id = pin.message_id
-            pin.delete_instance()
-            try:
-                pin_msg = await ctx.fetch_message(message_id)
-                await pin_msg.unpin()
-            except discord.errors.NotFound:
-                pass
+    # async def clear_old_banner_pins(self, ctx: commands.Context):
+    #     '''
+    #     latest bannered board gets pinned, and pin is tracked in BannerPost table
+    #     on new banner, go through old pinned post(s) to un-pin
+    #     '''
+    #     pins = db.BannerPost.select()
+    #     for pin in pins:
+    #         message_id = pin.message_id
+    #         pin.delete_instance()
+    #         try:
+    #             pin_msg = await ctx.fetch_message(message_id)
+    #             await pin_msg.unpin()
+    #         except discord.errors.NotFound:
+    #             pass
 
     # uncomment if you need a dedicated banner candidate channel
     # @commands.Cog.listener()

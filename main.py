@@ -1,6 +1,6 @@
 '''
 main.py
-Run this to run bot-clony
+Run this to run bannerbot
 '''
 import asyncio
 import logging

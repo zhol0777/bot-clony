@@ -10,5 +10,5 @@ RUN git clone https://github.com/zhol0777/bot-clony.git .
 
 RUN git checkout bot-lite
 
-RUN pip3 install -U -r requirements.txt
+RUN pip3 install -U -r requirements-unfrozen.txt
 CMD ["python3", "./main.py"]
