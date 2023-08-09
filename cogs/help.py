@@ -25,6 +25,9 @@ Generics:
                        !remindme 30d develop better help messages
   channeldescription
                 Posts channel description
+  mechmarket    Searches for query on mechmarket
+                    ex. !mechmarket gmk laser
+  thock         provide a count of total usage of 'thock' as well as local channel usage
 '''
 
 HELPER_COMMANDS = '''
@@ -59,6 +62,7 @@ Helper Commands:
                         Delete a wiki page
                         !wiki delete [shortname]
   forcegoogle   Usage:  [reply] !forcegoogle
+                                !lmgtfy
   silly         Usage:  !silly define [shortname] [response text...]
                         !silly delete [shortname]
                         !silly [shortname]
@@ -68,6 +72,7 @@ Helper Commands:
                         !autosanitize true
                         Disable auto-sanitizer in a help channel:
                         !autosanitize false
+  slowmode      Usage:  Set slowmode in help/buying-advice to number of seconds
 '''
 
 MOD_COMMANDS = '''
@@ -81,6 +86,9 @@ Mod Commands:
                 Restarts temp eject monitoring task loop
   startreminderloop
                 Restarts/starts reminder task loop
+  countthock    Enable thock-counting in channel:
+                !countthock true
+                Use false to disable counting
 '''
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))

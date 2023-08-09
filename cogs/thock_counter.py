@@ -12,6 +12,7 @@ import db
 THOCK = 'thoc'
 THOCK_EMOTE = os.getenv('THOCK_EMOTE', '🧱')
 COMMAND_NAME = f"{os.getenv('COMMAND_PREFIX', '!')}thock"
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class ThockCount(commands.Cog):
@@ -32,6 +33,7 @@ class ThockCount(commands.Cog):
                 await ctx.channel.send(f"{ctx.channel.name} `thock` usage reads: {local_count}")
 
     @commands.command()
+    @commands.has_role(MOD_ROLE_ID)
     async def countthock(self, ctx, value: bool) -> None:
         '''
         Usage: !countthock True
