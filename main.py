@@ -20,7 +20,7 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX,
+bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # type: ignore
                    intents=discord.Intents.all())
 bot.remove_command('help')
 
@@ -32,4 +32,4 @@ async def load_extensions():
             await bot.load_extension(f"cogs.{filename[:-3]}")
 
 asyncio.run(load_extensions())
-bot.run(DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN)  # type: ignore
