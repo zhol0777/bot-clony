@@ -38,7 +38,8 @@ class ModListeners(commands.Cog):
             )
             # pylint: disable=not-an-iterable
             for r_a in former_role_assignments:
-                await util.apply_role(member, member.id, r_a.role_name)
+                await util.apply_role(member, member.id, r_a.role_name,
+                                      enter_in_db=False)
 
     @commands.Cog.listener()
     async def on_member_update(self, before, after):

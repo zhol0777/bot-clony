@@ -100,10 +100,15 @@ async def apply_role(member: discord.Member, user_id: int,
         await member.add_roles(role, reason=reason)
         if enter_in_db:
             with db.bot_db:
-                db.RoleAssignment.create(
-                    user_id=user_id,
-                    role_name=role_name
+                query = db.RoleAssignment.select().where(
+                    (db.RoleAssignment.user_id == user_id) &
+                    (db.RoleAssignment.role_name == role_name)
                 )
+                if not query.exists():
+                    db.RoleAssignment.create(
+                        user_id=user_id,
+                        role_name=role_name
+                    )
 
 
 # TODO: handle via role IDs
