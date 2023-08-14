@@ -75,7 +75,10 @@ class Wiki(commands.Cog):
         with db.bot_db:
             if sub_sub_command == 'page':
                 shortname, page = args[1], args[2]
-                if validators.url(page):
+                raw_url = page
+                if page.startswith('<') and page.endswith('>'):
+                    raw_url = page[1:-1]
+                if validators.url(raw_url):
                     goes_to_root_domain = False
                 else:
                     goes_to_root_domain = True
