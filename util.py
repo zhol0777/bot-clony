@@ -17,7 +17,8 @@ IGNORE_COMMAND_LIST = [
 ]
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
-                  'quality', 'size', 'width', 'height', 'feature', 'p', 'l']
+                  'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
+                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'gatewayAdapt']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -39,9 +40,9 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
                 needs_sanitizing = True
             # also remove embed
             sanitized_msg_word_list.append(f"<{sanitized_word}>")
-        else:
-            sanitized_msg_word_list.append(word)
-    return ' '.join(sanitized_msg_word_list), needs_sanitizing
+        # else:
+        #     sanitized_msg_word_list.append(word)
+    return '\n'.join(sanitized_msg_word_list), needs_sanitizing
 
 
 def sanitize_word(word: str) -> str:
@@ -95,8 +96,7 @@ async def apply_role(member: discord.Member, user_id: int,
                      role_name: str, reason: Optional[str] = None,
                      enter_in_db: bool = True) -> None:
     '''Apply a role to a member, and mark it in db'''
-    role = discord.utils.get(member.guild.roles, name=role_name)
-    if role:
+    if role := discord.utils.get(member.guild.roles, name=role_name):
         await member.add_roles(role, reason=reason)
         if enter_in_db:
             with db.bot_db:

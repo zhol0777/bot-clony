@@ -20,9 +20,16 @@ BANNERLORD_CHANNEL_ID = int(os.getenv('BANNERLORD_CHANNEL_ID', '0'))
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
 MAX_IMAGE_SIZE = 1024 * 1024 * 10
 
-BAD_MESSAGE_TEXT = '''
-kb-show-and-tell messages should contain attachments of pictures of keyboards.
+BAD_MESSAGE_TEXT = f'''
+<#{BANNERLORD_CHANNEL_ID}> messages should contain attachments of pictures of keyboards.
 Please create a thread to add comments to someone's build.
+If you believe this message was sent in error, please contact <@688959322708901907>
+to debug it.'''
+
+SOUND_TEST_TEXT = f'''
+<#{BANNERLORD_CHANNEL_ID}> messages should contain attachments of pictures of keyboards.
+Posts that strictly contain sound tests (such as videos or sound clips) should be posted
+in <#885005588399030303>.
 If you believe this message was sent in error, please contact <@688959322708901907>
 to debug it.'''
 
@@ -116,8 +123,12 @@ class Bannerlord(commands.Cog):
                 pass
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         '''delete any bunk message in bannerlord channel'''
+        has_image = True
+        if util.user_has_role_from_id(message.author, BANNERLORD_ROLE_ID):
+            # bannerlord is announcing banner of the day
+            return
         if isinstance(message.channel, (discord.DMChannel, discord.Thread)):
             # avoid error messages caused by DM responses or etc.
             return
@@ -128,16 +139,22 @@ class Bannerlord(commands.Cog):
             return
         if message.attachments:
             # ignore messages with attachments
-            return
+            has_image = False
+            for attachment in message.attachments:
+                if str(attachment.content_type).startswith('image'):
+                    return
         for word in message.content.split():
+            # take on faith that there's an embed in here
+            # TODO: actually check for embed
             if validators.url(word):
                 return
-        if util.user_has_role_from_id(message.author, BANNERLORD_ROLE_ID):
-            # bannerlord is announcing banner of the day
-            return
         try:
             dm_channel = await message.author.create_dm()
-            await dm_channel.send(BAD_MESSAGE_TEXT)
+            nastygram = SOUND_TEST_TEXT if has_image else BAD_MESSAGE_TEXT
+            if message.attachments:
+                log.info("List of content types in image: %s",
+                         [a.content_type for a in message.attachments])
+            await dm_channel.send(nastygram)
         except AttributeError:
             pass
         except discord.errors.Forbidden:
@@ -163,7 +180,7 @@ def reduced_image(image_content: bytes) -> bytes:
     if image_size_needs_reduction(image_content):
         image_obj = Image.open(BytesIO(image_content))
         width, height = image_obj.size
-        image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)
+        image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)  # pylint: disable=no-member
         buf = BytesIO()
         try:
             image_obj.save(buf, format='JPEG')
