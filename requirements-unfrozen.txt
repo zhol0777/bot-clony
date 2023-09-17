@@ -1,11 +1,15 @@
+bs4
 discord.py
+feedparser
 flake8
 mypy
 peewee
 Pillow
 pylint
 python-dotenv
+retrying
 requests
-types-Pillow
+types-beautifulsoup4
 types-requests
+types-Pillow
 validators

@@ -119,6 +119,17 @@ class ThockTrackingChannel(BaseModel):
     counter = peewee.BigIntegerField()
 
 
+class MechmarketPost(BaseModel):
+    '''every reddit post gets a unique ID?'''
+    post_id = peewee.CharField()
+
+
+class MechmarketQuery(BaseModel):
+    '''basic search to run through page content to look for a match'''
+    user_id = peewee.BigIntegerField()
+    search_string = peewee.CharField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -128,7 +139,8 @@ def create_tables():
                               SocialCredit, Reminder,
                               SuspiciousUser, KickedUser,
                               BannedUser, SanitizedChannel,
-                              SillyPage, ThockTrackingChannel])
+                              SillyPage, ThockTrackingChannel,
+                              MechmarketPost, MechmarketQuery])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',

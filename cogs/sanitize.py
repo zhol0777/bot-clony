@@ -18,6 +18,7 @@ MESSAGE_PREFIX = '''
 List of sanitized URLs:
 '''
 
+
 class Sanitize(commands.Cog):
     '''Cog to sanitize messages'''
     def __init__(self, client):

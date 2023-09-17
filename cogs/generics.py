@@ -52,16 +52,6 @@ class Generics(commands.Cog):
         if isinstance(ctx.channel, TextChannel):
             await ctx.message.channel.send(ctx.channel.topic)
 
-    @commands.command()
-    async def mechmarket(self, ctx: commands.Context, *args):
-        '''response for people who will not do price checks themselves'''
-        mechmarket_url = "https://old.reddit.com/r/mechmarket"
-        if len(args) > 0:
-            search_string = "%20".join(args)
-            mechmarket_url = "<https://old.reddit.com/r/mechmarket/search/?q=flair%3Aselling%20" + \
-                             f"{search_string}&sort=new&restrict_sr=on>"
-        await ctx.message.channel.send(mechmarket_url)
-
 
 async def setup(client):
     '''setup'''
