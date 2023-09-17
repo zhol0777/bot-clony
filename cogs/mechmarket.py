@@ -34,8 +34,8 @@ mechmarket:
   mechmarket list   Lists all running queries a user has made by ID
                     Usage: !mechmarket list
   mechmarket delete
-                    Delete a user's own running mechmarket query based on ID
-                    Usage: !mechmarket delete 100
+                    Delete a user's own running mechmarket queries based on IDs
+                    Usage: !mechmarket delete 1 2 3
 '''
 
 
@@ -71,7 +71,7 @@ class MechmarketScraper(commands.Cog):
         return req
 
     @tasks.loop(seconds=LOOP_TIME)
-    # pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals,too-many-branches
     async def scrape(self):
         '''run periodic scrape'''
         mechmarket_req = self.make_request(MECHMARKET_RSS_FEED)
@@ -104,16 +104,22 @@ class MechmarketScraper(commands.Cog):
                 continue
             with db.bot_db:
                 for market_query in db.MechmarketQuery.select():
-                    matches = market_query.search_string.lower() in content.lower() or \
-                        re.match(market_query.search_string, content)
+                    matches = False
+                    # with basic search, content to match every word in query
+                    for word_that_needs_to_be_found in market_query.search_string.lower().split():
+                        matches = word_that_needs_to_be_found in content.lower()
+                    # check for exact search if necessary
+                    if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
+                        matches = market_query.search_string[1:-1].lower() in content.lower()
+                    matches = matches or re.match(market_query.search_string, content)
                     if not matches:
                         continue
                     reminded_user = await self.client.fetch_user(market_query.user_id)
                     channel = await reminded_user.create_dm()
-                    text = f"Match found for following query: {market_query.search_string}\n{post.title}"\
+                    text = f"Match found for following query: {market_query.search_string}\n{post.title}" + \
                            f"\n{post_link} - {timestamp}"
                     await channel.send(text)
-                db.MechmarketPost.insert(post_id=post_id).execute()
+                db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):
@@ -126,15 +132,15 @@ class MechmarketScraper(commands.Cog):
         if len(args) > 0:
             search_string = "%20".join(args)
             response_text = f"<{MECHMARKET_BASE_URL}/search/?q=flair%3Aselling%20" + \
-                             f"{search_string}&sort=new&restrict_sr=on>"
+                            f"{search_string}&sort=new&restrict_sr=on>"
         await ctx.message.channel.send(response_text)
 
     @mechmarket.command()  # type: ignore
-    async def add(self, ctx: commands.Context, *args):
+    async def add(self, ctx: commands.Context):
         '''add a mechmarketquery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
-        query = ' '.join(args)
+        query = ' '.join(ctx.message.content.split()[2:])
         with db.bot_db:
             db.MechmarketQuery.create(
                 user_id=ctx.message.author.id,
@@ -144,15 +150,20 @@ class MechmarketScraper(commands.Cog):
         await dm_channel.send(f"Scraping mechmarket to look for `{query}`")
 
     @mechmarket.command()  # type: ignore
-    async def delete(self, ctx: commands.Context, reason_id: int):
+    async def delete(self, ctx: commands.Context, *args):
         '''delete a MechmarketQuery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
         with db.bot_db:
-            warning_reason = db.MechmarketQuery.get_by_id(reason_id)
-            if warning_reason:
-                warning_reason.delete_instance()
-                await ctx.channel.send("Running query deleted")
+            for reason_id in args:
+                try:
+                    row_id = int(reason_id)
+                except ValueError:
+                    continue
+                query = db.MechmarketQuery.get_by_id(row_id)
+                if query:
+                    await ctx.channel.send(f"Deleting running query for `{query.search_string}`")
+                    query.delete_instance()
 
     @mechmarket.command()  # type: ignore
     async def list(self, ctx: commands.Context):
@@ -176,12 +187,13 @@ class MechmarketScraper(commands.Cog):
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
         await ctx.message.channel.send(f'```{EXPLANATION}```')
-    
+
     @commands.Cog.listener()
     async def on_ready(self):
         '''mostly to start task loop on bringup'''
         try:
             self.scrape.start()  # pylint: disable=no-member
+            pass
         except RuntimeError:
             pass
 
