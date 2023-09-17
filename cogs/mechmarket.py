@@ -130,14 +130,14 @@ class MechmarketScraper(commands.Cog):
         await ctx.message.channel.send(response_text)
 
     @mechmarket.command()  # type: ignore
-    async def add(self, ctx: commands.Context, query: str):
+    async def add(self, ctx: commands.Context, *args):
         '''add a mechmarketquery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
         with db.bot_db:
             db.MechmarketQuery.create(
                 user_id=ctx.message.author.id,
-                search_string=query
+                search_string=' '.join(args)
             )
         dm_channel = await ctx.message.author.create_dm()
         await dm_channel.send(f"Scraping mechmarket to look for `{query}`")
