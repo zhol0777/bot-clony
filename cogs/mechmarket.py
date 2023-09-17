@@ -83,7 +83,7 @@ class MechmarketScraper(commands.Cog):
             with db.bot_db:
                 if db.MechmarketPost.get_or_none(post_id=post_id):
                     continue  # post has been processed
-            content = post.content[0].value
+            content = post.title + post.content[0].value
             old_link = post_link.replace('//www', '//old')  # new reddit does not include post flair?
             timestamp = None
             is_wts_post_missing_timestamp = False
