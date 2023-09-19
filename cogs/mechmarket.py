@@ -83,7 +83,7 @@ class MechmarketScraper(commands.Cog):
             with db.bot_db:
                 if db.MechmarketPost.get_or_none(post_id=post_id):
                     continue  # post has been processed
-            content = post.title + post.content[0].value
+            content = post.title + ' ' + post.content[0].value
             old_link = post_link.replace('//www', '//old')  # new reddit does not include post flair?
             timestamp = None
             is_wts_post_missing_timestamp = False
@@ -104,10 +104,12 @@ class MechmarketScraper(commands.Cog):
                 continue
             with db.bot_db:
                 for market_query in db.MechmarketQuery.select():
-                    matches = False
+                    matches = True
                     # with basic search, content to match every word in query
                     for word_that_needs_to_be_found in market_query.search_string.lower().split():
-                        matches = word_that_needs_to_be_found in content.lower()
+                        # strip html tags out
+                        found_word = word_that_needs_to_be_found in re.sub('<[^<]+?>', '', content.lower()).split()
+                        matches = matches and found_word
                     # check for exact search if necessary
                     if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
                         matches = market_query.search_string[1:-1].lower() in content.lower()
@@ -193,7 +195,6 @@ class MechmarketScraper(commands.Cog):
         '''mostly to start task loop on bringup'''
         try:
             self.scrape.start()  # pylint: disable=no-member
-            pass
         except RuntimeError:
             pass
 
