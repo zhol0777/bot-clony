@@ -15,12 +15,11 @@ import discord
 from discord.ext import commands, tasks  # ignore
 
 import db
-# import util
 
 
-MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/new.rss'
+MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
-SELLING_FLAIR_SPAN = '<span class="linkflairlabel " title="Selling">Selling</span>'
+# SELLING_FLAIR_SPAN = '<span class="linkflairlabel " title="Selling">Selling</span>'
 LOOP_TIME = 90
 BACKOFF_TIME_MS = 10000
 
@@ -84,9 +83,9 @@ class MechmarketScraper(commands.Cog):
                 if db.MechmarketPost.get_or_none(post_id=post_id):
                     continue  # post has been processed
             content = post.title + ' ' + post.content[0].value
-            old_link = post_link.replace('//www', '//old')  # new reddit does not include post flair?
+            # old_link = post_link.replace('//www', '//old')  # new reddit does not include post flair?
             timestamp = None
-            is_wts_post_missing_timestamp = False
+            # is_wts_post_missing_timestamp = False
             soup = BeautifulSoup(content, 'html.parser')
             for link in soup.find_all('a'):
                 if 'timestamp' in str(link).lower():
@@ -95,13 +94,6 @@ class MechmarketScraper(commands.Cog):
                 embedded_links = [link.get('href', '/') for link in soup.find_all('a') if 'reddit' not in str(link)]
                 if embedded_links:
                     timestamp = embedded_links[0]  # this is a really stupid guess
-            if not timestamp:
-                req = self.make_request(old_link)
-                true_content = req.text
-                if SELLING_FLAIR_SPAN in true_content:
-                    is_wts_post_missing_timestamp = True
-            if not timestamp and not is_wts_post_missing_timestamp:
-                continue
             with db.bot_db:
                 for market_query in db.MechmarketQuery.select():
                     matches = True
