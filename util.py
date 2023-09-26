@@ -18,7 +18,8 @@ IGNORE_COMMAND_LIST = [
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
-                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'gatewayAdapt']
+                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'gatewayAdapt',
+                  'page', 'sort']
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -38,8 +39,8 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             sanitized_word = sanitize_word(word)
             if sanitized_word != word:
                 needs_sanitizing = True
-            # also remove embed
-            sanitized_msg_word_list.append(f"<{sanitized_word}>")
+                # also remove embed
+                sanitized_msg_word_list.append(f"<{sanitized_word}>")
         # else:
         #     sanitized_msg_word_list.append(word)
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing
@@ -53,15 +54,18 @@ def sanitize_word(word: str) -> str:
         url_params = word.split('?')[1].split('&')
     if 'amazon.' in new_word:
         new_word = new_word.split('ref=')[0]
-    for param in url_params:
-        for allowed_param in ALLOWED_PARAMS:
-            if param.startswith(f'{allowed_param}='):
-                if not new_word.endswith('?'):
-                    new_word += '?'
-                new_word += f'{param}&'
-    if new_word.endswith('&'):
-        new_word = new_word[:-1]  # trim remaining
+    url_params[:] = [param for param in url_params if valid_param(param)]
+    if len(url_params) > 0:
+        new_word = new_word + '?' + '&'.join(url_params)
     return word if word.endswith('?') else new_word
+
+
+def valid_param(param: str) -> bool:
+    '''checks url query parameter against hard list of valid ones'''
+    for allowed_param in ALLOWED_PARAMS:
+        if param.startswith(f'{allowed_param}='):
+            return True
+    return False
 
 
 # TODO: deprecate
