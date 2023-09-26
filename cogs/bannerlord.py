@@ -80,13 +80,14 @@ class Bannerlord(commands.Cog):
             except IndexError:
                 await util.handle_error(ctx,
                                         'no valid attachments for banner found with that index')
-            attachment_url = attachment.url
+            attachment_url = util.sanitize_word(attachment.url)
             if not attachment_url.lower().endswith(VALID_IMAGE_EXTENSIONS):
                 await util.handle_error(ctx,
                                         f'intended image name {attachment_url} does not '
                                         'end in {VALID_IMAGE_EXTENSIONS}')
+                return
         await status_message.edit(content="found banner! downloading...")
-        image_req = requests.get(str(attachment_url), timeout=30)
+        image_req = requests.get(str(attachment.url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
             await util.handle_error(ctx, 'Attempt to download {attachment_url} '
