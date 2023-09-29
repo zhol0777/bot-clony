@@ -8,7 +8,7 @@ WORKDIR /usr/src/bot
 
 RUN git clone https://github.com/zhol0777/bot-clony.git .
 
-RUN git checkout bannerlords_only
+RUN git checkout granmark
 
 RUN pip3 install -U -r requirements-unfrozen.txt
 CMD ["python3", "./main.py"]
