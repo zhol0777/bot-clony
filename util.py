@@ -2,10 +2,12 @@
 Utility functions shared across cogs
 '''
 from typing import Any, Tuple, Optional, Union
+from urllib.parse import urlparse
 import os
 
 from discord.ext import commands
 import validators
+import requests
 import discord
 
 import db
@@ -18,8 +20,24 @@ IGNORE_COMMAND_LIST = [
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
-                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'gatewayAdapt',
-                  'page', 'sort']
+                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort']
+
+
+DOMAINS_TO_FIX = {
+    'www.tiktok.com': 'proxitok.pussthecat.org',
+    'twitter.com': 'fxtwitter.com',
+    'x.com': 'fixupx.com',
+    'instagram.com': 'ddinstagram.com'
+}
+
+DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'tiktok.com']
+
+
+def proxy_url(url: str) -> str:
+    '''just proxy a URL on demand'''
+    sanitized_url = handle_redirect(url)
+    sanitized_url, _ = proxy_if_necessary(sanitized_url)
+    return sanitized_url if sanitized_url != url else url
 
 
 def sanitize_message(args: Any) -> Tuple[str, bool]:
@@ -36,11 +54,11 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
         if word.startswith('<') and word.endswith('>'):
             word = word[1:-1]
         if validators.url(word):
-            sanitized_word = sanitize_word(word)
-            if sanitized_word != word:
+            sanitized_url = handle_redirect(word)
+            sanitized_url = sanitize_word(sanitized_url)
+            if sanitized_url != word:
                 needs_sanitizing = True
-                # also remove embed
-                sanitized_msg_word_list.append(f"<{sanitized_word}>")
+                sanitized_msg_word_list.append(f"<{sanitized_url}>")
         # else:
         #     sanitized_msg_word_list.append(word)
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing
@@ -58,6 +76,28 @@ def sanitize_word(word: str) -> str:
     if len(url_params) > 0:
         new_word = new_word + '?' + '&'.join(url_params)
     return word if word.endswith('?') else new_word
+
+
+def handle_redirect(url: str) -> str:
+    '''redirect URLs that are hiding trackers in them'''
+    try:
+        for domain in DOMAINS_TO_REDIRECT:
+            if domain == urlparse(url).netloc:
+                req = requests.get(url, timeout=10)
+                if req.status_code == 200:
+                    return req.url
+    except Exception:  # pylint: disable=broad-except
+        pass
+    return url
+
+
+def proxy_if_necessary(url: str) -> tuple[str, bool]:
+    '''mostly fix embeds for discord'''
+    for bad_domain, better_domain in DOMAINS_TO_FIX.items():
+        if urlparse(url).netloc == bad_domain:
+            url = url.replace(bad_domain, better_domain, 1)
+            return url, True
+    return url, False
 
 
 def valid_param(param: str) -> bool:
