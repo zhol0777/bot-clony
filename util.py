@@ -28,7 +28,7 @@ DOMAINS_TO_FIX = {
     'instagram.com': 'ddinstagram.com'
 }
 
-DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'tiktok.com']
+DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
 
 
 def proxy_url(url: str) -> str:
@@ -57,7 +57,8 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             sanitized_url = sanitize_word(sanitized_url)
             if sanitized_url != word:
                 needs_sanitizing = True
-                sanitized_msg_word_list.append(f"<{sanitized_url}>")
+                # sanitized_msg_word_list.append(f"<{sanitized_url}>")
+                sanitized_msg_word_list.append(sanitized_url)
         # else:
         #     sanitized_msg_word_list.append(word)
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing
