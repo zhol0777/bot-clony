@@ -25,7 +25,8 @@ DOMAINS_TO_FIX = {
     'www.tiktok.com': 'proxitok.pussthecat.org',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
-    'instagram.com': 'ddinstagram.com'
+    'instagram.com': 'ddinstagram.com',
+    'www.instagram.com': 'ddinstagram.com'
 }
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
