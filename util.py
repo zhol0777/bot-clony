@@ -10,8 +10,6 @@ import validators
 import requests
 import discord
 
-import db
-
 IGNORE_COMMAND_LIST = [
     'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
     'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
@@ -30,7 +28,7 @@ DOMAINS_TO_FIX = {
     'instagram.com': 'ddinstagram.com'
 }
 
-DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'tiktok.com']
+DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
 
 
 def proxy_url(url: str) -> str:
@@ -55,6 +53,7 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             word = word[1:-1]
         if validators.url(word):
             sanitized_url = handle_redirect(word)
+            sanitized_url = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
             if sanitized_url != word:
                 needs_sanitizing = True
@@ -133,39 +132,6 @@ async def get_reply_message(message: discord.Message) -> discord.Message:
     if message.reference is not None and message.reference.message_id:
         message = await message.channel.fetch_message(message.reference.message_id)
     return message
-
-
-# TODO: handle via role IDs
-async def apply_role(member: discord.Member, user_id: int,
-                     role_name: str, reason: Optional[str] = None,
-                     enter_in_db: bool = True) -> None:
-    '''Apply a role to a member, and mark it in db'''
-    if role := discord.utils.get(member.guild.roles, name=role_name):
-        await member.add_roles(role, reason=reason)
-        if enter_in_db:
-            with db.bot_db:
-                query = db.RoleAssignment.select().where(
-                    (db.RoleAssignment.user_id == user_id) &
-                    (db.RoleAssignment.role_name == role_name)
-                )
-                if not query.exists():
-                    db.RoleAssignment.create(
-                        user_id=user_id,
-                        role_name=role_name
-                    )
-
-
-# TODO: handle via role IDs
-async def remove_role(member: discord.Member, user_id: int,
-                      role_name: str) -> None:
-    '''Remove a role from a member, and remove it from db'''
-    role = discord.utils.get(member.guild.roles, name=role_name)
-    await member.remove_roles(role)  # type: ignore
-    with db.bot_db:
-        db.RoleAssignment.delete().where(
-            (db.RoleAssignment.user_id == user_id) &
-            (db.RoleAssignment.role_name == role_name)
-        ).execute()
 
 
 async def handle_error(ctx: commands.Context, error_message: Optional[str]):
