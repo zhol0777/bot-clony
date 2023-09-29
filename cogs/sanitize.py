@@ -42,7 +42,7 @@ class Sanitize(commands.Cog):
         '''
         Pink keys pink stabilizer pink keyboard I'm so cute aaaahhhh
         '''
-        await ctx.message.channel.send("Pink keys pink stabilizer pink keyboard I'm so cute aaaahhhh")
+        await ctx.message.channel.send("omg pink pcb pink switches pink hot sockets pink keycaps pink keyboard pink plate pink deskmat pink monitor pink lights pink mouse pink desk pink shelves pink artisans pink tray pink pink PIIIIINK IM SUCH A CUUUTIE AAAAAA")
 
 
 async def setup(client):
