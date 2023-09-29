@@ -36,7 +36,6 @@ class Sanitize(commands.Cog):
         Sanitizes URLs in messages it is told to
         '''
         await self.send_sanitized_message(ctx.message)
-        await ctx.message.delete()
 
     @commands.command()
     async def pink(self, ctx: commands.Context) -> None:
