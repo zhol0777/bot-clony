@@ -164,7 +164,7 @@ def reduced_image(image_content: bytes) -> bytes:
     if image_size_needs_reduction(image_content):
         image_obj = Image.open(BytesIO(image_content))
         width, height = image_obj.size
-        image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)
+        image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)  # pylint: disable=no-member
         buf = BytesIO()
         try:
             image_obj.save(buf, format='JPEG')
