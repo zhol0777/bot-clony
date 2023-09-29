@@ -7,15 +7,6 @@ import discord
 
 import util
 
-SCOLD_MESSAGE = '''
-Beware of leaving trackers in your URLs! (Please complain to zhol to report false positives)
-<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>
-'''
-
-MESSAGE_PREFIX = '''
-List of sanitized URLs:
-'''
-
 
 class Sanitize(commands.Cog):
     '''Cog to sanitize messages'''
@@ -34,10 +25,8 @@ class Sanitize(commands.Cog):
         sanitized_message, needs_sanitizing = util.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
-            sanitized_message = MESSAGE_PREFIX + sanitized_message
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
-            await message.channel.send(SCOLD_MESSAGE)
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:

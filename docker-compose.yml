@@ -1,8 +1,8 @@
 version: "3"
 services:
-  bannerbot:
-    container_name: bannerbot
-    image: bannerbot
+  grannybot:
+    container_name: grannybot
+    image: grannybot
     # user: 1000:1000 # should be owner of volumes
     restart: always
     volumes:

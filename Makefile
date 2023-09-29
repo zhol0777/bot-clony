@@ -24,7 +24,7 @@ mypy:
 	mypy cogs/*.py db.py main.py util.py
 
 docker-build:
-	docker build --no-cache -t bannerbot .
+	docker build --no-cache -t grannybot .
 
 docker-run:
 	docker-compose up -d
