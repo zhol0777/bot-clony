@@ -8,7 +8,7 @@ import sys
 from discord.ext import commands
 from discord.errors import Forbidden
 
-BOT_OWNER_ID = int(os.getenv('MOD_ROLE_ID', '0'))
+BANNERLORD_ROLE_ID = int(os.getenv('BANNERLORD_ROLE_ID', '0'))
 
 
 class Reboot(commands.Cog):
@@ -17,7 +17,7 @@ class Reboot(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_role(BOT_OWNER_ID)
+    @commands.has_role(BANNERLORD_ROLE_ID)
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update

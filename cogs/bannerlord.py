@@ -73,7 +73,7 @@ class Bannerlord(commands.Cog):
             except IndexError:
                 await util.handle_error(ctx,
                                         'no valid attachments for banner found with that index')
-            attachment_url = attachment.url
+            attachment_url = util.sanitize_word(attachment.url)
             if not attachment_url.lower().endswith(VALID_IMAGE_EXTENSIONS):
                 await util.handle_error(ctx,
                                         f'intended image name {attachment_url} does not '
