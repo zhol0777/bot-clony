@@ -94,7 +94,6 @@ class Bannerlord(commands.Cog):
         await ctx.guild.edit(banner=image_content, splash=image_content,  # type: ignore
                              discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
-        await ctx.message.delete()
         # with db.bot_db:
         #     await self.clear_old_banner_pins(ctx)
         #     db.BannerPost.create(message_id=ctx.message.reference.message_id)
