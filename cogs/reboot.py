@@ -27,7 +27,7 @@ class Reboot(commands.Cog):
             await ctx.message.delete()
         except Forbidden:
             pass
-        subprocess.run('git pull origin bot-lite', shell=True, check=True)
+        subprocess.run('git pull origin granmark', shell=True, check=True)
         os.execv(sys.executable, ['python'] + sys.argv)
 
 
