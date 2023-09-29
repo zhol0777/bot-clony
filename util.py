@@ -53,6 +53,7 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             word = word[1:-1]
         if validators.url(word):
             sanitized_url = handle_redirect(word)
+            sanitized_url = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
             if sanitized_url != word:
                 needs_sanitizing = True
