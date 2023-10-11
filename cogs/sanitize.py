@@ -36,7 +36,8 @@ class Sanitize(commands.Cog):
         sanitized_message, needs_sanitizing, post_warning = util.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
-            sanitized_message = MESSAGE_PREFIX + sanitized_message
+            if post_warning:
+                sanitized_message = MESSAGE_PREFIX + sanitized_message
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
             if post_warning:
