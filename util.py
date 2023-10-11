@@ -10,6 +10,8 @@ import validators
 import requests
 import discord
 
+import db
+
 IGNORE_COMMAND_LIST = [
     'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
     'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
@@ -33,18 +35,22 @@ DOMAINS_TO_FIX = {
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
 
 
-def proxy_url(url: str) -> str:
-    '''just proxy a URL on demand'''
+def proxy_url(url: str) -> Tuple[str, bool]:
+    '''
+    just proxy a URL on demand
+    :return: sanitized url, bool implying whether or not to keep embed
+    '''
     sanitized_url = handle_redirect(url)
-    sanitized_url, _ = proxy_if_necessary(sanitized_url)
-    return sanitized_url if sanitized_url != url else url
+    sanitized_url, keep_embed = proxy_if_necessary(sanitized_url)
+    return sanitized_url if sanitized_url != url else url, keep_embed
 
 
-def sanitize_message(args: Any) -> Tuple[str, bool]:
+def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
     '''
     :return: Message with every URL sanitized if necessary
     '''
     needs_sanitizing = False
+    post_warning = True
     msg = ''.join(args).split()
     sanitized_msg_word_list = []
 
@@ -55,14 +61,18 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             word = word[1:-1]
         if validators.url(word):
             sanitized_url = handle_redirect(word)
-            sanitized_url = proxy_url(sanitized_url)
+            sanitized_url, keep_embed = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
             if sanitized_url != word:
                 needs_sanitizing = True
-                sanitized_msg_word_list.append(f"<{sanitized_url}>")
+                if not keep_embed:
+                    sanitized_msg_word_list.append(f"<{sanitized_url}>")
+                else:
+                    sanitized_msg_word_list.append(sanitized_url)
+                    post_warning = False
         # else:
         #     sanitized_msg_word_list.append(word)
-    return '\n'.join(sanitized_msg_word_list), needs_sanitizing
+    return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
 
 
 def sanitize_word(word: str) -> str:
@@ -92,8 +102,11 @@ def handle_redirect(url: str) -> str:
     return url
 
 
-def proxy_if_necessary(url: str) -> tuple[str, bool]:
-    '''mostly fix embeds for discord'''
+def proxy_if_necessary(url: str) -> Tuple[str, bool]:
+    '''
+    mostly fix embeds for discord
+    :return the sanitized url, bool implying whether or not to keep embed
+    '''
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
             url = url.replace(bad_domain, better_domain, 1)
@@ -134,6 +147,40 @@ async def get_reply_message(message: discord.Message) -> discord.Message:
     if message.reference is not None and message.reference.message_id:
         message = await message.channel.fetch_message(message.reference.message_id)
     return message
+
+
+# TODO: handle via role IDs
+async def apply_role(member: discord.Member, user_id: int,
+                     role_name: str, reason: Optional[str] = None,
+                     enter_in_db: bool = True) -> None:
+    '''Apply a role to a member, and mark it in db'''
+    role = discord.utils.get(member.guild.roles, name=role_name)
+    if role:
+        await member.add_roles(role, reason=reason)
+        if enter_in_db:
+            with db.bot_db:
+                query = db.RoleAssignment.select().where(
+                    (db.RoleAssignment.user_id == user_id) &
+                    (db.RoleAssignment.role_name == role_name)
+                )
+                if not query.exists():
+                    db.RoleAssignment.create(
+                        user_id=user_id,
+                        role_name=role_name
+                    )
+
+
+# TODO: handle via role IDs
+async def remove_role(member: discord.Member, user_id: int,
+                      role_name: str) -> None:
+    '''Remove a role from a member, and remove it from db'''
+    role = discord.utils.get(member.guild.roles, name=role_name)
+    await member.remove_roles(role)  # type: ignore
+    with db.bot_db:
+        db.RoleAssignment.delete().where(
+            (db.RoleAssignment.user_id == user_id) &
+            (db.RoleAssignment.role_name == role_name)
+        ).execute()
 
 
 async def handle_error(ctx: commands.Context, error_message: Optional[str]):

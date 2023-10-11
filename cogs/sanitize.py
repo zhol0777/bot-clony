@@ -33,13 +33,14 @@ class Sanitize(commands.Cog):
                           otherwise bot will repeatedly sanitize the same message
         '''
         reply_message = await util.get_reply_message(message) if get_reply else message
-        sanitized_message, needs_sanitizing = util.sanitize_message(
+        sanitized_message, needs_sanitizing, post_warning = util.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
             sanitized_message = MESSAGE_PREFIX + sanitized_message
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
-            await message.channel.send(SCOLD_MESSAGE)
+            if post_warning:
+                await message.channel.send(SCOLD_MESSAGE)
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
