@@ -25,7 +25,8 @@ ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 
 
 
 DOMAINS_TO_FIX = {
-    'www.tiktok.com': 'proxitok.pussthecat.org',
+    # 'www.tiktok.com': 'proxitok.pussthecat.org',
+    'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
     'instagram.com': 'ddinstagram.com',
