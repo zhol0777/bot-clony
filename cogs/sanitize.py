@@ -37,6 +37,21 @@ class Sanitize(commands.Cog):
         '''
         await self.send_sanitized_message(ctx.message)
 
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message) -> None:
+        '''auto-sanitize messages where necessary when requested'''
+        if message.author.bot:
+            return
+        if message.attachments:
+            for attachment in message.attachments:
+                # URL for image sometimes has a bunch of inscrutable parameters
+                # that just clutter chat if they're sanitized away, and breaks the embed
+                # hopefully users won't embed an image through a link and then other
+                # garbage links, but if so, well, tell them to get bent
+                if str(attachment.content_type).startswith('image'):
+                    return
+        await self.send_sanitized_message(message, get_reply=False)
+    
     @commands.command()
     async def pink(self, ctx: commands.Context) -> None:
         '''

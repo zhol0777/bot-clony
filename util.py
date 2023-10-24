@@ -10,19 +10,14 @@ import validators
 import requests
 import discord
 
-IGNORE_COMMAND_LIST = [
-    'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
-    'northfacing', 'oos', 'pins', 'spraylubing', 'vendors', 'fakelifealert',
-    'lifealert', 'trade', 'vote', 'flashsales', 'help', 'rk61', ''
-]
-
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
-                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort']
+                  'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
+                  'iframe_url_utf8', 'spm', 'gcode', 'url', 'h', 'w', 'hash', 'm']
 
 
 DOMAINS_TO_FIX = {
-    'www.tiktok.com': 'proxitok.pussthecat.org',
+    'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
     'instagram.com': 'ddinstagram.com',

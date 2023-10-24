@@ -23,6 +23,7 @@ class Reboot(commands.Cog):
         Usage: !update
         git pull, then bot reboot
         '''
+        await ctx.message.channel.send('ok updating...')
         try:
             await ctx.message.delete()
         except Forbidden:
