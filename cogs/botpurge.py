@@ -23,7 +23,7 @@ MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 MOD_CHAT_ID = os.getenv('MOD_CHAT_ID')
 DEFAULT_LIMIT = 1500
 LOOP_TIME = 60
-BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-09-01').toordinal())
+BOT_BIRTHDAY = datetime.fromordinal(date.fromisoformat('2022-06-01').toordinal())
 MAX_KICKS_ALLOWED = 5
 BAN_REASON = 'User is banned under suspicion of being a bot: ' \
              'Repeated server joins without passing verification'
