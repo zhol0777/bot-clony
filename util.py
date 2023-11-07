@@ -79,17 +79,23 @@ def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
 
 
+def is_image(uri: str) -> bool:
+    possible_ext = os.path.splitext(uri)[1].lower()
+    try:
+        if possible_ext and mimetypes.types_map[possible_ext].startswith('image'):
+            return True
+    except KeyError:
+        pass
+    return False
+
+
 def sanitize_word(word: str) -> str:
     '''remove unnecessary url parameters from a url'''
     new_word = word.split('?')[0]
 
     # do not sanitize image embeds
-    try:
-        possible_ext = os.path.splitext(new_word)[1]
-        if possible_ext and mimetypes.types_map[new_word].startswith('image'):
-            return word
-    except KeyError:
-        pass
+    if is_image(word):
+        return word
 
     url_params = []
     if len(word.split('?')) > 1:
