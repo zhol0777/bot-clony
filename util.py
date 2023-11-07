@@ -3,6 +3,7 @@ Utility functions shared across cogs
 '''
 from typing import Any, Tuple, Optional, Union
 from urllib.parse import urlparse
+import mimetypes
 import os
 
 from discord.ext import commands
@@ -34,6 +35,8 @@ DOMAINS_TO_FIX = {
 }
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
+
+mimetypes.init()
 
 
 def proxy_url(url: str) -> Tuple[str, bool]:
@@ -79,6 +82,15 @@ def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
 def sanitize_word(word: str) -> str:
     '''remove unnecessary url parameters from a url'''
     new_word = word.split('?')[0]
+
+    # do not sanitize image embeds
+    try:
+        possible_ext = os.path.splitext(new_word)[1]
+        if possible_ext and mimetypes.types_map[new_word].startswith('image'):
+            return word
+    except KeyError:
+        pass
+
     url_params = []
     if len(word.split('?')) > 1:
         url_params = word.split('?')[1].split('&')
