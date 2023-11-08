@@ -129,7 +129,7 @@ def handle_redirect(url: str) -> str:
         for domain in DOMAINS_TO_REDIRECT:
             if domain == urlparse(url).netloc:
                 req = requests.get(url, headers=SCRAPE_HEADERS, timeout=10)
-                if req.status_code == 200:
+                if req.status_code == 200 and not req.url.endswith('errors/500'):
                     return req.url
     except Exception:  # pylint: disable=broad-except
         pass
