@@ -15,6 +15,7 @@ import discord
 from discord.ext import commands, tasks  # ignore
 
 import db
+import util
 
 
 MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
@@ -50,20 +51,7 @@ class MechmarketScraper(commands.Cog):
     @retry(wait_fixed=BACKOFF_TIME_MS, retry_on_result=lambda ret: ret.status_code != 200)
     def make_request(self, url: str) -> requests.models.Response:
         '''make request with user agent and retry'''
-        headers = {
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "en-US,en;q=0.5",
-            "Connection": "keep-alive",
-            "Dnt": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Upgrade-Insecure-Requests": "1",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0",
-        }
-        req = requests.get(url, headers=headers, timeout=10)
+        req = requests.get(url, headers=util.SCRAPE_HEADERS, timeout=10)
         if req.status_code != 200:
             log.warning("Rate limited while trying to access %s with %s, waiting %sms",
                         url, req.status_code, BACKOFF_TIME_MS)
