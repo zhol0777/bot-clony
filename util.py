@@ -11,37 +11,57 @@ import validators
 import requests
 import discord
 
+# si (source identifier) is a tracking param but people kept whining
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
-                  'iframe_url_utf8', 'spm', 'gcode', 'url', 'h', 'w', 'hash', 'm']
+                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm']
 
 
 DOMAINS_TO_FIX = {
+    # 'www.tiktok.com': 'proxitok.pussthecat.org',
     'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
-    'instagram.com': 'ddinstagram.com',
-    'www.instagram.com': 'ddinstagram.com'
+    # 'instagram.com': 'ddinstagram.com',
+    # 'www.instagram.com': 'ddinstagram.com'
 }
 
-DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
+DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
+
+SCRAPE_HEADERS = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en-US,en;q=0.5",
+    "Connection": "keep-alive",
+    "Dnt": "1",
+    "Sec-Fetch-Dest": "document",
+    "Sec-Fetch-Mode": "navigate",
+    "Sec-Fetch-Site": "none",
+    "Sec-Fetch-User": "?1",
+    "Upgrade-Insecure-Requests": "1",
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/117.0",
+}
 
 mimetypes.init()
 
 
-def proxy_url(url: str) -> str:
-    '''just proxy a URL on demand'''
+def proxy_url(url: str) -> Tuple[str, bool]:
+    '''
+    just proxy a URL on demand
+    :return: sanitized url, bool implying whether or not to keep embed
+    '''
     sanitized_url = handle_redirect(url)
-    sanitized_url, _ = proxy_if_necessary(sanitized_url)
-    return sanitized_url if sanitized_url != url else url
+    sanitized_url, keep_embed = proxy_if_necessary(sanitized_url)
+    return sanitized_url if sanitized_url != url else url, keep_embed
 
 
-def sanitize_message(args: Any) -> Tuple[str, bool]:
+def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
     '''
     :return: Message with every URL sanitized if necessary
     '''
     needs_sanitizing = False
+    post_warning = True
     msg = ''.join(args).split()
     sanitized_msg_word_list = []
 
@@ -52,18 +72,22 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
             word = word[1:-1]
         if validators.url(word):
             sanitized_url = handle_redirect(word)
-            sanitized_url = proxy_url(sanitized_url)
+            sanitized_url, keep_embed = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
             if sanitized_url != word:
                 needs_sanitizing = True
-                # sanitized_msg_word_list.append(f"<{sanitized_url}>")
-                sanitized_msg_word_list.append(sanitized_url)
+                if not keep_embed:
+                    sanitized_msg_word_list.append(f"<{sanitized_url}>")
+                else:
+                    sanitized_msg_word_list.append(sanitized_url)
+                    post_warning = False
         # else:
         #     sanitized_msg_word_list.append(word)
-    return '\n'.join(sanitized_msg_word_list), needs_sanitizing
+    return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
 
 
 def is_image(uri: str) -> bool:
+    '''see if a URI directs to an image'''
     possible_ext = os.path.splitext(uri)[1].lower()
     try:
         if possible_ext and mimetypes.types_map[possible_ext].startswith('image'):
@@ -97,16 +121,19 @@ def handle_redirect(url: str) -> str:
     try:
         for domain in DOMAINS_TO_REDIRECT:
             if domain == urlparse(url).netloc:
-                req = requests.get(url, timeout=10)
-                if req.status_code == 200:
+                req = requests.get(url, headers=SCRAPE_HEADERS, timeout=10)
+                if req.status_code == 200 and not req.url.endswith('errors/500'):
                     return req.url
     except Exception:  # pylint: disable=broad-except
         pass
     return url
 
 
-def proxy_if_necessary(url: str) -> tuple[str, bool]:
-    '''mostly fix embeds for discord'''
+def proxy_if_necessary(url: str) -> Tuple[str, bool]:
+    '''
+    mostly fix embeds for discord
+    :return the sanitized url, bool implying whether or not to keep embed
+    '''
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
             url = url.replace(bad_domain, better_domain, 1)

@@ -22,7 +22,7 @@ class Sanitize(commands.Cog):
                           otherwise bot will repeatedly sanitize the same message
         '''
         reply_message = await util.get_reply_message(message) if get_reply else message
-        sanitized_message, needs_sanitizing = util.sanitize_message(
+        sanitized_message, needs_sanitizing, _ = util.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
             await message.channel.send(sanitized_message, reference=reply_message,
@@ -51,13 +51,16 @@ class Sanitize(commands.Cog):
                 if str(attachment.content_type).startswith('image'):
                     return
         await self.send_sanitized_message(message, get_reply=False)
-    
+
     @commands.command()
     async def pink(self, ctx: commands.Context) -> None:
         '''
         Pink keys pink stabilizer pink keyboard I'm so cute aaaahhhh
         '''
-        await ctx.message.channel.send("omg pink pcb pink switches pink hot sockets pink keycaps pink keyboard pink plate pink deskmat pink monitor pink lights pink mouse pink desk pink shelves pink artisans pink tray pink pink PIIIIINK IM SUCH A CUUUTIE AAAAAA")
+        await ctx.message.channel.send("omg pink pcb pink switches pink hot sockets pink keycaps "
+                                       "pink keyboard pink plate pink deskmat pink monitor "
+                                       "pink lights pink mouse pink desk pink shelves pink artisans "
+                                       "pink tray pink pink PIIIIINK IM SUCH A CUUUTIE AAAAAA")
 
 
 async def setup(client):
