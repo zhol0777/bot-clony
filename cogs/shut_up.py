@@ -139,10 +139,10 @@ class DoublePosting(commands.Cog):
             return
         with db.bot_db:
             tracked_message = db.TrackedMessage.get_or_none(message_hash=hash(message.content),
-                                                            author_id=message.author.id)
+                                                            user_id=message.author.id)
             if not tracked_message:
                 db.TrackedMessage.create(message_hash=hash(message.content),
-                                         author_id=message.author.id,
+                                         user_id=message.author.id,
                                          created_at=message.created_at)
                 return
             time_delta = message.created_at - datetime.strptime(tracked_message.created_at,
