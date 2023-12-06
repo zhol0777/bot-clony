@@ -23,8 +23,8 @@ DOMAINS_TO_FIX = {
     'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
-    # 'instagram.com': 'ddinstagram.com',
-    # 'www.instagram.com': 'ddinstagram.com'
+    'instagram.com': 'ddinstagram.com',
+    'www.instagram.com': 'ddinstagram.com'
 }
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
@@ -102,7 +102,7 @@ def sanitize_word(word: str) -> str:
     new_word = word.split('?')[0]
 
     # do not sanitize image embeds
-    if is_image(word):
+    if is_image(new_word):
         return word
 
     url_params = []
