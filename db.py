@@ -130,6 +130,21 @@ class MechmarketQuery(BaseModel):
     search_string = peewee.CharField()
 
 
+class StupidMessage(BaseModel):
+    '''part of a message you do not want to see anymore'''
+    message_text = peewee.CharField()
+    response_text = peewee.CharField()
+
+
+class TrackedMessage(BaseModel):
+    '''
+    hash of a message to see if it is posted multiple times in a short succession
+    to yell if necessary
+    '''
+    message_hash = peewee.CharField()
+    created_at = peewee.DateTimeField()
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
@@ -140,7 +155,8 @@ def create_tables():
                               SuspiciousUser, KickedUser,
                               BannedUser, SanitizedChannel,
                               SillyPage, ThockTrackingChannel,
-                              MechmarketPost, MechmarketQuery])
+                              MechmarketPost, MechmarketQuery,
+                              StupidMessage, TrackedMessage])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',
