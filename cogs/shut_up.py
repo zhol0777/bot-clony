@@ -3,7 +3,7 @@ Track specific strings (like gifs of a cat jerking itself off or a lil shoosh so
 that triggers response
 '''
 # from functools import lru_cache
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 import os
 
@@ -125,7 +125,7 @@ class DoublePosting(commands.Cog):
     async def purge_loop_function(self):
         '''delete messages that were initially sent too long ago'''
         with db.bot_db:
-            now = datetime.now()
+            now = datetime.now(timezone.utc)
             for message in db.TrackedMessage.select():
                 time_delta = datetime.strptime(message.created_at, '%Y-%m-%d %H:%M:%S.%f%z') - now
                 if time_delta.seconds > 60:
