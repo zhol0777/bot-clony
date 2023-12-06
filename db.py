@@ -142,6 +142,7 @@ class TrackedMessage(BaseModel):
     to yell if necessary
     '''
     message_hash = peewee.CharField()
+    user_id = peewee.BigIntegerField()
     created_at = peewee.DateTimeField()
 
 

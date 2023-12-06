@@ -127,17 +127,22 @@ class DoublePosting(commands.Cog):
         with db.bot_db:
             now = datetime.now(timezone.utc)
             for message in db.TrackedMessage.select():
-                time_delta = datetime.strptime(message.created_at, '%Y-%m-%d %H:%M:%S.%f%z') - now
+                time_delta = now - datetime.strptime(message.created_at, '%Y-%m-%d %H:%M:%S.%f%z')
                 if time_delta.seconds > 60:
                     message.delete_instance()
 
     @commands.Cog.listener()
     async def on_message(self, message):
         '''send annoyance message if message has been sent multiple times in last 15s'''
+        # do not do this to zholbot and end up in infinite feedback loop
+        if message.author.id == self.client.user.id:
+            return
         with db.bot_db:
-            tracked_message = db.TrackedMessage.get_or_none(message_hash=hash(message.content))
+            tracked_message = db.TrackedMessage.get_or_none(message_hash=hash(message.content),
+                                                            author_id=message.author.id)
             if not tracked_message:
                 db.TrackedMessage.create(message_hash=hash(message.content),
+                                         author_id=message.author.id,
                                          created_at=message.created_at)
                 return
             time_delta = message.created_at - datetime.strptime(tracked_message.created_at,
