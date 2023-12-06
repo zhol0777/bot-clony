@@ -118,7 +118,7 @@ class DoublePosting(commands.Cog):
     @tasks.loop(seconds=LOOP_TIME)
     async def purge_loop_function(self):
         '''delete messages that were initially sent too long ago'''
-        with db.bot_db():
+        with db.bot_db:
             now = datetime.now()
             for message in db.TrackedMessage.select():
                 time_delta = message.created_at - now
@@ -128,7 +128,7 @@ class DoublePosting(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         '''send annoyance message if message has been sent multiple times in last 15s'''
-        with db.bot_db():
+        with db.bot_db:
             tracked_message = db.TrackedMessage.get_or_none(message_hash=hash(message.content))
             if not tracked_message:
                 db.TrackedMessage.create(message_hash=hash(message.content),
