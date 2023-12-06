@@ -44,7 +44,7 @@ class ShutUp(commands.Cog):
             response_text = ''
             await util.handle_error(ctx, "No response text provided, leaving blank")
 
-        with db.bot_db():
+        with db.bot_db:
             db.StupidMessage.create(message_text=message_text,
                                     response_text=response_text)
         await ctx.message.channel.send("Bot will now yell at people who post: " + message_text)
@@ -91,7 +91,7 @@ class ShutUp(commands.Cog):
         '''
         cache bad messages so you don't have to read DB on every message
         '''
-        with db.bot_db():
+        with db.bot_db:
             return db.StupidMessage.select()
 
     @commands.Cog.listener()
