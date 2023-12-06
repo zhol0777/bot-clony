@@ -48,13 +48,14 @@ class MechmarketScraper(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @retry(wait_fixed=BACKOFF_TIME_MS, retry_on_result=lambda ret: ret.status_code != 200)
+    # @retry(wait_fixed=BACKOFF_TIME_MS, retry_on_result=lambda ret: ret.status_code != 200)
     def make_request(self, url: str) -> requests.models.Response:
         '''make request with user agent and retry'''
         req = requests.get(url, headers=util.SCRAPE_HEADERS, timeout=10)
         if req.status_code != 200:
-            log.warning("Rate limited while trying to access %s with %s, waiting %sms",
-                        url, req.status_code, BACKOFF_TIME_MS)
+            # log.warning("Rate limited while trying to access %s with %s, waiting %sms",
+            #             url, req.status_code, BACKOFF_TIME_MS)
+            log.warning("Failed to scrape from Reddit Mechmarket, retrying %ss later", LOOP_TIME)
         return req
 
     @tasks.loop(seconds=LOOP_TIME)
