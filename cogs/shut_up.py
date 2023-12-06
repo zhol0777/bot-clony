@@ -32,6 +32,9 @@ class ShutUp(commands.Cog):
         '''
         !blacklist imagehosting.net/catjackoff.gif oh my god stop posting this
         '''
+        if ctx.invoked_subcommand and \
+                ctx.invoked_subcommand.name in ['list', 'delete']:
+            return
         message_words = ctx.message.content.split()
         try:
             message_text = message_words[1]
