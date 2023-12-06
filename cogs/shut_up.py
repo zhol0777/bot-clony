@@ -104,7 +104,7 @@ class ShutUp(commands.Cog):
         with db.bot_db:
             blacklisted_messages = db.StupidMessage.select()
             for bl_msg in blacklisted_messages:
-                if bl_msg.message_text():
+                if bl_msg.message_text:
                     await message.channel.send(bl_msg.response_text)
 
 
@@ -127,7 +127,7 @@ class DoublePosting(commands.Cog):
         with db.bot_db:
             now = datetime.now()
             for message in db.TrackedMessage.select():
-                time_delta = message.created_at - now
+                time_delta = datetime.strptime(message.created_at, '%Y-%m-%d %H:%M:%S.%f%z') - now
                 if time_delta.seconds > 60:
                     message.delete_instance()
 
@@ -140,7 +140,8 @@ class DoublePosting(commands.Cog):
                 db.TrackedMessage.create(message_hash=hash(message.content),
                                          created_at=message.created_at)
                 return
-            time_delta = message.created_at - tracked_message.created_at
+            time_delta = message.created_at - datetime.strptime(tracked_message.created_at,
+                                                                '%Y-%m-%d %H:%M:%S.%f%z')
             # send annoyance message if message has been sent multiple times in last 15s
             if time_delta.seconds < 15:
                 await message.channel.send('Stop sending the same message to multiple channels!')
