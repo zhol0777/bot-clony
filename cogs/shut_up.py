@@ -34,12 +34,12 @@ class ShutUp(commands.Cog):
         '''
         message_words = ctx.message.content.split()
         try:
-            message_text = message_words[0]
+            message_text = message_words[1]
         except IndexError:
             await util.handle_error(ctx, "No bad link provided")
             return
         try:
-            response_text = ' '.join(message_words[1:])
+            response_text = ' '.join(message_words[2:])
         except IndexError:
             response_text = ''
             await util.handle_error(ctx, "No response text provided, leaving blank")
