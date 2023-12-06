@@ -8,7 +8,7 @@ import re
 import feedparser
 import requests
 from bs4 import BeautifulSoup
-from retrying import retry
+# from retrying import retry
 
 
 import discord

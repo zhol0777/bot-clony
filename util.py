@@ -31,8 +31,8 @@ DOMAINS_TO_FIX = {
     'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
-    # 'instagram.com': 'ddinstagram.com',
-    # 'www.instagram.com': 'ddinstagram.com'
+    'instagram.com': 'ddinstagram.com',
+    'www.instagram.com': 'ddinstagram.com'
 }
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
@@ -97,8 +97,9 @@ def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
 def is_image(uri: str) -> bool:
     '''see if a URI directs to an image'''
     possible_ext = os.path.splitext(uri)[1].lower()
+    img_extensions = {k for k, v in mimetypes.types_map.items() if 'image' in v}
     try:
-        if possible_ext and mimetypes.types_map[possible_ext].startswith('image'):
+        if possible_ext and possible_ext in img_extensions:
             return True
     except KeyError:
         pass
@@ -110,7 +111,7 @@ def sanitize_word(word: str) -> str:
     new_word = word.split('?')[0]
 
     # do not sanitize image embeds
-    if is_image(word):
+    if is_image(new_word):
         return word
 
     url_params = []

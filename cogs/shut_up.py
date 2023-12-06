@@ -2,7 +2,7 @@
 Track specific strings (like gifs of a cat jerking itself off or a lil shoosh soundtest)
 that triggers response
 '''
-from functools import lru_cache
+# from functools import lru_cache
 from datetime import datetime
 import logging
 import os
@@ -51,7 +51,7 @@ class ShutUp(commands.Cog):
             db.StupidMessage.create(message_text=message_text,
                                     response_text=response_text)
         await ctx.message.channel.send("Bot will now yell at people who post: " + message_text)
-        self.get_blacklisted_messages.cache_clear()  # pylint: disable=no-member
+        # self.get_blacklisted_messages.cache_clear()  # pylint: disable=no-member
 
     @blacklist.command()  # type: ignore
     @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
@@ -65,15 +65,16 @@ class ShutUp(commands.Cog):
             if not channel:
                 return
 
-        stupid_messages = self.get_blacklisted_messages()
+        with db.bot_db:
+            stupid_messages = db.StupidMessage.select()
 
-        for s_m in stupid_messages:  # pylint: disable=not-an-iterable
-            embed = discord.Embed(color=discord.Colour.orange())
-            embed.set_author(name="Message To Yell At")
-            embed.add_field(name="id", value=str(s_m.id))
-            embed.add_field(name="String to search", value=str(s_m.message_text))
-            embed.add_field(name="Response text", value=str(s_m.response_text))
-            await channel.send(embed=embed)
+            for s_m in stupid_messages:  # pylint: disable=not-an-iterable
+                embed = discord.Embed(color=discord.Colour.orange())
+                embed.set_author(name="Message To Yell At")
+                embed.add_field(name="id", value=str(s_m.id))
+                embed.add_field(name="String to search", value=str(s_m.message_text))
+                embed.add_field(name="Response text", value=str(s_m.response_text))
+                await channel.send(embed=embed)
 
     @blacklist.command()  # type: ignore
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
@@ -87,22 +88,24 @@ class ShutUp(commands.Cog):
             if reason:
                 reason.delete_instance()
                 await ctx.channel.send("Deleted")
-                self.get_blacklisted_messages.cache_clear()  # pylint: disable=no-member
+                # self.get_blacklisted_messages.cache_clear()  # pylint: disable=no-member
 
-    @lru_cache
-    def get_blacklisted_messages(self):
-        '''
-        cache bad messages so you don't have to read DB on every message
-        '''
-        with db.bot_db:
-            return db.StupidMessage.select()
+    # @lru_cache
+    # def get_blacklisted_messages(self):
+    #     '''
+    #     cache bad messages so you don't have to read DB on every message
+    #     '''
+    #     with db.bot_db:
+    #         return db.StupidMessage.select()
 
     @commands.Cog.listener()
     async def on_message(self, message):
         '''Auto-respond to every message that bot finds sus'''
-        for bl_msg in self.get_blacklisted_messages():
-            if bl_msg.message_text():
-                await message.channel.send(bl_msg.response_text)
+        with db.bot_db:
+            blacklisted_messages = db.StupidMessage.select()
+            for bl_msg in blacklisted_messages:
+                if bl_msg.message_text():
+                    await message.channel.send(bl_msg.response_text)
 
 
 class DoublePosting(commands.Cog):
