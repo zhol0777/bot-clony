@@ -137,6 +137,8 @@ class DoublePosting(commands.Cog):
         # do not do this to zholbot and end up in infinite feedback loop
         if message.author.id == self.client.user.id:
             return
+        if message.stickers:
+            return
         with db.bot_db:
             tracked_message = db.TrackedMessage.get_or_none(message_hash=hash(message.content),
                                                             user_id=message.author.id)
