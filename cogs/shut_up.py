@@ -127,7 +127,7 @@ class DoublePosting(commands.Cog):
         with db.bot_db:
             now = datetime.now(timezone.utc)
             for message in db.TrackedMessage.select():
-                time_delta = now - datetime.strptime(message.created_at, '%Y-%m-%d %H:%M:%S.%f%z')
+                time_delta = now - self.parse_date_time_str(message.created_at)
                 if time_delta.seconds > 60:
                     message.delete_instance()
 
@@ -148,11 +148,17 @@ class DoublePosting(commands.Cog):
                                          created_at=message.created_at,
                                          channel_id=message.channel.id)
                 return
-            time_delta = message.created_at - datetime.strptime(tracked_message.created_at,
-                                                                '%Y-%m-%d %H:%M:%S.%f%z')
+            time_delta = message.created_at - self.parse_date_time_str(tracked_message.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if time_delta.seconds < 15 and message.channel.id != tracked_message.channel_id:
                 await message.channel.send('Stop sending the same message to multiple channels!')
+
+    def parse_date_time_str(self, date_time_str) -> datetime:
+        "dates are sometimes saved in two different formats"
+        try:
+            return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f%z')
+        except ValueError:
+            return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S%z')
 
 
 async def setup(client):
