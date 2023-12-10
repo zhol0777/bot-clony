@@ -144,6 +144,7 @@ class TrackedMessage(BaseModel):
     message_hash = peewee.CharField()
     user_id = peewee.BigIntegerField()
     created_at = peewee.DateTimeField()
+    channel_id = peewee.BigIntegerField()
 
 
 def create_tables():

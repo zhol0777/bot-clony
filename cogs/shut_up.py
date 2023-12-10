@@ -132,7 +132,7 @@ class DoublePosting(commands.Cog):
                     message.delete_instance()
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         '''send annoyance message if message has been sent multiple times in last 15s'''
         # do not do this to zholbot and end up in infinite feedback loop
         if message.author.id == self.client.user.id:
@@ -145,12 +145,13 @@ class DoublePosting(commands.Cog):
             if not tracked_message:
                 db.TrackedMessage.create(message_hash=hash(message.content),
                                          user_id=message.author.id,
-                                         created_at=message.created_at)
+                                         created_at=message.created_at,
+                                         channel_id=message.channel.id)
                 return
             time_delta = message.created_at - datetime.strptime(tracked_message.created_at,
                                                                 '%Y-%m-%d %H:%M:%S.%f%z')
             # send annoyance message if message has been sent multiple times in last 15s
-            if time_delta.seconds < 15:
+            if time_delta.seconds < 15 and message.channel.id != tracked_message.channel_id:
                 await message.channel.send('Stop sending the same message to multiple channels!')
 
 
