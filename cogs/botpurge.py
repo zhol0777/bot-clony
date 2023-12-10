@@ -225,14 +225,14 @@ class BotPurger(commands.Cog):
                     update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
                 ).execute()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        '''mostly to start task loop on bringup'''
-        try:
-            self.guild = await util.fetch_primary_guild(self.client)
-            self.purge_loop_function.start()  # pylint: disable=no-member
-        except RuntimeError:
-            pass
+    # @commands.Cog.listener()
+    # async def on_ready(self):
+    #     '''mostly to start task loop on bringup'''
+    #     try:
+    #         self.guild = await util.fetch_primary_guild(self.client)
+    #         self.purge_loop_function.start()  # pylint: disable=no-member
+    #     except RuntimeError:
+    #         pass
 
     @commands.Cog.listener()
     async def on_member_join(self, member):
