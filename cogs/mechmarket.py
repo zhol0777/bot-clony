@@ -39,7 +39,7 @@ mechmarket:
 '''
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] [%(asctime)s] %(message)s')
 log = logging.getLogger(__name__)
 
 
