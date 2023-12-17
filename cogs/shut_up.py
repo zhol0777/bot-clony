@@ -13,6 +13,7 @@ import discord
 import db
 import util
 
+ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -151,7 +152,11 @@ class DoublePosting(commands.Cog):
             time_delta = message.created_at - self.parse_date_time_str(tracked_message.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if time_delta.seconds < 15 and message.channel.id != tracked_message.channel_id:
-                await message.channel.send('Stop sending the same message to multiple channels!')
+                # await message.channel.send('Stop sending the same message to multiple channels!')
+                channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
+                if channel:
+                    await channel.send("Spammer or annoying guy detected at %s",
+                                       message.jump_url)
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
