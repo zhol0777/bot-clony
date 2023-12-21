@@ -61,7 +61,7 @@ class MechmarketScraper(commands.Cog):
         for post in self.reddit.subreddit('mechmarket').search('flair:"Selling"', sort='new',
                                                                limit=25):
             post_id = post.id
-            post_link = post.link
+            post_link = post.url
             with db.bot_db:
                 if db.MechmarketPost.get_or_none(post_id=post_id):
                     continue  # post has been processed
