@@ -8,9 +8,9 @@ import os
 import re
 
 
+import asyncpraw
 import discord
 from discord.ext import commands, tasks  # ignore
-import praw
 
 import db
 import util
@@ -45,7 +45,7 @@ class MechmarketScraper(commands.Cog):
     '''scrape mechmarket posts from reddit feed'''
     def __init__(self, client):
         self.client = client
-        self.reddit = praw.Reddit(
+        self.reddit = asyncpraw.Reddit(
             username=os.getenv('REDDIT_USERNAME', ''),
             password=os.getenv('REDDIT_PASSWORD', ''),
             client_id=os.getenv('REDDIT_CLIENT_ID', ''),
@@ -57,9 +57,9 @@ class MechmarketScraper(commands.Cog):
     # pylint: disable=too-many-locals,too-many-branches
     async def scrape(self):
         '''run periodic scrape'''
-        posts_processed = 0
-        for post in self.reddit.subreddit('mechmarket').search('flair:"Selling"', sort='new',
-                                                               limit=25):
+        mechmarket_subreddit = await self.reddit.subreddit('mechmarket')
+        async for post in mechmarket_subreddit.search('flair:"Selling"', sort='new',
+                                                      limit=25):
             post_id = post.id
             post_link = post.url
             with db.bot_db:
@@ -92,8 +92,6 @@ class MechmarketScraper(commands.Cog):
                            f"\n{post_link} - {timestamp}"
                     await channel.send(text)
                 db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
-            posts_processed += 1
-        log.info("%s posts processed by MechMarket scraper", posts_processed)
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):
