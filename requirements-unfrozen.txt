@@ -1,4 +1,3 @@
-asyncpraw
 bs4
 discord.py
 feedparser
@@ -6,6 +5,7 @@ flake8
 mypy
 peewee
 Pillow
+praw
 pylint
 python-dotenv
 retrying
