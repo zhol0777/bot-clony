@@ -4,15 +4,13 @@ Scrape mechmarket periodically
 import logging
 
 
+import os
 import re
-import feedparser
-import requests
-from bs4 import BeautifulSoup
-# from retrying import retry
 
 
 import discord
 from discord.ext import commands, tasks  # ignore
+import praw
 
 import db
 import util
@@ -21,7 +19,7 @@ import util
 MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
 # SELLING_FLAIR_SPAN = '<span class="linkflairlabel " title="Selling">Selling</span>'
-LOOP_TIME = 90
+LOOP_TIME = 60
 BACKOFF_TIME_MS = 10000
 
 EXPLANATION = '''
@@ -47,54 +45,45 @@ class MechmarketScraper(commands.Cog):
     '''scrape mechmarket posts from reddit feed'''
     def __init__(self, client):
         self.client = client
-
-    # @retry(wait_fixed=BACKOFF_TIME_MS, retry_on_result=lambda ret: ret.status_code != 200)
-    def make_request(self, url: str) -> requests.models.Response:
-        '''make request with user agent and retry'''
-        req = requests.get(url, headers=util.MECHMARKET_SCRAPE_HEADERS, timeout=10)
-        if req.status_code != 200:
-            # log.warning("Rate limited while trying to access %s with %s, waiting %sms",
-            #             url, req.status_code, BACKOFF_TIME_MS)
-            log.warning("Failed to scrape from Reddit Mechmarket, retrying %ss later", LOOP_TIME)
-        return req
+        self.reddit = praw.Reddit(
+            username=os.getenv('REDDIT_USERNAME', ''),
+            password=os.getenv('REDDIT_PASSWORD', ''),
+            client_id=os.getenv('REDDIT_CLIENT_ID', ''),
+            client_secret=os.getenv('REDDIT_CLIENT_SECRET', ''),
+            user_agent=util.MECHMARKET_SCRAPE_HEADERS['user-agent']
+        )
 
     @tasks.loop(seconds=LOOP_TIME)
     # pylint: disable=too-many-locals,too-many-branches
     async def scrape(self):
         '''run periodic scrape'''
-        mechmarket_req = self.make_request(MECHMARKET_RSS_FEED)
-        mechmarket = feedparser.parse(mechmarket_req.text)
-
-        for post in mechmarket.entries:
+        posts_processed = 0
+        for post in self.reddit.subreddit('mechmarket').search('flair:"Selling"', sort='new',
+                                                               limit=25):
             post_id = post.id
             post_link = post.link
             with db.bot_db:
                 if db.MechmarketPost.get_or_none(post_id=post_id):
                     continue  # post has been processed
-            content = post.title + ' ' + post.content[0].value
-            # old_link = post_link.replace('//www', '//old')  # new reddit does not include post flair?
+
             timestamp = None
-            # is_wts_post_missing_timestamp = False
-            soup = BeautifulSoup(content, 'html.parser')
-            for link in soup.find_all('a'):
-                if 'timestamp' in str(link).lower():
-                    timestamp = link.get('href', '/')
-            if not timestamp:
-                embedded_links = [link.get('href', '/') for link in soup.find_all('a') if 'reddit' not in str(link)]
-                if embedded_links:
-                    timestamp = embedded_links[0]  # this is a really stupid guess
+            post_text = post.selftext.replace('\n', ' ')
+            urls = re.findall(r"(?P<url>https?://[^\s]+)", post_text)
+            if urls:
+                timestamp = urls[0]  # pray that it's the first link that's the timestamp
+
             with db.bot_db:
                 for market_query in db.MechmarketQuery.select():
                     matches = True
                     # with basic search, content to match every word in query
-                    for word_that_needs_to_be_found in market_query.search_string.lower().split():
+                    for word_that_needs_to_be_found in market_query.search_string.split():
                         # strip html tags out
-                        found_word = word_that_needs_to_be_found in re.sub('<[^<]+?>', '', content.lower()).split()
+                        found_word = word_that_needs_to_be_found.lower() in post_text.lower()
                         matches = matches and found_word
                     # check for exact search if necessary
                     if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
-                        matches = market_query.search_string[1:-1].lower() in content.lower()
-                    matches = matches or re.match(market_query.search_string, content)
+                        matches = market_query.search_string[1:-1].lower() in post_text.lower()
+                    matches = matches or re.match(market_query.search_string.lower(), post_text.lower())
                     if not matches:
                         continue
                     reminded_user = await self.client.fetch_user(market_query.user_id)
@@ -103,6 +92,8 @@ class MechmarketScraper(commands.Cog):
                            f"\n{post_link} - {timestamp}"
                     await channel.send(text)
                 db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
+            posts_processed += 1
+        log.info("%s posts processed by MechMarket scraper", posts_processed)
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):

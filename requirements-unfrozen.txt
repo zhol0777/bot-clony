@@ -5,6 +5,7 @@ flake8
 mypy
 peewee
 Pillow
+praw
 pylint
 python-dotenv
 retrying
