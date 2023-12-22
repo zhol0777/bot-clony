@@ -23,7 +23,8 @@ IGNORE_COMMAND_LIST = [
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
-                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm']
+                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 'dl', 'th',
+                  'language', ]
 
 
 DOMAINS_TO_FIX = {

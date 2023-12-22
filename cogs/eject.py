@@ -134,12 +134,14 @@ class Eject(commands.Cog):
         try:
             self.guild = await util.fetch_primary_guild(self.client)
             self.undo_temp_eject.start()  # pylint: disable=no-member
-        except RuntimeError:
+        except (NotFound, RuntimeError):
             pass
 
     @tasks.loop(seconds=LOOP_TIME)
     async def undo_temp_eject(self):
         '''loop through db to see when to eject someone'''
+        if not self.guild:
+            return
         current_time = time.time()
         channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)  # this is bot test channel
         with db.bot_db:
