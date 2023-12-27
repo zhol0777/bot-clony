@@ -155,8 +155,7 @@ class DoublePosting(commands.Cog):
                 # await message.channel.send('Stop sending the same message to multiple channels!')
                 channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
                 if channel:
-                    await channel.send("Spammer or annoying guy detected at %s",
-                                       message.jump_url)
+                    await channel.send(f"Spammer or annoying guy detected at: {message.jump_url}")
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
