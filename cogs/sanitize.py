@@ -10,8 +10,7 @@ import db
 import util
 
 SCOLD_MESSAGE = '''
-Beware of leaving trackers in your URLs! (Please complain to zhol to report false positives)
-<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>
+[*Why was this message sent?*](<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>)
 '''
 
 MESSAGE_PREFIX = '''
@@ -37,11 +36,9 @@ class Sanitize(commands.Cog):
             reply_message.content)
         if needs_sanitizing:
             if post_warning:
-                sanitized_message = MESSAGE_PREFIX + sanitized_message
+                sanitized_message = MESSAGE_PREFIX + sanitized_message + f'\n{SCOLD_MESSAGE}'
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
-            if post_warning:
-                await message.channel.send(SCOLD_MESSAGE)
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
