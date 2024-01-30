@@ -112,7 +112,7 @@ class MechmarketScraper(commands.Cog):
             return
         query = ' '.join(ctx.message.content.split()[2:])
         with db.bot_db:
-            db.MechmarketQuery.create(
+            db.MechmarketQuery.get_or_create(
                 user_id=ctx.message.author.id,
                 search_string=query
             )
@@ -132,6 +132,9 @@ class MechmarketScraper(commands.Cog):
                     continue
                 query = db.MechmarketQuery.get_by_id(row_id)
                 if query:
+                    if query.user_id != ctx.message.author.id:
+                        await ctx.channel.send(f"Cannot delete other users query")
+                        return
                     await ctx.channel.send(f"Deleting running query for `{query.search_string}`")
                     query.delete_instance()
 
