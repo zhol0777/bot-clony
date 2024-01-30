@@ -25,9 +25,12 @@ Generics:
                        !remindme 30d develop better help messages
   channeldescription
                 Posts channel description
-  mechmarket    Searches for query on mechmarket
-                    ex. !mechmarket gmk laser
   thock         provide a count of total usage of 'thock' as well as local channel usage
+  mechmarket    Usage: !mechmarket [query...]           # search reddit for sales
+                       !mechmarket add [query...]       # ping you when mechmarket scraper matches 
+                       !mechmarket list                 # list all queries by ID and string
+                       !mechmarket delete [query_id]    # stop responding to matches
+
 '''
 
 HELPER_COMMANDS = '''
@@ -61,12 +64,12 @@ Helper Commands:
                         !wiki define root [url]
                         Delete a wiki page
                         !wiki delete [shortname]
+  silly         Usage:  Define a silly piece of text by a shortcut:
+                        !silly define [shortname] [text...]
+                        Delete a silly link
+                        !silly delete [shortname]
   forcegoogle   Usage:  [reply] !forcegoogle
                                 !lmgtfy
-  silly         Usage:  !silly define [shortname] [response text...]
-                        !silly delete [shortname]
-                        !silly [shortname]
-                        ![shortname]
   decide        Usage:  !decide sonnet75 obliterated75 gmmkpro q1 m1
   autosanitize  Usage:  Enable auto-sanitizer in a help channel:
                         !autosanitize true
