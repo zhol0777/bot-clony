@@ -9,6 +9,7 @@ import re
 import asyncpraw
 import discord
 from discord.ext import commands, tasks  # ignore
+from tabulate import tabulate
 
 import db
 import util
@@ -133,7 +134,7 @@ class MechmarketScraper(commands.Cog):
                 query = db.MechmarketQuery.get_by_id(row_id)
                 if query:
                     if query.user_id != ctx.message.author.id:
-                        await ctx.channel.send(f"Cannot delete other users query")
+                        await ctx.channel.send("Cannot delete other users query")
                         return
                     await ctx.channel.send(f"Deleting running query for `{query.search_string}`")
                     query.delete_instance()
@@ -147,12 +148,11 @@ class MechmarketScraper(commands.Cog):
             dm_channel = await ctx.message.author.create_dm()
             queries = db.MechmarketQuery.select().where(db.MechmarketQuery.user_id == ctx.message.author.id)
             # pylint: disable=not-an-iterable
+            table = []
             for query in queries:
-                embed = discord.Embed(color=discord.Colour.orange())
-                embed.set_author(name="Mechmarket Query")
-                embed.add_field(name="id", value=query.id)
-                embed.add_field(name="search_string", value=query.search_string)
-                await dm_channel.send(embed=embed)
+                table.append([query.id, query.search_string])
+            msg_text = f"```{tabulate(table, headers=['query_id', 'query string'])}```"
+            await dm_channel.send(msg_text)
 
     @mechmarket.command()  # type: ignore
     async def help(self, ctx: commands.Context):

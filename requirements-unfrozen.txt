@@ -10,7 +10,9 @@ pylint
 python-dotenv
 retrying
 requests
+tabulate
 types-beautifulsoup4
 types-requests
 types-Pillow
+types-tabulate
 validators
