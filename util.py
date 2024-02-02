@@ -15,7 +15,7 @@ import discord
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
-                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm']
+                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 's']
 
 
 DOMAINS_TO_FIX = {
@@ -136,8 +136,14 @@ def proxy_if_necessary(url: str) -> Tuple[str, bool]:
     '''
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
-            url = url.replace(bad_domain, better_domain, 1)
-            return url, True
+            new_url = url.replace(bad_domain, better_domain, 1)
+            if bad_domain in ['twitter.com', 'x.com']:
+                # rain's crying that bot re-embeds unnecessarily,
+                # so only send if its got a video embed
+                req = requests.get(new_url, timeout=10)
+                if 'twitter:player:stream' not in req.text:
+                    return url, False
+            return new_url, True
     return url, False
 
 
