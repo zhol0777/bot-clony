@@ -4,8 +4,11 @@ Command to sanitize trackers out of URL parameters by stripping params
 
 from discord.ext import commands
 import discord
+import logging
 
 import util
+
+log = logging.getLogger(__name__)
 
 
 class Sanitize(commands.Cog):
@@ -27,6 +30,10 @@ class Sanitize(commands.Cog):
         if needs_sanitizing:
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
+            try:
+                await message.edit(suppress=True)
+            except Exception:
+                log.exception("ok could not remove embed sorry!")
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
