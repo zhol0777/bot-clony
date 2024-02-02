@@ -33,7 +33,7 @@ class Sanitize(commands.Cog):
             try:
                 await message.edit(suppress=True)
             except Exception:
-                log.exception("ok could not remove embed sorry!")
+                log.exception("Bot is missing MANAGE_MESSAGES permission, cannot hide embed")
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
