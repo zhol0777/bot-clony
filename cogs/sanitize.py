@@ -39,6 +39,10 @@ class Sanitize(commands.Cog):
                 sanitized_message = MESSAGE_PREFIX + sanitized_message + SCOLD_MESSAGE
             await message.channel.send(sanitized_message, reference=reply_message,
                                        mention_author=False)
+            try:
+                await message.edit(suppress=True)
+            except Exception:
+                pass
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
