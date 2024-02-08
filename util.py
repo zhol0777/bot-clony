@@ -137,12 +137,12 @@ def proxy_if_necessary(url: str) -> Tuple[str, bool]:
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
             new_url = url.replace(bad_domain, better_domain, 1)
-            if bad_domain in ['twitter.com', 'x.com']:
-                # rain's crying that bot re-embeds unnecessarily,
-                # so only send if its got a video embed
-                req = requests.get(new_url, timeout=10)
-                if 'twitter:player:stream' not in req.text:
-                    return url, False
+            # if bad_domain in ['twitter.com', 'x.com']:
+            #     # rain's crying that bot re-embeds unnecessarily,
+            #     # so only send if its got a video embed
+            #     req = requests.get(new_url, timeout=10)
+            #     if 'twitter:player:stream' not in req.text:
+            #         return url, False
             return new_url, True
     return url, False
 
