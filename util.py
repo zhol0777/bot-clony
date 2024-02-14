@@ -2,11 +2,16 @@
 Utility functions shared across cogs
 '''
 
+import mimetypes
+import os
+
 from discord.ext import commands
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort']
+
+mimetypes.init()
 
 
 async def handle_error(ctx: commands.Context, error_message: str):
@@ -35,4 +40,15 @@ def valid_param(param: str) -> bool:
     for allowed_param in ALLOWED_PARAMS:
         if param.startswith(f'{allowed_param}='):
             return True
+    return False
+
+
+def is_image(uri: str) -> bool:
+    '''see if a URI directs to an image'''
+    possible_ext = os.path.splitext(uri)[1].lower()
+    try:
+        if possible_ext and mimetypes.types_map[possible_ext].startswith('image'):
+            return True
+    except KeyError:
+        pass
     return False
