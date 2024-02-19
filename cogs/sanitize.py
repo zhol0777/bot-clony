@@ -77,6 +77,8 @@ class Sanitize(commands.Cog):
         '''
         emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
         is_correct_reacc = emoji_name == '❌'
+        if not is_correct_reacc:
+            return
         msg_is_from_bot = reaction.message.author.id == self.client.user.id
         user_ids_reacc_list = [user.id async for user in reaction.users()]
 
