@@ -1,10 +1,10 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
+import logging
 
 from discord.ext import commands
 import discord
-import logging
 
 import util
 
@@ -28,12 +28,13 @@ class Sanitize(commands.Cog):
         sanitized_message, needs_sanitizing, _ = util.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
-            await message.channel.send(sanitized_message, reference=reply_message,
-                                       mention_author=False)
+            sanitized_msg = await message.channel.send(sanitized_message, reference=reply_message,
+                                                       mention_author=False)
             try:
                 await message.edit(suppress=True)
             except Exception:
                 log.exception("Bot is missing MANAGE_MESSAGES permission, cannot hide embed")
+            await sanitized_msg.add_reaction("❌")
 
     @commands.command(aliases=['sanitise'])
     async def sanitize(self, ctx: commands.Context) -> None:
@@ -68,6 +69,20 @@ class Sanitize(commands.Cog):
                                        "pink keyboard pink plate pink deskmat pink monitor "
                                        "pink lights pink mouse pink desk pink shelves pink artisans "
                                        "pink tray pink pink PIIIIINK IM SUCH A CUUUTIE AAAAAA")
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction: discord.Reaction, user) -> None:
+        '''
+        delete messages from zholbot
+        '''
+        emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
+        is_correct_reacc = emoji_name == '❌'
+        msg_is_from_bot = reaction.message.author.id == self.client.user.id
+        user_ids_reacc_list = [user.id async for user in reaction.users()]
+
+        if is_correct_reacc and msg_is_from_bot and self.client.user.id in user_ids_reacc_list and \
+                len(user_ids_reacc_list) > 1:
+            await reaction.message.delete()
 
 
 async def setup(client):
