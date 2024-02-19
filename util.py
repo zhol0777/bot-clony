@@ -15,7 +15,7 @@ import discord
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
-                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 's']
+                  'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 's', 'key']
 
 
 DOMAINS_TO_FIX = {
