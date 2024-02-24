@@ -75,15 +75,17 @@ class Bannerlord(commands.Cog):
                                         'no valid attachments for banner found with that index')
             attachment_url = attachment.url.split('?')[0]
             if not util.is_image(attachment_url):
+                log.error("attachment_url %s is not known to be image?", attachment_url)
                 await util.handle_error(ctx,
                                         f'intended image name {attachment_url} does not '
-                                        'end in {VALID_IMAGE_EXTENSIONS}')
+                                        f'end in {VALID_IMAGE_EXTENSIONS}')
         await status_message.edit(content="found banner! downloading...")
-        image_req = requests.get(str(attachment_url), timeout=30)
+        image_req = requests.get(str(attachment.url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
-            await util.handle_error(ctx, 'Attempt to download {attachment_url} '
-                                         'resulted in HTTP {image_req.status_code}')
+            log.error("attempting to download %s results in %s", attachment.url, image_req.status_code)
+            await util.handle_error(ctx, f'Attempt to download {attachment.url} '
+                                         f'resulted in HTTP {image_req.status_code}')
             return
         image_content = image_req.content
         if image_size_needs_reduction(image_content):
