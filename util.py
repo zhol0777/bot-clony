@@ -20,14 +20,14 @@ ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 
 
 DOMAINS_TO_FIX = {
     # 'www.tiktok.com': 'proxitok.pussthecat.org',
-    'www.tiktok.com': 'vxtiktok.com',
+    # 'www.tiktok.com': 'vxtiktok.com',
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
     'instagram.com': 'ddinstagram.com',
     'www.instagram.com': 'ddinstagram.com'
 }
 
-DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
+DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'a.co']  # add vm.tiktok.com later if necessary
 
 SCRAPE_HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
