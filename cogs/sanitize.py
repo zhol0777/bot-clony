@@ -82,7 +82,8 @@ class Sanitize(commands.Cog):
         msg_is_from_bot = reaction.message.author.id == self.client.user.id
         user_ids_reacc_list = [user.id async for user in reaction.users()]
 
-        if is_correct_reacc and msg_is_from_bot:
+        if is_correct_reacc and msg_is_from_bot and self.client.user.id in user_ids_reacc_list and \
+                len(user_ids_reacc_list) > 1:
             await reaction.message.delete()
 
 
