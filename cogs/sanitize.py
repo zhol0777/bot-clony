@@ -1,6 +1,7 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
+from typing import Union
 import logging
 
 from discord.ext import commands
@@ -71,19 +72,20 @@ class Sanitize(commands.Cog):
                                        "pink tray pink pink PIIIIINK IM SUCH A CUUUTIE AAAAAA")
 
     @commands.Cog.listener()
-    async def on_reaction_add(self, reaction: discord.Reaction, user) -> None:
+    async def on_reaction_add(self, reaction: discord.Reaction,
+                              user: Union[discord.Member, discord.User]) -> None:
         '''
         delete messages from zholbot
         '''
+        if (user.id == self.client.user.id) or user.bot:  # reacting to self, do nothing
+            return
         emoji_name = reaction.emoji if isinstance(reaction.emoji, str) else reaction.emoji.name
         is_correct_reacc = emoji_name == '❌'
         if not is_correct_reacc:
             return
         msg_is_from_bot = reaction.message.author.id == self.client.user.id
-        user_ids_reacc_list = [user.id async for user in reaction.users()]
 
-        if is_correct_reacc and msg_is_from_bot and self.client.user.id in user_ids_reacc_list and \
-                len(user_ids_reacc_list) > 1:
+        if is_correct_reacc and msg_is_from_bot:
             await reaction.message.delete()
 
 
