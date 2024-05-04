@@ -1,7 +1,4 @@
-asyncpraw
-bs4
 discord.py
-feedparser
 flake8
 mypy
 peewee
@@ -10,9 +7,6 @@ pylint
 python-dotenv
 retrying
 requests
-tabulate
-types-beautifulsoup4
 types-requests
 types-Pillow
-types-tabulate
 validators

@@ -2,16 +2,15 @@
 Utility functions shared across cogs
 '''
 
-import mimetypes
+from functools import cache
 import os
 
 from discord.ext import commands
+from PIL.Image import registered_extensions
 
 ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 'tk', 'topic',
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort']
-
-mimetypes.init()
 
 
 async def handle_error(ctx: commands.Context, error_message: str):
@@ -43,11 +42,19 @@ def valid_param(param: str) -> bool:
     return False
 
 
+@cache
+def supported_image_extensions() -> set[str]:
+    '''
+    this takes a second to run as pillow inits, caching out of paranoia
+    '''
+    return set(registered_extensions().keys())
+
+
 def is_image(uri: str) -> bool:
     '''see if a URI directs to an image'''
     possible_ext = os.path.splitext(uri)[1].lower()
     try:
-        if possible_ext and mimetypes.types_map[possible_ext].startswith('image'):
+        if possible_ext and possible_ext in supported_image_extensions():
             return True
     except KeyError:
         pass
