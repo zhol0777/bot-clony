@@ -90,7 +90,10 @@ class RemindMe(commands.Cog):
         embed.add_field(name="Reason", value=reason)
         embed.add_field(name="Time", value=f'<t:{reminder_time}:f>')
         embed.add_field(name="Message link", value=str(message_url))
-        await channel.send(embed=embed)
+        try:
+            await channel.send(embed=embed)
+        except discord.errors.Forbidden:
+            pass
 
     @commands.Cog.listener()
     async def on_ready(self):
