@@ -27,7 +27,7 @@ Generics:
                 Posts channel description
   thock         provide a count of total usage of 'thock' as well as local channel usage
   mechmarket    Usage: !mechmarket [query...]           # search reddit for sales
-                       !mechmarket add [query...]       # ping you when mechmarket scraper matches 
+                       !mechmarket add [query...]       # ping you when mechmarket scraper matches
                        !mechmarket list                 # list all queries by ID and string
                        !mechmarket delete [query_id]    # stop responding to matches
 

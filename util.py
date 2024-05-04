@@ -1,13 +1,14 @@
 '''
 Utility functions shared across cogs
 '''
-from typing import Any, Tuple, Optional, Union
+from functools import cache
+from typing import Tuple, Optional, Union
 from urllib.parse import urlparse
-import mimetypes
 import os
 
 from discord.ext import commands
-import validators
+from PIL.Image import registered_extensions
+from urlextract import URLExtract
 import requests
 import discord
 
@@ -24,7 +25,7 @@ ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
                   'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 'dl', 'th',
-                  'language', ]
+                  'language', 'k']
 
 
 DOMAINS_TO_FIX = {
@@ -71,9 +72,6 @@ REDIRECT_HEADERS = {
 }
 
 
-mimetypes.init()
-
-
 def proxy_url(url: str) -> Tuple[str, bool]:
     '''
     just proxy a URL on demand
@@ -84,42 +82,42 @@ def proxy_url(url: str) -> Tuple[str, bool]:
     return sanitized_url if sanitized_url != url else url, keep_embed
 
 
-def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
+def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
     '''
     :return: Message with every URL sanitized if necessary
     '''
     needs_sanitizing = False
     post_warning = True
-    msg = ''.join(args).split()
     sanitized_msg_word_list = []
 
-    for word in msg:
-        # remove carats that disable embed but can also stop url from
-        # being recognized as link
-        if word.startswith('<') and word.endswith('>'):
-            word = word[1:-1]
-        if validators.url(word):
-            sanitized_url = handle_redirect(word)
-            sanitized_url, keep_embed = proxy_url(sanitized_url)
-            sanitized_url = sanitize_word(sanitized_url)
-            if sanitized_url != word:
-                needs_sanitizing = True
-                if not keep_embed:
-                    sanitized_msg_word_list.append(f"<{sanitized_url}>")
-                else:
-                    sanitized_msg_word_list.append(sanitized_url)
-                    post_warning = False
-        # else:
-        #     sanitized_msg_word_list.append(word)
+    for url in URLExtract().gen_urls(message_content):
+        sanitized_url = handle_redirect(url)
+        sanitized_url, keep_embed = proxy_url(sanitized_url)
+        sanitized_url = sanitize_word(sanitized_url)
+        if sanitized_url != url:
+            needs_sanitizing = True
+            if not keep_embed:
+                sanitized_msg_word_list.append(f"<{sanitized_url}>")
+            else:
+                sanitized_msg_word_list.append(sanitized_url)
+                post_warning = False
+
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
+
+
+@cache
+def supported_image_extensions() -> set[str]:
+    '''
+    this takes a second to run as pillow inits, caching out of paranoia
+    '''
+    return set(registered_extensions().values())
 
 
 def is_image(uri: str) -> bool:
     '''see if a URI directs to an image'''
     possible_ext = os.path.splitext(uri)[1].lower()
-    img_extensions = {k for k, v in mimetypes.types_map.items() if 'image' in v}
     try:
-        if possible_ext and possible_ext in img_extensions:
+        if possible_ext and possible_ext in supported_image_extensions():
             return True
     except KeyError:
         pass

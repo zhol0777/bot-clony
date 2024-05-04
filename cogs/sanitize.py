@@ -41,7 +41,7 @@ class Sanitize(commands.Cog):
                                        mention_author=False)
             try:
                 await message.edit(suppress=True)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
     @commands.command(aliases=['sanitise'])
