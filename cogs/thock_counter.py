@@ -65,7 +65,7 @@ class ThockCount(commands.Cog):
             if bool(randint(0, 1)):
                 emoji_list = ["🇱", "🇪", "🇲", "🇴", "🇳", "🇰", "3️⃣", "🇾", "🐵"]
             else:
-                emoji_list = ["🍋"]
+                emoji_list = ["🍋", "🔑"]
             for emoji in emoji_list:
                 await message.add_reaction(emoji)
         if THOCK not in message.content.lower() or message.content.lower().startswith(COMMAND_NAME):
