@@ -10,6 +10,7 @@ import discord
 import db
 
 THOCK = 'thoc'
+LEMOKEY = 'lemokey'
 THOCK_EMOTE = os.getenv('THOCK_EMOTE', '🧱')
 COMMAND_NAME = f"{os.getenv('COMMAND_PREFIX', '!')}thock"
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -59,6 +60,9 @@ class ThockCount(commands.Cog):
         '''increment thock-counter'''
         if message.author.bot:
             return
+        if LEMOKEY in message.content.lower():
+            for emoji in ["🇱", "🇪", "🇲", "🇴", "🇳", "🇰", "📧", "🇾", "🐵"]:
+                await message.add_reaction(emoji)
         if THOCK not in message.content.lower() or message.content.lower().startswith(COMMAND_NAME):
             return
         if self.is_tracking(message.channel.id):
