@@ -73,7 +73,8 @@ class ThockCount(commands.Cog):
         if self.is_tracking(message.channel.id):
             counter = 0
             for word in message.content.lower().split():
-                if word.startswith(THOCK):
+                clean_word = ''.join(char for char in word if char.isalnum())
+                if clean_word.startswith(THOCK):
                     counter += 1
             if counter > 0:
                 with db.bot_db:
