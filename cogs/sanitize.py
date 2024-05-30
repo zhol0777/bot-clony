@@ -2,6 +2,7 @@
 Command to sanitize trackers out of URL parameters by stripping params
 '''
 from functools import lru_cache
+import os
 
 from discord.ext import commands
 import discord
@@ -16,6 +17,8 @@ SCOLD_MESSAGE = '''
 MESSAGE_PREFIX = '''
 List of sanitized URLs:
 '''
+
+MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
 
 class Sanitize(commands.Cog):
@@ -55,6 +58,7 @@ class Sanitize(commands.Cog):
         await ctx.message.delete()
 
     @commands.command()
+    @commands.has_any_role(MOD_ROLE_ID)
     async def autosanitize(self, ctx, value: bool) -> None:
         '''
         Usage: !autosanitize True
