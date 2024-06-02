@@ -96,7 +96,7 @@ class DoublePosting(commands.Cog):
             embed.add_field(name="User", value=message.author.name)
             embed.add_field(name="Message Content", value=f'`{message.content}`')
             embed.add_field(name="Instance Count", value=message_identifier.instance_count)
-            embed.add_field(name="Message link", value=str(message.url))
+            embed.add_field(name="Message link", value=str(message.jump_url))
             if not message_identifier.tracking_message_id:
                 tracking_message = await channel.send(embed=embed)
                 db.MessageIdentifier.update(
