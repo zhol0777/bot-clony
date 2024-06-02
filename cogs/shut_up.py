@@ -93,20 +93,22 @@ class DoublePosting(commands.Cog):
 
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
-            embed.add_field(name="User", value=message.author.name)
+            embed.add_field(name="User", value=f'<@{message.author.id}>')
             embed.add_field(name="Message Content", value=f'`{message.content}`')
             embed.add_field(name="Instance Count", value=message_identifier.instance_count)
             embed.add_field(name="Message link", value=str(message.jump_url))
+            content = f'<@<688959322708901907>: <@{message.author.id} is spamming a lot!'
             if not message_identifier.tracking_message_id:
-                tracking_message = await channel.send(embed=embed)
+                tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
                     tracking_message_id=tracking_message.id).where(
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
+                
             else:
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
-                await original_message.edit(embed=embed)
+                await original_message.edit(content=content, embed=embed)
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
