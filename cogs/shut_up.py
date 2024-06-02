@@ -97,7 +97,7 @@ class DoublePosting(commands.Cog):
             embed.add_field(name="Message Content", value=f'`{message.content}`')
             embed.add_field(name="Instance Count", value=message_identifier.instance_count)
             embed.add_field(name="Message link", value=str(message.jump_url))
-            content = f'<@<688959322708901907>: <@{message.author.id} is spamming a lot!'
+            content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
             if not message_identifier.tracking_message_id:
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
