@@ -60,6 +60,10 @@ class DoublePosting(commands.Cog):
             return
         if message.stickers:
             return
+        if not message.content:
+            # this may just be pictures, which have blank message content
+            # which is distinct from embeds
+            return
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
