@@ -67,7 +67,7 @@ class DoublePosting(commands.Cog):
                 db.MessageIdentifier.create(message_hash=hash(message.content),
                                             user_id=message.author.id,
                                             instance_count=1,
-                                            created_at=datetime.now())
+                                            created_at=message.created_at)
                 return
 
             time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
