@@ -15,6 +15,7 @@ import db
 import util
 
 ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
+CONTAINMENT_CHANNEL_ID = int(os.getenv('CONTAINMENT_CHANNEL_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -86,15 +87,21 @@ class DoublePosting(commands.Cog):
                     db.MessageIdentifier.message_hash == hash(message.content)
                 ).execute()
 
-            # TODO: make this SCIF instead
-            channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
-            if not channel:
-                return
             # send message if over threshold
             message_identifier = self.get_message_identifier(message)
             if message_identifier.instance_count < 4:
                 return
 
+            channel_id = ZHOLBOT_CHANNEL_ID
+            # TODO: uncomment when ready
+            # await util.apply_role(message.author, message.author.id, 'Razer Hate',
+            #                       'this guy might be spamming')
+            # await self.purge(message.author.id)
+            # channel = CONTAINMENT_CHANNEL_ID
+            channel = self.client.get_channel(channel_id)
+            if not channel:
+                return
+            
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
             embed.add_field(name="User", value=f'<@{message.author.id}>')
@@ -109,7 +116,6 @@ class DoublePosting(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
-                
             else:
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
                 await original_message.edit(content=content, embed=embed)
