@@ -136,15 +136,21 @@ class StupidMessage(BaseModel):
     response_text = peewee.CharField()
 
 
-class TrackedMessage(BaseModel):
+class MessageIdentifier(BaseModel):
     '''
-    hash of a message to see if it is posted multiple times in a short succession
-    to yell if necessary
+    messages are identified based of content hashed, and message author
+    one cog will see if they are fired in multiple channels in short
+    succession in case there is a bot that needs to be muted
     '''
     message_hash = peewee.CharField()
     user_id = peewee.BigIntegerField()
     created_at = peewee.DateTimeField()
-    channel_id = peewee.BigIntegerField()
+    instance_count = peewee.BigIntegerField()
+
+    # if instance count exceeds some threshold, we send some message to
+    # a bot channel or something to explain to user and mods why they
+    # they got muted
+    tracking_message_id = peewee.CharField()
 
 
 def create_tables():
@@ -158,7 +164,7 @@ def create_tables():
                               BannedUser, SanitizedChannel,
                               SillyPage, ThockTrackingChannel,
                               MechmarketPost, MechmarketQuery,
-                              StupidMessage, TrackedMessage])
+                              StupidMessage, MessageIdentifier])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',

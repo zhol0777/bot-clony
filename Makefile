@@ -15,13 +15,13 @@ start: source
 lint: flake8 pylint mypy
 
 flake8:
-	flake8 cogs/ db.py main.py util.py
+	python3 -m flake8 cogs/ db.py main.py util.py
 
 pylint:
-	pylint cogs/ db.py main.py util.py
+	python3 -m pylint cogs/ db.py main.py util.py
 
 mypy:
-	mypy cogs/*.py db.py main.py util.py
+	python3 -m mypy cogs/*.py db.py main.py util.py
 
 docker-build:
 	docker build --no-cache -t bot-clony .

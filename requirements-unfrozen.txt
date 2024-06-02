@@ -8,6 +8,7 @@ pylint
 python-dotenv
 requests
 tabulate
+typed-ast
 types-requests
 types-Pillow
 types-tabulate

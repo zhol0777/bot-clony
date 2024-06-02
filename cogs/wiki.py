@@ -151,7 +151,7 @@ class Silly(commands.Cog):
 
         shortname = ctx.message.content.split()[1]
         with db.bot_db:
-            if silly_page := db.SillyPage.get_or_none(shortname=shortname):
+            if silly_page := db.SillyPage.get_or_none(shortname=shortname):  # noqa
                 await ctx.channel.send(silly_page.response_text)
 
     @silly.command()  # type: ignore

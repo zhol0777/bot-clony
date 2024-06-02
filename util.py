@@ -1,7 +1,6 @@
 '''
 Utility functions shared across cogs
 '''
-from functools import cache
 from typing import Tuple, Optional, Union
 from urllib.parse import urlparse
 import os
@@ -105,7 +104,6 @@ def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
 
 
-@cache
 def supported_image_extensions() -> set[str]:
     '''
     this takes a second to run as pillow inits, caching out of paranoia
