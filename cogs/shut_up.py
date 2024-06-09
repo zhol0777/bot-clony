@@ -122,6 +122,8 @@ class DoublePosting(commands.Cog):
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
+        if isinstance(date_time_str, datetime):
+            return date_time_str
         try:
             return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f%z')
         except ValueError:
