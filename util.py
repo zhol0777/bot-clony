@@ -45,7 +45,7 @@ SCRAPE_HEADERS = {
 
 mimetypes.init()
 
-WHITELISTED_DOMAINS = ['youtube.com', 'open.spotify.com']
+WHITELISTED_DOMAINS = ['youtube.com', 'www.youtube.com', 'open.spotify.com']
 
 
 def proxy_url(url: str) -> Tuple[str, bool]:
