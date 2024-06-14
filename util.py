@@ -26,6 +26,8 @@ DOMAINS_TO_FIX = {
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com']
 
+WHITELISTED_DOMAINS = ['youtube.com', 'open.spotify.com']
+
 
 def proxy_url(url: str) -> str:
     '''just proxy a URL on demand'''
@@ -48,6 +50,8 @@ def sanitize_message(args: Any) -> Tuple[str, bool]:
         if word.startswith('<') and word.endswith('>'):
             word = word[1:-1]
         if validators.url(word):
+            if urlparse(word).netloc in WHITELISTED_DOMAINS:
+                continue
             sanitized_url = handle_redirect(word)
             sanitized_url = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
