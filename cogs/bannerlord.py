@@ -35,7 +35,7 @@ class Bannerlord(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_any_role(BANNERLORD_ROLE_ID)
+    # @commands.has_any_role(BANNERLORD_ROLE_ID)
     async def banner(self, ctx: commands.Context, *args):
         '''
         make the message this replies to banner!
@@ -73,17 +73,19 @@ class Bannerlord(commands.Cog):
             except IndexError:
                 await util.handle_error(ctx,
                                         'no valid attachments for banner found with that index')
-            attachment_url = util.sanitize_word(attachment.url)
-            if not attachment_url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+            attachment_url = attachment.url
+            if not util.is_image(attachment_url.split('?')[0]):
+                log.error("attachment_url %s is not known to be image?", attachment_url)
                 await util.handle_error(ctx,
                                         f'intended image name {attachment_url} does not '
-                                        'end in {VALID_IMAGE_EXTENSIONS}')
+                                        f'end in {VALID_IMAGE_EXTENSIONS}')
         await status_message.edit(content="found banner! downloading...")
         image_req = requests.get(str(attachment_url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
-            await util.handle_error(ctx, 'Attempt to download {attachment_url} '
-                                         'resulted in HTTP {image_req.status_code}')
+            log.error("attempting to download %s results in %s", attachment_url, image_req.status_code)
+            await util.handle_error(ctx, f'Attempt to download {attachment_url} '
+                                         f'resulted in HTTP {image_req.status_code}')
             return
         image_content = image_req.content
         if image_size_needs_reduction(image_content):
