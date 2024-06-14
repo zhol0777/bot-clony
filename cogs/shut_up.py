@@ -41,12 +41,14 @@ class DoublePosting(commands.Cog):
     @tasks.loop(seconds=LOOP_TIME)
     async def purge_loop_function(self):
         '''delete messages that were initially sent too long ago'''
-        with db.bot_db:
-            now = datetime.now(timezone.utc)
-            for message in db.MessageIdentifier.select():
-                time_delta = now - self.parse_date_time_str(message.created_at)
-                if time_delta.seconds > 60:
-                    message.delete_instance()
+        db.bot_db.execute_sql(
+            "DELETE FROM messageidentifier WHERE created_at < datetime('now', '-60 seconds');")
+        # with db.bot_db:
+        #     now = datetime.now(timezone.utc)
+        #     for message in db.MessageIdentifier.select():
+        #         time_delta = now - self.parse_date_time_str(message.created_at)
+        #         if time_delta.seconds > 60:
+        #             message.delete_instance()
 
     def get_message_identifier(self, message: discord.Message) -> typing.Union[db.MessageIdentifier, None]:
         '''kind of a macro'''
