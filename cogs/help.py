@@ -11,10 +11,9 @@ import util
 GENERAL_COMMANDS = '''
 Generics:
   help2         Posts all this
-  sanitize      Sanitize messages with URLs with extra URL parameters
-                Usage: !sanitize [url1] [url2] ...
+  sanitize      Usage: !sanitize [url1] [url2] ...
                        !sanitize (as reply)
-  newvendors       Posts the vendors list
+  newvendors    Posts the vendors list
   wiki          Provide link from community wiki
                 Usage: !wiki [page name]
                        ![page name]
@@ -30,7 +29,6 @@ Generics:
                        !mechmarket add [query...]       # ping you when mechmarket scraper matches
                        !mechmarket list                 # list all queries by ID and string
                        !mechmarket delete [query_id]    # stop responding to matches
-
 '''
 
 HELPER_COMMANDS = '''
@@ -43,39 +41,27 @@ Helper Commands:
                         !ejectwarn [reason...] (as reply)
                         !ejectwarn list [@ user tag]
                         !ejectwarn delete [reason ID]
-  unejectloopstart
-                Start async time monitoring loop for unejects
-                Usage:  !unejectloopstart
-  slowmode      Activate slowmode in help channels
-                Usage:  !slowmode [interval]
   socialcredit
-                Social credit adding or removing from users
                 Usage:  !socialcredit [user tag]
                 [reply] !socialcredit
-
                         !socialcredit add [user tag] [amount]
                 [reply] !socialcredit add [amount]
 
                         !socialcredit remove [user tag] [amount]
                 [reply] !socialcredit remove [amount]
-  wiki          Usage:  Define a wiki page by a shortcut:
-                        !wiki define page [shortname] [url]
-                        Define the wiki root domain:
+  wiki          Usage:  !wiki define page [shortname] [url]
                         !wiki define root [url]
-                        Delete a wiki page
                         !wiki delete [shortname]
-  silly         Usage:  Define a silly piece of text by a shortcut:
-                        !silly define [shortname] [text...]
-                        Delete a silly link
+                        !wiki listall
+  silly         Usage:  !silly define [shortname] [text...]
                         !silly delete [shortname]
+                        !silly listall
   forcegoogle   Usage:  [reply] !forcegoogle
                                 !lmgtfy
   decide        Usage:  !decide sonnet75 obliterated75 gmmkpro q1 m1
-  autosanitize  Usage:  Enable auto-sanitizer in a help channel:
-                        !autosanitize true
-                        Disable auto-sanitizer in a help channel:
+  autosanitize  Usage:  !autosanitize true
                         !autosanitize false
-  slowmode      Usage:  Set slowmode in help/buying-advice to number of seconds
+  slowmode      Usage:  !slowmode [interval]  # only for help/buying advice
 '''
 
 MOD_COMMANDS = '''
