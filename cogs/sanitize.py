@@ -33,7 +33,7 @@ class Sanitize(commands.Cog):
                                                        mention_author=False)
             try:
                 await message.edit(suppress=True)
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 log.exception("Bot is missing MANAGE_MESSAGES permission, cannot hide embed")
             await sanitized_msg.add_reaction("❌")
 
