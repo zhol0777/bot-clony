@@ -73,8 +73,6 @@ def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
         if word.startswith('<') and word.endswith('>'):
             word = word[1:-1]
         if validators.url(word):
-            if urlparse(word).netloc in WHITELISTED_DOMAINS:
-                continue
             sanitized_url = handle_redirect(word)
             sanitized_url, keep_embed = proxy_url(sanitized_url)
             sanitized_url = sanitize_word(sanitized_url)
@@ -103,6 +101,8 @@ def is_image(uri: str) -> bool:
 
 def sanitize_word(word: str) -> str:
     '''remove unnecessary url parameters from a url'''
+    if urlparse(word).netloc in WHITELISTED_DOMAINS + [*DOMAINS_TO_FIX]:
+        return word
     new_word = word.split('?')[0]
 
     # do not sanitize image embeds
@@ -141,13 +141,21 @@ def proxy_if_necessary(url: str) -> Tuple[str, bool]:
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
             new_url = url.replace(bad_domain, better_domain, 1)
+            try:
+                req = requests.head(new_url, timeout=5)
+            except requests.exceptions.ReadTimeout:
+                return url, True
+
             # if bad_domain in ['twitter.com', 'x.com']:
             #     # rain's crying that bot re-embeds unnecessarily,
             #     # so only send if its got a video embed
             #     req = requests.get(new_url, timeout=10)
             #     if 'twitter:player:stream' not in req.text:
             #         return url, False
-            return new_url, True
+
+            # the original functionality
+            # return new_url, True
+            return (new_url, True) if 'mp4' in req.text else (url, True)
     return url, False
 
 
