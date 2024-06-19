@@ -24,7 +24,7 @@ class Steal(commands.Cog):
         emoji_name = words[2] if len(words) > 2 else None
         # is url
         if emoji.startswith('<') and emoji.endswith('>'):  # uses embedded emoji
-            found_emoji = discord.PartialEmoji.from_str(emoji)
+            found_emoji = discord.PartialEmoji.from_str(emoji)  # pylint: disable=no-member
             emoji_url = found_emoji.url
             emoji_name = emoji_name or found_emoji.name
         elif validators.url(emoji):
@@ -51,8 +51,8 @@ class Steal(commands.Cog):
         try:
             await ctx.guild.delete_emoji(emoji)  # type: ignore
             await ctx.message.channel.send("farewell...")
-        except Exception as e:
-            await ctx.message.channel.send(f"error occured deleting emoji: `{e}`")
+        except Exception as exc:  # pylint: disable=broad-except
+            await ctx.message.channel.send(f"error occured deleting emoji: `{exc}`")
 
 
 async def setup(client):

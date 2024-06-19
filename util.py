@@ -48,22 +48,12 @@ mimetypes.init()
 WHITELISTED_DOMAINS = ['youtube.com', 'www.youtube.com', 'open.spotify.com']
 
 
-def proxy_url(url: str) -> Tuple[str, bool]:
-    '''
-    just proxy a URL on demand
-    :return: sanitized url, bool implying whether or not to keep embed
-    '''
-    sanitized_url = handle_redirect(url)
-    sanitized_url, keep_embed = proxy_if_necessary(sanitized_url)
-    return sanitized_url if sanitized_url != url else url, keep_embed
-
-
 def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
     '''
     :return: Message with every URL sanitized if necessary
     '''
     needs_sanitizing = False
-    post_warning = True
+    post_warning = False  # never send it here
     msg = ''.join(args).split()
     sanitized_msg_word_list = []
 
@@ -75,26 +65,25 @@ def sanitize_message(args: Any) -> Tuple[str, bool, bool]:
         if validators.url(word):
             if urlparse(word).netloc in WHITELISTED_DOMAINS:
                 continue
-            sanitized_url = handle_redirect(word)
-            sanitized_url, keep_embed = proxy_url(sanitized_url)
-            sanitized_url = sanitize_word(sanitized_url)
-            if sanitized_url != word:
-                needs_sanitizing = True
-                if not keep_embed:
-                    sanitized_msg_word_list.append(f"<{sanitized_url}>")
-                else:
-                    if urlparse(sanitized_url).netloc in [*DOMAINS_TO_FIX]:
-                        try:
-                            req = requests.get(sanitized_url, timeout=10)
-                        except requests.exceptions.ReadTimeout:
-                            continue
-                        if 'mp4' in req.text:
-                            sanitized_msg_word_list.append(sanitized_url)
-                    else:
-                        sanitized_msg_word_list.append(sanitized_url)
-                    post_warning = False
-        # else:
-        #     sanitized_msg_word_list.append(word)
+            # if urlparse(word).netloc in [*DOMAINS_TO_FIX]:
+            if proxy_url(word) != word:
+                sanitized_url = sanitize_word(proxy_url(word))
+                # check for liveness
+                try:
+                    req = requests.get(sanitized_url, timeout=10)
+                except requests.exceptions.ReadTimeout:
+                    continue  # he's dead jim
+                if 'mp4' in req.text:
+                    sanitized_msg_word_list.append(sanitized_url)
+                    needs_sanitizing = True
+                else:  # no value add
+                    continue
+            else:
+                sanitized_url = handle_redirect(word)
+                sanitized_url = sanitize_word(sanitized_url)
+                if sanitized_url != word:
+                    sanitized_msg_word_list.append(sanitized_url)
+                    needs_sanitizing = True
     return '\n'.join(sanitized_msg_word_list), needs_sanitizing, post_warning
 
 
@@ -141,7 +130,7 @@ def handle_redirect(url: str) -> str:
     return url
 
 
-def proxy_if_necessary(url: str) -> Tuple[str, bool]:
+def proxy_url(url: str) -> str:
     '''
     mostly fix embeds for discord
     :return the sanitized url, bool implying whether or not to keep embed
@@ -149,14 +138,8 @@ def proxy_if_necessary(url: str) -> Tuple[str, bool]:
     for bad_domain, better_domain in DOMAINS_TO_FIX.items():
         if urlparse(url).netloc == bad_domain:
             new_url = url.replace(bad_domain, better_domain, 1)
-            # if bad_domain in ['twitter.com', 'x.com']:
-            #     # rain's crying that bot re-embeds unnecessarily,
-            #     # so only send if its got a video embed
-            #     req = requests.get(new_url, timeout=10)
-            #     if 'twitter:player:stream' not in req.text:
-            #         return url, False
-            return new_url, True
-    return url, False
+            return new_url
+    return url
 
 
 def valid_param(param: str) -> bool:
@@ -165,21 +148,6 @@ def valid_param(param: str) -> bool:
         if param.startswith(f'{allowed_param}='):
             return True
     return False
-
-
-# TODO: deprecate
-def aliexpress_sanitize(url: str) -> str:
-    '''
-    Convert bogus aliexpress url (which already has URL params *stripped*)
-    https://aliexpress.ru/item/424380923490234098324.html or
-    https://it.aliexpress.com/item/gabagoolmammamia.html
-    to:
-    https://www.aliexpress.com/item/3292032903290.html
-    to prevent anyone who clicks on a link from having their language settings
-    changed
-    '''
-    stripped_id = get_id_from_tag(url)
-    return f'https://www.aliexpress.com/item/{stripped_id}.html'
 
 
 def get_id_from_tag(tag: str) -> int:
