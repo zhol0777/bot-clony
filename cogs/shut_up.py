@@ -63,7 +63,7 @@ class DoublePosting(commands.Cog):
         # do not do this to messages that are empty for some reason
         if any([message.author.id == self.client.user.id, message.stickers, not message.content]):
             return
-        
+
         # NOTE: link won't detect if content is something like "discord dot gg"
         # so, uh, watch out! most spam we're getting is steamcommunity phishing
         # links which would normally detect anyway
@@ -117,7 +117,7 @@ class DoublePosting(commands.Cog):
             content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
             if not message_identifier.tracking_message_id:
                 await util.apply_role(message.author, message.author.id, 'Razer Hate',
-                        'this guy might be spamming')
+                                      'this guy might be spamming')
                 await self.purge(message.author.id)
 
                 tracking_message = await channel.send(content=content, embed=embed)
