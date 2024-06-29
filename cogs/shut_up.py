@@ -101,11 +101,11 @@ class DoublePosting(commands.Cog):
             if message_identifier.instance_count < 5:
                 return
 
-            channel_id = CONTAINMENT_CHANNEL_ID or ZHOLBOT_CHANNEL_ID
-
-            channel = self.client.get_channel(channel_id)
+            channel = self.client.get_channel(CONTAINMENT_CHANNEL_ID)
             if not channel:
-                return
+                channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
+                if not channel:
+                    return
 
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
