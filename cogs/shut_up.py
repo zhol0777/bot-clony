@@ -2,13 +2,13 @@
 Track specific strings (like gifs of a cat jerking itself off or a lil shoosh soundtest)
 that triggers response
 '''
-# from functools import lru_cache
-from datetime import datetime, timezone
+from datetime import datetime
 import logging
 import os
 import typing
 
 from discord.ext import commands, tasks
+from urlextract import URLExtract
 import discord
 
 import db
@@ -59,14 +59,21 @@ class DoublePosting(commands.Cog):
     async def on_message(self, message: discord.Message):
         '''send annoyance message if message has been sent multiple times in last 15s'''
         # do not do this to zholbot and end up in infinite feedback loop
-        if message.author.id == self.client.user.id:
+        # do not do this to messages that only have a sticker
+        # do not do this to messages that are empty for some reason
+        if any([message.author.id == self.client.user.id, message.stickers, not message.content]):
             return
-        if message.stickers:
+        
+        # NOTE: link won't detect if content is something like "discord dot gg"
+        # so, uh, watch out! most spam we're getting is steamcommunity phishing
+        # links which would normally detect anyway
+        has_link = False
+        for _ in URLExtract().gen_urls(message.content):
+            has_link = True
+            break
+        if not has_link:
             return
-        if not message.content:
-            # this may just be pictures, which have blank message content
-            # which is distinct from embeds
-            return
+
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
@@ -91,19 +98,15 @@ class DoublePosting(commands.Cog):
 
             # send message if over threshold
             message_identifier = self.get_message_identifier(message)
-            if message_identifier.instance_count < 4:
+            if message_identifier.instance_count < 5:
                 return
 
-            channel_id = ZHOLBOT_CHANNEL_ID
-            # TODO: uncomment when ready
-            # await util.apply_role(message.author, message.author.id, 'Razer Hate',
-            #                       'this guy might be spamming')
-            # await self.purge(message.author.id)
-            # channel = CONTAINMENT_CHANNEL_ID
+            channel_id = CONTAINMENT_CHANNEL_ID or ZHOLBOT_CHANNEL_ID
+
             channel = self.client.get_channel(channel_id)
             if not channel:
                 return
-            
+
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
             embed.add_field(name="User", value=f'<@{message.author.id}>')
@@ -111,7 +114,12 @@ class DoublePosting(commands.Cog):
             embed.add_field(name="Instance Count", value=message_identifier.instance_count)
             embed.add_field(name="Message link", value=str(message.jump_url))
             content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
+            content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
             if not message_identifier.tracking_message_id:
+                await util.apply_role(message.author, message.author.id, 'Razer Hate',
+                        'this guy might be spamming')
+                await self.purge(message.author.id)
+
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
                     tracking_message_id=tracking_message.id).where(
@@ -131,22 +139,24 @@ class DoublePosting(commands.Cog):
         except ValueError:
             return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S%z')
 
-    async def purge(self, user_id: int):
+    async def purge(self, purged_user_id: int):
         '''
         Go through last 100 messages and purge those from user
         tagged or replied to
         '''
-        purged_user = self.client.get_user(user_id)
 
-        def is_purged_user(message):
-            return message.author == purged_user
+        def is_purged_user(message: discord.Message):
+            return message.author.id == purged_user_id
 
         # TODO: figure out less dumb way to do this
         # TODO: async purge
         guild = util.fetch_primary_guild(self.client)
         for channel in guild.channels:
             if isinstance(channel, discord.TextChannel):
-                await channel.purge(limit=100, check=is_purged_user)
+                try:
+                    await channel.purge(limit=20, check=is_purged_user)
+                except Exception:  # pylint: disable=broad-exception-caught
+                    pass
 
 
 async def setup(client):

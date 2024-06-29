@@ -63,7 +63,7 @@ class ThockCount(commands.Cog):
             return
         if LEMOKEY in message.content.lower():
             if bool(randint(0, 1)):
-                emoji_list = ["🇱", "🇪", "🇲", "🇴", "🇳", "🇰", "3️⃣", "🇾", "🐵"]
+                emoji_list = ["🇱", "🇪", "🐵"]
             else:
                 emoji_list = ["🍋", "🔑"]
             for emoji in emoji_list:

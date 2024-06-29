@@ -91,7 +91,7 @@ class MechmarketScraper(commands.Cog):
                             f"\n{post_link} - {timestamp}"
                         await channel.send(text)
                     db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
-        except Exception:
+        except Exception:  # pylint:disable=broad-exception-caught
             pass  # TODO: cry I guess
         await reddit.close()
 
