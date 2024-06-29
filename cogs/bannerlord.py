@@ -90,8 +90,8 @@ class Bannerlord(commands.Cog):
         image_req = requests.get(str(attachment_url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
         if image_req.status_code != 200:
-            await util.handle_error(ctx, 'Attempt to download {attachment_url} '
-                                         'resulted in HTTP {image_req.status_code}')
+            await util.handle_error(ctx, f'Attempt to download {attachment_url} '
+                                         f'resulted in HTTP {image_req.status_code}')
             return
         image_content = image_req.content
         if image_size_needs_reduction(image_content):
