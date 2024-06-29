@@ -150,7 +150,7 @@ class DoublePosting(commands.Cog):
 
         # TODO: figure out less dumb way to do this
         # TODO: async purge
-        guild = util.fetch_primary_guild(self.client)
+        guild = await util.fetch_primary_guild(self.client)
         for channel in guild.channels:
             if isinstance(channel, discord.TextChannel):
                 try:
