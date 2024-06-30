@@ -19,7 +19,9 @@ CONTAINMENT_CHANNEL_ID = int(os.getenv('CONTAINMENT_CHANNEL_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
+
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 LOOP_TIME = 60
 SPAM_INTERVAL = 15
@@ -118,7 +120,7 @@ class DoublePosting(commands.Cog):
             if not message_identifier.tracking_message_id:
                 await util.apply_role(message.author, message.author.id, 'Razer Hate',
                                       'this guy might be spamming')
-                await self.purge(message.author.id)
+                await self.purge(message.author.id, message.guild)
 
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
@@ -139,7 +141,7 @@ class DoublePosting(commands.Cog):
         except ValueError:
             return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S%z')
 
-    async def purge(self, purged_user_id: int):
+    async def purge(self, purged_user_id: int, guild: discord.Guild):
         '''
         Go through last 100 messages and purge those from user
         tagged or replied to
@@ -150,13 +152,16 @@ class DoublePosting(commands.Cog):
 
         # TODO: figure out less dumb way to do this
         # TODO: async purge
-        guild = await util.fetch_primary_guild(self.client)
+        # guild = await util.fetch_primary_guild(self.client)
         for channel in guild.channels:
+            log.debug("purging %s messages from %s", purged_user_id, channel.name)
             if isinstance(channel, discord.TextChannel):
                 try:
                     await channel.purge(limit=20, check=is_purged_user)
                 except Exception:  # pylint: disable=broad-exception-caught
-                    pass
+                    log.exception("Cant purge from %s...", channel.name)
+            else:
+                log.debug("%s not a text channel... is %s", channel.name, type(channel))
 
 
 async def setup(client):
