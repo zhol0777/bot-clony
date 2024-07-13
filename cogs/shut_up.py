@@ -57,6 +57,7 @@ class DoublePosting(commands.Cog):
         return db.MessageIdentifier.get_or_none(message_hash=hash(message.content),
                                                 user_id=message.author.id)
 
+    # TODO: deal with race condition
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         '''send annoyance message if message has been sent multiple times in last 15s'''
@@ -120,7 +121,7 @@ class DoublePosting(commands.Cog):
             if not message_identifier.tracking_message_id:
                 await util.apply_role(message.author, message.author.id, 'Razer Hate',
                                       'this guy might be spamming')
-                await self.purge(message.author.id, message.guild)
+                await self.purge(message.author.id, message.guild, message.content)
 
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
@@ -141,14 +142,15 @@ class DoublePosting(commands.Cog):
         except ValueError:
             return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S%z')
 
-    async def purge(self, purged_user_id: int, guild: discord.Guild):
+    async def purge(self, purged_user_id: int, guild: discord.Guild,
+                    message_content: str):
         '''
         Go through last 100 messages and purge those from user
         tagged or replied to
         '''
 
-        def is_purged_user(message: discord.Message):
-            return message.author.id == purged_user_id
+        def should_be_purged(message: discord.Message):
+            return message.author.id == purged_user_id and hash(message_content) == hash(message.content)
 
         # TODO: figure out less dumb way to do this
         # TODO: async purge
@@ -157,9 +159,15 @@ class DoublePosting(commands.Cog):
             log.debug("purging %s messages from %s", purged_user_id, channel.name)
             if isinstance(channel, discord.TextChannel):
                 try:
-                    await channel.purge(limit=20, check=is_purged_user)
+                    async for message in channel.history(limit=20):
+                        if should_be_purged(message):
+                            try:
+                                await message.delete()
+                            except discord.NotFound:
+                                pass  # hopefully already deleted?
                 except Exception:  # pylint: disable=broad-exception-caught
-                    log.exception("Cant purge from %s...", channel.name)
+                    log.exception("Cant delete normally from %s, puring...", channel.name)
+                    await channel.purge(limit=20, check=should_be_purged)
             else:
                 log.debug("%s not a text channel... is %s", channel.name, type(channel))
 
