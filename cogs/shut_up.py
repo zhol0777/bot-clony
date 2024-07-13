@@ -155,21 +155,22 @@ class DoublePosting(commands.Cog):
         # TODO: figure out less dumb way to do this
         # TODO: async purge
         # guild = await util.fetch_primary_guild(self.client)
-        for channel in guild.channels:
+        for channel in guild.text_channels:
             log.debug("purging %s messages from %s", purged_user_id, channel.name)
-            if isinstance(channel, discord.TextChannel):
-                try:
-                    async for message in channel.history(limit=20):
-                        if should_be_purged(message):
-                            try:
-                                await message.delete()
-                            except discord.NotFound:
-                                pass  # hopefully already deleted?
-                except Exception:  # pylint: disable=broad-exception-caught
-                    log.exception("Cant delete normally from %s, puring...", channel.name)
-                    await channel.purge(limit=20, check=should_be_purged)
-            else:
-                log.debug("%s not a text channel... is %s", channel.name, type(channel))
+            try:
+                # await channel.purge(limit=20, check=should_be_purged)
+                async for message in channel.history(limit=20):
+                    if should_be_purged(message):
+                        try:
+                            await message.delete()
+                        except discord.NotFound:
+                            pass  # hopefully already deleted?
+            except discord.errors.Forbidden:
+                log.error("Cannot purge messages from %s due to permissions forbidden",
+                          channel.name)
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                log.error("Cant purge from %s due to %s...", channel.name, exc)
+                # await channel.purge(limit=20, check=should_be_purged)
 
 
 async def setup(client):
