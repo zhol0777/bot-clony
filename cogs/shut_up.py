@@ -161,7 +161,6 @@ class DoublePosting(commands.Cog):
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
                 await original_message.edit(content=content, embed=embed)
                 lock.release()
-            lock.release()
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
