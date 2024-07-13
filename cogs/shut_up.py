@@ -3,6 +3,7 @@ Track specific strings (like gifs of a cat jerking itself off or a lil shoosh so
 that triggers response
 '''
 from datetime import datetime
+from threading import RLock
 import logging
 import os
 import typing
@@ -31,6 +32,7 @@ class DoublePosting(commands.Cog):
     '''Oh My God Stop Posting Multiple Times In Every Channel'''
     def __init__(self, client):
         self.client = client
+        self.user_id_lock_map = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -77,6 +79,10 @@ class DoublePosting(commands.Cog):
         if not has_link:
             return
 
+        if message.author.id not in self.user_id_lock_map:
+            self.user_id_lock_map[message.author.id] = RLock()
+        self.user_id_lock_map[message.author.id].acquire()
+
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
@@ -85,11 +91,13 @@ class DoublePosting(commands.Cog):
                                             user_id=message.author.id,
                                             instance_count=1,
                                             created_at=message.created_at)
+                self.user_id_lock_map[message.author.id].release()
                 return
 
             time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if time_delta.seconds > SPAM_INTERVAL:
+                self.user_id_lock_map[message.author.id].release()
                 return
 
             # increment count
@@ -102,12 +110,15 @@ class DoublePosting(commands.Cog):
             # send message if over threshold
             message_identifier = self.get_message_identifier(message)
             if message_identifier.instance_count < 5:
+                self.user_id_lock_map[message.author.id].release()
                 return
 
             channel = self.client.get_channel(CONTAINMENT_CHANNEL_ID)
             if not channel:
                 channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
                 if not channel:
+                    log.error("Please set up a containment channel!")
+                    self.user_id_lock_map[message.author.id].release()
                     return
 
             embed = discord.Embed(color=discord.Colour.orange())
@@ -129,9 +140,11 @@ class DoublePosting(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
+                self.user_id_lock_map[message.author.id].release()
             else:
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
                 await original_message.edit(content=content, embed=embed)
+                self.user_id_lock_map[message.author.id].release()
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
@@ -155,7 +168,9 @@ class DoublePosting(commands.Cog):
         # TODO: figure out less dumb way to do this
         # TODO: async purge
         # guild = await util.fetch_primary_guild(self.client)
-        for channel in guild.text_channels:
+        for channel in guild.channels:
+            if not isinstance(channel, discord.TextChannel):
+                continue
             log.debug("purging %s messages from %s", purged_user_id, channel.name)
             try:
                 # await channel.purge(limit=20, check=should_be_purged)
@@ -166,8 +181,7 @@ class DoublePosting(commands.Cog):
                         except discord.NotFound:
                             pass  # hopefully already deleted?
             except discord.errors.Forbidden:
-                log.error("Cannot purge messages from %s due to permissions forbidden",
-                          channel.name)
+                pass
             except Exception as exc:  # pylint: disable=broad-exception-caught
                 log.error("Cant purge from %s due to %s...", channel.name, exc)
                 # await channel.purge(limit=20, check=should_be_purged)
