@@ -3,7 +3,6 @@ Track specific strings (like gifs of a cat jerking itself off or a lil shoosh so
 that triggers response
 '''
 from datetime import datetime
-from threading import RLock
 import logging
 import os
 import typing
@@ -32,7 +31,6 @@ class DoublePosting(commands.Cog):
     '''Oh My God Stop Posting Multiple Times In Every Channel'''
     def __init__(self, client):
         self.client = client
-        self.user_id_lock_map = {}
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -54,8 +52,11 @@ class DoublePosting(commands.Cog):
         #         if time_delta.seconds > 60:
         #             message.delete_instance()
 
-    def get_message_identifier(self, message: discord.Message) -> typing.Union[db.MessageIdentifier, None]:
+    def get_message_identifier(self, message: discord.Message,
+                               row_id: int = None) -> typing.Union[db.MessageIdentifier, None]:
         '''kind of a macro'''
+        if row_id:
+            return db.MessageIdentifier.get_or_none(id=row_id)
         return db.MessageIdentifier.get_or_none(message_hash=hash(message.content),
                                                 user_id=message.author.id)
 
@@ -79,10 +80,6 @@ class DoublePosting(commands.Cog):
         if not has_link:
             return
 
-        if message.author.id not in self.user_id_lock_map:
-            self.user_id_lock_map[message.author.id] = RLock()
-        self.user_id_lock_map[message.author.id].acquire()
-
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
@@ -91,35 +88,30 @@ class DoublePosting(commands.Cog):
                                             user_id=message.author.id,
                                             instance_count=1,
                                             created_at=message.created_at)
-                self.user_id_lock_map[message.author.id].release()
                 return
 
             time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if time_delta.seconds > SPAM_INTERVAL:
-                self.user_id_lock_map[message.author.id].release()
                 return
 
             # increment count
             db.MessageIdentifier.update(
                 instance_count=db.MessageIdentifier.instance_count + 1).where(
-                    db.MessageIdentifier.user_id == message.author.id,
-                    db.MessageIdentifier.message_hash == hash(message.content)
+                    db.MessageIdentifier.id == message_identifier.id,  # pylint: disable=no-member
                 ).execute()
-
-            # send message if over threshold
-            message_identifier = self.get_message_identifier(message)
-            if message_identifier.instance_count < 5:
-                self.user_id_lock_map[message.author.id].release()
-                return
 
             channel = self.client.get_channel(CONTAINMENT_CHANNEL_ID)
             if not channel:
                 channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
                 if not channel:
                     log.error("Please set up a containment channel!")
-                    self.user_id_lock_map[message.author.id].release()
                     return
+
+            # send message if over threshold
+            message_identifier = self.get_message_identifier(message, message_identifier.id)
+            if message_identifier.instance_count < 5:
+                return
 
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
@@ -129,22 +121,21 @@ class DoublePosting(commands.Cog):
             embed.add_field(name="Message link", value=str(message.jump_url))
             content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
             content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
+            # need as fresh as possible because i don't know how to handle race conditions
+            message_identifier = self.get_message_identifier(message, message_identifier.id)
             if not message_identifier.tracking_message_id:
                 await util.apply_role(message.author, message.author.id, 'Razer Hate',
                                       'this guy might be spamming')
-                await self.purge(message.author.id, message.guild, message.content)
-
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
                     tracking_message_id=tracking_message.id).where(
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
-                self.user_id_lock_map[message.author.id].release()
+                await self.purge(message.author.id, message.guild, message.content)
             else:
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
                 await original_message.edit(content=content, embed=embed)
-                self.user_id_lock_map[message.author.id].release()
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
@@ -171,7 +162,6 @@ class DoublePosting(commands.Cog):
         for channel in guild.channels:
             if not isinstance(channel, discord.TextChannel):
                 continue
-            log.debug("purging %s messages from %s", purged_user_id, channel.name)
             try:
                 # await channel.purge(limit=20, check=should_be_purged)
                 async for message in channel.history(limit=20):
