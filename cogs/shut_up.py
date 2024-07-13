@@ -3,6 +3,7 @@ Track specific strings (like gifs of a cat jerking itself off or a lil shoosh so
 that triggers response
 '''
 from datetime import datetime
+from pathlib import Path
 import logging
 import os
 import typing
@@ -25,6 +26,22 @@ log.setLevel(logging.DEBUG)
 
 LOOP_TIME = 60
 SPAM_INTERVAL = 15
+
+
+class BasicLock:
+    def __init__(self, uid):
+        self.lock_path = Path(f'.lock_{uid}')
+
+    def acquire(self):
+        while self.lock_path.exists():
+            pass
+        self.lock_path.touch()
+
+    def release(self):
+        try:
+            self.lock_path.unlink()
+        except FileNotFoundError:
+            pass
 
 
 class DoublePosting(commands.Cog):
@@ -113,11 +130,17 @@ class DoublePosting(commands.Cog):
             if message_identifier.instance_count < 5:
                 return
 
+            # start lock operations
+            lock = BasicLock(message_identifier.message_hash)
+            lock.acquire()
+            
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
             embed.add_field(name="User", value=f'<@{message.author.id}>')
             embed.add_field(name="Message Content", value=f'`{message.content}`')
-            embed.add_field(name="Instance Count", value=message_identifier.instance_count)
+            embed.add_field(name="Instance Count",
+                            value=self.get_message_identifier(message,
+                                                              message_identifier.id).instance_count)
             embed.add_field(name="Message link", value=str(message.jump_url))
             content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
             content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
@@ -132,10 +155,12 @@ class DoublePosting(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
+                lock.release()
                 await self.purge(message.author.id, message.guild, message.content)
             else:
                 original_message = await channel.fetch_message(message_identifier.tracking_message_id)
                 await original_message.edit(content=content, embed=embed)
+                lock.release()
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"
