@@ -11,7 +11,7 @@ import db
 import util
 
 SCOLD_MESSAGE = '''
-[*Why was this message sent?*](<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>)
+-# [*Why was this message sent?*](<https://faun.pub/url-sanitization-the-why-and-how-9f14e1547151>)
 '''
 
 MESSAGE_PREFIX = '''
