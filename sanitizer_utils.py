@@ -29,7 +29,7 @@ DOMAINS_TO_FIX = {
 }
 
 
-WHITELISTED_DOMAINS = ['youtube.com', 'www.youtube.com', 'open.spotify.com', *DOMAINS_TO_FIX.values()]
+WHITELISTED_DOMAINS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'open.spotify.com', *DOMAINS_TO_FIX.values()]
 
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
