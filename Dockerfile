@@ -1,4 +1,4 @@
-FROM python:3.9.13-alpine3.16
+FROM python:3.11-alpine
 
 RUN apk update
 RUN apk --no-cache add git
