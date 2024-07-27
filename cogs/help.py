@@ -1,8 +1,8 @@
 '''
 Generic commands that provide simple responses
 '''
-import re
 import os
+import re
 
 from discord.ext import commands
 
@@ -98,8 +98,8 @@ class Help(commands.Cog):
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
             if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID) \
-                    and ctx.message.channel.id in [HELPER_CHAT_ID,
-                                                   ZHOLBOT_CHANNEL_ID]:
+                    and ctx.message.channel.id in {HELPER_CHAT_ID,
+                                                   ZHOLBOT_CHANNEL_ID}:
                 await ctx.channel.send(f'```{HELPER_COMMANDS}```')
             if util.user_has_role_from_id(ctx.message.author, MOD_ROLE_ID) \
                     and ctx.message.channel.id == MOD_CHAT_ID:
@@ -113,8 +113,8 @@ class Help(commands.Cog):
         if not hasattr(ctx.message.author, 'roles'):
             return
         if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID) \
-                and ctx.message.channel.id in [HELPER_CHAT_ID,
-                                               ZHOLBOT_CHANNEL_ID]:
+                and ctx.message.channel.id in {HELPER_CHAT_ID,
+                                               ZHOLBOT_CHANNEL_ID}:
             for line in HELPER_COMMANDS.split('\n'):
                 if command in line:
                     help_msg += f'{line}\n'

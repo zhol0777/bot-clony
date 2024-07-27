@@ -2,11 +2,11 @@
 Cog to allow users to link pages in community wiki
 and allow helpers to define page links in community wiki
 '''
-from urllib.parse import urljoin
 import os
+from urllib.parse import urljoin
 
-from discord.ext import commands
 import validators
+from discord.ext import commands
 
 import db
 import util
@@ -29,7 +29,7 @@ class Wiki(commands.Cog):
         Grab a link to some community wiki page
         '''
         if ctx.invoked_subcommand and \
-                ctx.invoked_subcommand.name in ['define', 'listall', 'delete']:
+                ctx.invoked_subcommand.name in {'define', 'listall', 'delete'}:
             return
         reply_message = await util.get_reply_message(ctx.message)
 
@@ -146,12 +146,12 @@ class Silly(commands.Cog):
     async def silly(self, ctx: commands.Context):
         "like wiki, but dumber"
         if ctx.invoked_subcommand and \
-                ctx.invoked_subcommand.name in ['define', 'listall', 'delete']:
+                ctx.invoked_subcommand.name in {'define', 'listall', 'delete'}:
             return
 
         shortname = ctx.message.content.split()[1]
         with db.bot_db:
-            if silly_page := db.SillyPage.get_or_none(shortname=shortname):  # noqa
+            if silly_page := db.SillyPage.get_or_none(shortname=shortname):
                 await ctx.channel.send(silly_page.response_text)
 
     @silly.command()  # type: ignore
@@ -199,7 +199,7 @@ class Silly(commands.Cog):
         List all available programmable joke responses
         '''
         if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID):
-            if ctx.message.channel.id in [HELPER_CHAT_ID, ZHOLBOT_CHANNEL_ID]:
+            if ctx.message.channel.id in {HELPER_CHAT_ID, ZHOLBOT_CHANNEL_ID}:
                 with db.bot_db:
                     pages = db.SillyPage.select()
                     page_listing = '\n'.join(sorted(p.shortname for p in pages))

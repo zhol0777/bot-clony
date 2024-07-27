@@ -1,13 +1,13 @@
 '''
 DM a user a reminder of something they needed to be reminded of
 '''
-from typing import Union
 import asyncio
 import os
 import time
+from typing import Union
 
-from discord.ext import commands, tasks  # type: ignore
 import discord
+from discord.ext import commands, tasks  # type: ignore
 
 import db
 import util

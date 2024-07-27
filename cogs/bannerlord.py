@@ -2,15 +2,15 @@
 automate making server banners
 '''
 
-from io import BytesIO
 import logging
 import os
+from io import BytesIO
 
-from discord.ext import commands
-from PIL import Image
 import discord
 import requests
 import validators
+from discord.ext import commands
+from PIL import Image
 
 import db
 import util
@@ -65,10 +65,9 @@ class Bannerlord(commands.Cog):
             for embed in original_msg.embeds:
                 if embed.thumbnail and str(embed.thumbnail.url).lower().endswith(VALID_IMAGE_EXTENSIONS):
                     image_url_list.append(embed.thumbnail.url)
-                else:
-                    if embed.image and embed.image.url and \
-                            embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                        image_url_list.append(embed.image.url)
+                elif embed.image and embed.image.url and \
+                        embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                    image_url_list.append(embed.image.url)
             try:
                 attachment_url = image_url_list[attachment_index]
             except IndexError:
@@ -89,7 +88,7 @@ class Bannerlord(commands.Cog):
         await status_message.edit(content="found banner! downloading...")
         image_req = requests.get(str(attachment_url), timeout=30)
         await status_message.edit(content="banner should be downloaded now!")
-        if image_req.status_code != 200:
+        if not image_req.ok:
             await util.handle_error(ctx, f'Attempt to download {attachment_url} '
                                          f'resulted in HTTP {image_req.status_code}')
             return

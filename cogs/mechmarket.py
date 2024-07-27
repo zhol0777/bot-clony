@@ -2,7 +2,6 @@
 Scrape mechmarket periodically
 '''
 import logging
-
 import os
 import re
 
@@ -14,10 +13,8 @@ from tabulate import tabulate
 import db
 import util
 
-
 MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
-# SELLING_FLAIR_SPAN = '<span class="linkflairlabel " title="Selling">Selling</span>'
 LOOP_TIME = 60
 BACKOFF_TIME_MS = 10000
 
@@ -99,7 +96,7 @@ class MechmarketScraper(commands.Cog):
     async def mechmarket(self, ctx: commands.Context):
         '''response for people who will not do price checks themselves'''
         if ctx.invoked_subcommand and \
-                ctx.invoked_subcommand.name in ['add', 'list', 'delete', 'help']:
+                ctx.invoked_subcommand.name in {'add', 'list', 'delete', 'help'}:
             return
         response_text = MECHMARKET_BASE_URL
         args = ctx.message.content.split()[1:]
@@ -153,7 +150,7 @@ class MechmarketScraper(commands.Cog):
             # pylint: disable=not-an-iterable
             table = []
             for query in queries:
-                table.append([query.id, query.search_string])
+                table.append([query.id, query.search_string])  # noqa
             msg_text = f"```{tabulate(table, headers=['query_id', 'query string'])}```"
             await dm_channel.send(msg_text)
 

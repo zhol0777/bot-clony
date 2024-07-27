@@ -1,13 +1,14 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
-from functools import lru_cache
 import os
+from functools import lru_cache
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
 import db
+import sanitizer_utils
 import util
 
 SCOLD_MESSAGE = '''
@@ -35,7 +36,7 @@ class Sanitize(commands.Cog):
                           otherwise bot will repeatedly sanitize the same message
         '''
         reply_message = await util.get_reply_message(message) if get_reply else message
-        sanitized_message, needs_sanitizing, post_warning = util.sanitize_message(
+        sanitized_message, needs_sanitizing, post_warning = sanitizer_utils.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
             if post_warning:

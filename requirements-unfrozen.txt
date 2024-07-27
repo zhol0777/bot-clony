@@ -1,14 +1,17 @@
 asyncpraw
 discord.py
 flake8
+mock
 mypy
 peewee
 Pillow
 pylint
 python-dotenv
 requests
+ruff
 tabulate
 typed-ast
+types-mock
 types-requests
 types-Pillow
 types-tabulate

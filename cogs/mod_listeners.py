@@ -1,11 +1,11 @@
 '''
 Listeners for events that deserve moderation
 '''
-from urllib.parse import urljoin
 import logging
 import os
 import sys
 import traceback
+from urllib.parse import urljoin
 
 from discord.ext import commands
 
@@ -86,7 +86,7 @@ class ModListeners(commands.Cog):
             if command in util.IGNORE_COMMAND_LIST:
                 return
             with db.bot_db:
-                if wiki_page := db.WikiPage.get_or_none(shortname=command):  # noqa
+                if wiki_page := db.WikiPage.get_or_none(shortname=command):
                     if wiki_page.goes_to_root_domain:
                         wiki_domain = db.WikiRootUrl.get_or_none(indicator='primary')
                         if not wiki_domain:

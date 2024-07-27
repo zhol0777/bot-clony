@@ -3,5 +3,6 @@ __pycache__
 .env
 .mypy_cache
 .vscode
+.ruff_cache
 bot.db
 venv

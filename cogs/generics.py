@@ -3,8 +3,8 @@ Generic commands that provide simple responses
 '''
 import os
 
-from discord.ext import commands
 from discord import TextChannel
+from discord.ext import commands
 
 import util
 

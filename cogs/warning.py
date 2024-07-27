@@ -5,8 +5,8 @@ and track these warnings for mods/helpers
 import logging
 import os
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
 import db
 import util
@@ -31,7 +31,7 @@ class MemberWarning(commands.Cog):
         Warn a user to stop being a punk, and track the warning
         '''
         if ctx.invoked_subcommand and \
-                ctx.invoked_subcommand.name in ['list', 'delete']:
+                ctx.invoked_subcommand.name in {'list', 'delete'}:
             return
         args = ctx.message.content.split()
         if ctx.message.reference and ctx.message.reference.message_id:

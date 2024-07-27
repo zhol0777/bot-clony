@@ -34,7 +34,7 @@ class SocialCredit(commands.Cog):
                [reply] !socialcredit remove [amount]
         '''
         amount = 0
-        if len(args) > 0 and args[0] in ['add', 'remove']:
+        if len(args) > 0 and args[0] in {'add', 'remove'}:
             # it's a subcommand
             if ctx.message.reference is not None:
                 # replying to someone who is about to be ejected
@@ -46,15 +46,14 @@ class SocialCredit(commands.Cog):
             else:
                 user_id = util.get_id_from_tag(args[1])
                 amount = float(args[2])
+        elif ctx.message.reference is not None:
+            # replying to someone who is about to be ejected
+            original_msg = await ctx.fetch_message(
+                ctx.message.reference.message_id)
+            relevant_user = original_msg.author
+            user_id = relevant_user.id
         else:
-            if ctx.message.reference is not None:
-                # replying to someone who is about to be ejected
-                original_msg = await ctx.fetch_message(
-                    ctx.message.reference.message_id)
-                relevant_user = original_msg.author
-                user_id = relevant_user.id
-            else:
-                user_id = util.get_id_from_tag(args[0])
+            user_id = util.get_id_from_tag(args[0])
         with db.bot_db:
             credit_entry = db.SocialCredit.get_or_none(user_id=user_id)
             if not credit_entry:

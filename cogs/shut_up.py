@@ -2,14 +2,14 @@
 Track specific strings (like gifs of a cat jerking itself off or a lil shoosh soundtest)
 that triggers response
 '''
-from datetime import datetime
 import logging
 import os
 import typing
+from datetime import datetime
 
+import discord
 from discord.ext import commands, tasks
 from urlextract import URLExtract
-import discord
 
 import db
 import util
@@ -53,7 +53,7 @@ class DoublePosting(commands.Cog):
         #             message.delete_instance()
 
     def get_message_identifier(self, message: discord.Message,
-                               row_id: int = None) -> typing.Union[db.MessageIdentifier, None]:
+                               row_id: int | None = None) -> typing.Union[db.MessageIdentifier, None]:
         '''kind of a macro'''
         if row_id:
             return db.MessageIdentifier.get_or_none(id=row_id)
@@ -109,22 +109,22 @@ class DoublePosting(commands.Cog):
                     return
 
             # send message if over threshold
-            message_identifier = self.get_message_identifier(message, message_identifier.id)
-            if message_identifier.instance_count < 5:
+            message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
+            if message_identifier.instance_count < 5:  # type: ignore
                 return
 
             embed = discord.Embed(color=discord.Colour.orange())
             embed.set_author(name="Spam Signal")
             embed.add_field(name="User", value=f'<@{message.author.id}>')
             embed.add_field(name="Message Content", value=f'`{message.content}`')
-            embed.add_field(name="Instance Count", value=message_identifier.instance_count)
+            embed.add_field(name="Instance Count", value=message_identifier.instance_count)  # type: ignore
             embed.add_field(name="Message link", value=str(message.jump_url))
             content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
             content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
             # need as fresh as possible because i don't know how to handle race conditions
-            message_identifier = self.get_message_identifier(message, message_identifier.id)
-            if not message_identifier.tracking_message_id:
-                await util.apply_role(message.author, message.author.id, 'Razer Hate',
+            message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
+            if not message_identifier.tracking_message_id:  # type: ignore
+                await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
                                       'this guy might be spamming')
                 tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
@@ -132,9 +132,9 @@ class DoublePosting(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
-                await self.purge(message.author.id, message.guild, message.content)
+                await self.purge(message.author.id, message.guild, message.content)  # type: ignore
             else:
-                original_message = await channel.fetch_message(message_identifier.tracking_message_id)
+                original_message = await channel.fetch_message(message_identifier.tracking_message_id)  # type: ignore
                 await original_message.edit(content=content, embed=embed)
 
     def parse_date_time_str(self, date_time_str) -> datetime:

@@ -1,12 +1,12 @@
 '''
 Command to track usage of the word "thock"
 '''
-from functools import lru_cache
 import os
+from functools import lru_cache
 from random import randint
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
 import db
 

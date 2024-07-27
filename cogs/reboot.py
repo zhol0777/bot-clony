@@ -5,8 +5,8 @@ import os
 import subprocess
 import sys
 
-from discord.ext import commands
 from discord.errors import Forbidden
+from discord.ext import commands
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 
@@ -24,7 +24,7 @@ class Reboot(commands.Cog):
         Reboot bot
         '''
         await ctx.message.delete()
-        os.execv(sys.executable, ['python'] + sys.argv)
+        os.execv(sys.executable, ['python', *sys.argv])
 
     @commands.command()
     @commands.has_role(MOD_ROLE_ID)
@@ -41,12 +41,12 @@ class Reboot(commands.Cog):
             pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
         if 'pull-unfrozen' in ctx.message.content:
-            subprocess.run('pip3 install -U --no-cache-dir -r requirements.txt',
+            subprocess.run('pip3 install -U --no-cache-dir -r requirements-unfrozen.txt',
                            shell=True, check=True)
         if 'pull-frozen' in ctx.message.content:
             subprocess.run('pip3 install -U --no-cache-dir -r requirements.txt',
                            shell=True, check=True)
-        os.execv(sys.executable, ['python'] + sys.argv)
+        os.execv(sys.executable, ['python', *sys.argv])
 
 
 async def setup(client):

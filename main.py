@@ -7,9 +7,9 @@ import logging
 import os
 import sys
 
+import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-import discord
 
 import db
 
@@ -31,6 +31,7 @@ async def load_extensions():
     for filename in os.listdir("./cogs"):
         if filename.endswith(".py") and '__init__' not in filename:
             await bot.load_extension(f"cogs.{filename[:-3]}")
+
 
 asyncio.run(load_extensions())
 if not DISCORD_TOKEN:

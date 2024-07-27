@@ -1,12 +1,12 @@
 '''
 Deicde on something for a user who can't help themselves
 '''
-from random import randint, choice as rand_choice, randrange
 import asyncio
 import os
+from random import choice as rand_choice
+from random import randint, randrange
 
 from discord.ext import commands
-
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))

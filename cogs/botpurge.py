@@ -5,15 +5,15 @@ less than 100 have roles
 these are all probably bots
 time to die
 '''
-from collections import Counter
-from datetime import datetime, date
 import logging
 import os
 import time
 import traceback
+from collections import Counter
+from datetime import date, datetime
 
-from discord.ext import commands, tasks  # type: ignore
 import discord
+from discord.ext import commands, tasks  # type: ignore
 
 import db
 import util
@@ -87,7 +87,7 @@ class BotPurger(commands.Cog):
             return
         dm_channel = await ctx.message.author.create_dm()
         msg_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
-        status_message = await dm_channel.send("analyzing {msg_limit} joins to populate kickeduser table...")
+        status_message = await dm_channel.send(f"analyzing {msg_limit} joins to populate kickeduser table...")
         msg_count = 1
         arrival_counter = Counter()
         verified_user_ids = set()
@@ -128,7 +128,7 @@ class BotPurger(commands.Cog):
         '''ban any account that has rejoined after being kicked a certain number of times'''
         kick_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
         dm_channel = await ctx.message.author.create_dm()
-        status_message = await dm_channel.send(f"banning any account created after {str(BOT_BIRTHDAY)} "
+        status_message = await dm_channel.send(f"banning any account created after {BOT_BIRTHDAY!s} "
                                                f"with more than {kick_limit} kicks")
         ban_count = 0
         confirmed_banned_user_ids = set()
@@ -175,7 +175,7 @@ class BotPurger(commands.Cog):
             for banned_user in db.BannedUser.select():
                 confirmed_banned_user_ids.add(banned_user.user_id)
         dm_channel = await ctx.message.author.create_dm()
-        status_message = await dm_channel.send(f"banning any account created after {str(BOT_BIRTHDAY)} "
+        status_message = await dm_channel.send(f"banning any account created after {BOT_BIRTHDAY!s} "
                                                f"with more than {MAX_KICKS_ALLOWED} re-joins")
         async for message in self.client.get_channel(258268147486818304).history(limit=msg_limit):
             msg_count += 1

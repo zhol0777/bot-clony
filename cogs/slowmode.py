@@ -8,8 +8,8 @@ from typing import Optional
 import discord
 from discord.ext import commands
 
-from consts import HELP_CHANNEL_IDS
 import util
+from consts import HELP_CHANNEL_IDS
 
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
