@@ -45,7 +45,7 @@ mypy:
 ##########
 
 docker-build:
-	docker build --no-cache -t bot-clony .
+	docker build --no-cache -t grannybot .
 
 docker-run:
 	docker-compose up -d
