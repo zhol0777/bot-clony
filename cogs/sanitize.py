@@ -1,12 +1,13 @@
 '''
 Command to sanitize trackers out of URL parameters by stripping params
 '''
-from typing import Union
 import logging
+from typing import Union
 
-from discord.ext import commands
 import discord
+from discord.ext import commands
 
+import sanitizer_utils
 import util
 
 log = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ class Sanitize(commands.Cog):
                           otherwise bot will repeatedly sanitize the same message
         '''
         reply_message = await util.get_reply_message(message) if get_reply else message
-        sanitized_message, needs_sanitizing, _ = util.sanitize_message(
+        sanitized_message, needs_sanitizing, _ = sanitizer_utils.sanitize_message(
             reply_message.content)
         if needs_sanitizing:
             sanitized_msg = await message.channel.send(sanitized_message, reference=reply_message,

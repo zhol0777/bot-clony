@@ -1,10 +1,12 @@
 '''
 Command to steal emojis
 '''
-from discord.ext import commands
 import discord
 import requests
 import validators
+from discord.ext import commands
+
+import util
 
 
 class Steal(commands.Cog):
@@ -22,6 +24,7 @@ class Steal(commands.Cog):
         words = ctx.message.content.split()
         emoji = words[1]
         emoji_name = words[2] if len(words) > 2 else None
+        emoji_url: str | None = None
         # is url
         if emoji.startswith('<') and emoji.endswith('>'):  # uses embedded emoji
             found_emoji = discord.PartialEmoji.from_str(emoji)  # pylint: disable=no-member
@@ -33,12 +36,14 @@ class Steal(commands.Cog):
                 await ctx.channel.send("Direct URL to emoji requires naming. Maybe try "
                                        "`!steal [emoji url] [emoji name]`?")
                 return
+        if not emoji_url:
+            await util.handle_error(ctx, "Cannot determine emoji from message...")
         if emoji_name in [existing_emoji.name for existing_emoji in ctx.guild.emojis]:
             await ctx.channel.send(f"Emoji named `{emoji_name}` already exists in this server. "
                                    "Maybe you can consider renaming it by running "
                                    "`!steal [emoji] alternate-name`?")
             return
-        img_request = requests.get(emoji_url, timeout=10)
+        img_request = requests.get(emoji_url, timeout=10)  # type: ignore
         created_emoji = await ctx.message.guild.create_custom_emoji(name=emoji_name,  # type: ignore
                                                                     image=img_request.content)
         await ctx.message.add_reaction(created_emoji)

@@ -2,16 +2,16 @@
 automate making server banners
 '''
 
-from io import BytesIO
 import logging
 import os
+from io import BytesIO
 
-from discord.ext import commands
-from PIL import Image
 # import discord
 import requests
-# import validators
+from discord.ext import commands
+from PIL import Image
 
+# import validators
 # import db
 import util
 
@@ -58,10 +58,9 @@ class Bannerlord(commands.Cog):
             for embed in original_msg.embeds:
                 if embed.thumbnail and str(embed.thumbnail.url).lower().endswith(VALID_IMAGE_EXTENSIONS):
                     image_url_list.append(embed.thumbnail.url)
-                else:
-                    if embed.image and embed.image.url and \
-                            embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                        image_url_list.append(embed.image.url)
+                elif embed.image and embed.image.url and \
+                        embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
+                    image_url_list.append(embed.image.url)
             try:
                 attachment_url = image_url_list[attachment_index]
             except IndexError:
@@ -96,55 +95,6 @@ class Bannerlord(commands.Cog):
         await ctx.guild.edit(banner=image_content, splash=image_content,  # type: ignore
                              discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
-        # with db.bot_db:
-        #     await self.clear_old_banner_pins(ctx)
-        #     db.BannerPost.create(message_id=ctx.message.reference.message_id)
-        # await original_msg.pin()
-
-    # async def clear_old_banner_pins(self, ctx: commands.Context):
-    #     '''
-    #     latest bannered board gets pinned, and pin is tracked in BannerPost table
-    #     on new banner, go through old pinned post(s) to un-pin
-    #     '''
-    #     pins = db.BannerPost.select()
-    #     for pin in pins:
-    #         message_id = pin.message_id
-    #         pin.delete_instance()
-    #         try:
-    #             pin_msg = await ctx.fetch_message(message_id)
-    #             await pin_msg.unpin()
-    #         except discord.errors.NotFound:
-    #             pass
-
-    # uncomment if you need a dedicated banner candidate channel
-    # @commands.Cog.listener()
-    # async def on_message(self, message):
-    #     '''delete any bunk message in bannerlord channel'''
-    #     if isinstance(message.channel, (discord.DMChannel, discord.Thread)):
-    #         # avoid error messages caused by DM responses or etc.
-    #         return
-    #     if message.channel.id != BANNERLORD_CHANNEL_ID:
-    #         return
-    #     if message.type == discord.MessageType.thread_created:
-    #         # ignore thread creation
-    #         return
-    #     if message.attachments:
-    #         # ignore messages with attachments
-    #         return
-    #     for word in message.content.split():
-    #         if validators.url(word):
-    #             return
-    #     if util.user_has_role_from_id(message.author, BANNERLORD_ROLE_ID):
-    #         # bannerlord is announcing banner of the day
-    #         return
-    #     try:
-    #         dm_channel = await message.author.create_dm()
-    #         await dm_channel.send(BAD_MESSAGE_TEXT)
-    #     except AttributeError:
-    #         pass
-    #     except discord.errors.Forbidden:
-    #         pass  # user won't accept message from bot
-    #     await message.delete()
 
 
 def image_size_needs_reduction(image_content: bytes) -> bool:

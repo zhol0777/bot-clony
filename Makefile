@@ -1,30 +1,51 @@
-venv:
-	python3 -m venv venv
+start: source
+	python3 ./main.py
 
 source:
 	source venv/bin/activate
 
-install-requirements: source
-	python3 -m pip install -U -r requirements.txt
+################
+# installation #
+################
 
 install: venv install-requirements source
 
-start: source
-	python3 ./main.py
+venv:
+	python3 -m venv venv
 
-lint: flake8 pylint mypy
+install-requirements: source
+	python3 -m pip install -U -r requirements.txt
 
-flake8:
-	flake8 cogs/ db.py main.py util.py
+install-unfrozen:
+	python3 -m pip install -U -r requirements-unfrozen.txt
+
+update-requirements:
+	pip freeze > requirements.txt
+
+###########
+# testing #
+###########
+
+test: lint
+	python3 -m unittest discover tests
+
+lint: ruff pylint mypy
+
+ruff:
+	python3 -m ruff check cogs/ tests/ *.py --config tests/ruff.toml
 
 pylint:
-	pylint cogs/ db.py main.py util.py
+	python3 -m pylint cogs/ tests/ *.py
 
 mypy:
-	mypy cogs/*.py db.py main.py util.py
+	python3 -m mypy cogs/ tests/ *.py --config-file tests/mypy.ini
+
+##########
+# docker #
+##########
 
 docker-build:
-	docker build --no-cache -t grannybot .
+	docker build --no-cache -t bot-clony .
 
 docker-run:
 	docker-compose up -d
