@@ -1,5 +1,4 @@
 discord.py
-flake8
 mypy
 peewee
 Pillow
@@ -8,4 +7,5 @@ python-dotenv
 requests
 types-Pillow
 types-requests
+urlextract
 validators
