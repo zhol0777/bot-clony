@@ -25,7 +25,9 @@ DOMAINS_TO_FIX = {
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
     'instagram.com': 'ddinstagram.com',
-    'www.instagram.com': 'ddinstagram.com'
+    'www.instagram.com': 'ddinstagram.com',
+    'reddit.com': 'rxddit.com',
+    'www.reddit.com': 'rxddit.com',
 }
 
 
