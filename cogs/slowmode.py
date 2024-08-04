@@ -42,7 +42,7 @@ class SlowMode(commands.Cog):
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def slowmode(self, ctx: commands.Context, interval_str: str):
         """Activate slowmode in help channels"""
-        interval = util.get_id_from_tag(interval_str)
+        interval = min(util.get_id_from_tag(interval_str), 21600)
         if (
             isinstance(ctx.channel, discord.TextChannel)
             and ctx.channel.id in HELP_CHANNEL_IDS
