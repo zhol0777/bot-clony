@@ -5,6 +5,7 @@ Pillow
 pylint
 python-dotenv
 requests
+ruff
 types-Pillow
 types-requests
 urlextract

@@ -97,12 +97,12 @@ class Bannerlord(commands.Cog):
         await status_message.edit(content='banner uploaded! have a nice day!')
 
 
-def image_size_needs_reduction(image_content: bytes) -> bool:
+def image_size_needs_reduction(image_content: bytes, limit: int = MAX_IMAGE_SIZE) -> bool:
     '''return true if image is too big to be banner'''
-    return len(image_content) >= MAX_IMAGE_SIZE
+    return len(image_content) >= limit
 
 
-def reduced_image(image_content: bytes) -> bytes:
+def reduced_image(image_content: bytes, limit: int = MAX_IMAGE_SIZE) -> bytes:
     '''
     discord API sets a limit for 1MB for image for the banner
     I am too lazy to write something that does the math on how much an image
@@ -112,7 +112,7 @@ def reduced_image(image_content: bytes) -> bytes:
     pixels in the image for each passthrough to keep number of reductions
     fairly reasonable without overkilling resolution
     '''
-    if image_size_needs_reduction(image_content):
+    if image_size_needs_reduction(image_content, limit):
         image_obj = Image.open(BytesIO(image_content))
         width, height = image_obj.size
         image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)  # pylint: disable=no-member

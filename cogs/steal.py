@@ -7,6 +7,7 @@ import validators
 from discord.ext import commands
 
 import util
+from cogs.bannerlord import reduced_image
 
 
 class Steal(commands.Cog):
@@ -44,8 +45,15 @@ class Steal(commands.Cog):
                                    "`!steal [emoji] alternate-name`?")
             return
         img_request = requests.get(emoji_url, timeout=10)  # type: ignore
-        created_emoji = await ctx.message.guild.create_custom_emoji(name=emoji_name,  # type: ignore
-                                                                    image=img_request.content)
+        if not img_request.ok:
+            await util.handle_error(ctx, f"Image download from {img_request} received HTTP {img_request.status_code}")
+            return
+        try:
+            created_emoji = await ctx.message.guild.create_custom_emoji(
+                name=emoji_name,  # type: ignore
+                image=reduced_image(img_request.content, limit=2 ** 18))
+        except ValueError:
+            await util.handle_error(ctx, "Could not create emoji...")
         await ctx.message.add_reaction(created_emoji)
 
     @commands.command()
