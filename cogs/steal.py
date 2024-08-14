@@ -51,7 +51,7 @@ class Steal(commands.Cog):
         try:
             created_emoji = await ctx.message.guild.create_custom_emoji(
                 name=emoji_name,  # type: ignore
-                image=reduced_image(img_request.content, limit=2 ** 18))
+                image=reduced_image(img_request.content, limit=2 ** 18, format='PNG'))
         except ValueError:
             await util.handle_error(ctx, "Could not create emoji...")
         await ctx.message.add_reaction(created_emoji)

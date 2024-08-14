@@ -102,7 +102,7 @@ def image_size_needs_reduction(image_content: bytes, limit: int = MAX_IMAGE_SIZE
     return len(image_content) >= limit
 
 
-def reduced_image(image_content: bytes, limit: int = MAX_IMAGE_SIZE) -> bytes:
+def reduced_image(image_content: bytes, limit: int = MAX_IMAGE_SIZE, format='JPEG') -> bytes:
     '''
     discord API sets a limit for 1MB for image for the banner
     I am too lazy to write something that does the math on how much an image
@@ -118,7 +118,7 @@ def reduced_image(image_content: bytes, limit: int = MAX_IMAGE_SIZE) -> bytes:
         image_obj = image_obj.resize((int(width * 0.7), int(height * 0.7)), Image.LANCZOS)  # pylint: disable=no-member
         buf = BytesIO()
         try:
-            image_obj.save(buf, format='JPEG')
+            image_obj.save(buf, format=format)
         except (KeyError, OSError):
             # OSError: cannot write mode RGBA as JPEG
             image_obj = image_obj.convert('RGB')
