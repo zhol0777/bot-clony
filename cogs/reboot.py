@@ -39,7 +39,7 @@ class Reboot(commands.Cog):
             await ctx.message.delete()
         except Forbidden:
             pass
-        subprocess.run('git pull origin bot-lite', shell=True, check=True)
+        subprocess.run('git pull origin granmark', shell=True, check=True)
         if 'pull-unfrozen' in ctx.message.content:
             subprocess.run('pip3 install -U --no-cache-dir -r requirements-unfrozen.txt',
                            shell=True, check=True)
