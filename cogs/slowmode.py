@@ -48,7 +48,7 @@ class SlowMode(commands.Cog):
             and ctx.channel.id in HELP_CHANNEL_IDS
         ):
             await ctx.channel.edit(slowmode_delay=interval)
-            await ctx.channel.add_reaction("⏲️")
+            await ctx.message.add_reaction("⏲️")
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
