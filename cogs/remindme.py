@@ -104,6 +104,49 @@ class RemindMe(commands.Cog):
             pass
 
 
+class TeeTime(commands.Cog):
+    """golf"""
+    def __init__(self, client):
+        self.client = client
+        self.ping_channel_id = 234802192014508033  # kb-keyboards
+        self.club_role_id = 1275305906946703443  # golf club
+
+    def seconds_left_until_tee_time(self) -> int:
+        """calculate seconds left until it is time to golf again"""
+        week = 60 * 60 * 24 * 7
+        offset = 444600  # tee time is at 8:30 pm PST
+        current_time = int(time.time())
+        time_since_last_golf = (current_time - offset) % week
+        time_until_next_golf = week - time_since_last_golf
+        return time_until_next_golf
+
+    @commands.command()
+    @commands.has_role(1275305906946703443)
+    async def putt(self, ctx):
+        """post when tee off is"""
+        next_date = int(time.time()) + self.seconds_left_until_tee_time()
+        await ctx.channel.send(
+            f"Golf will happen at <t:{next_date}>")
+
+    @tasks.loop(seconds=60)
+    async def tee_off(self):
+        """ping people for putt party"""
+        if self.seconds_left_until_tee_time() < 60:
+            guild = await util.fetch_primary_guild(self.client)
+            ping_channel = await guild.get_channel(self.ping_channel_id)
+            if type(ping_channel, discord.TextChannel):
+                await ping_channel.send(f"<@&{self.club_role_id}> it's time to tee up!")
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.tee_off.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
+
+
 async def setup(client):
     '''setup'''
     await client.add_cog(RemindMe(client))
+    await client.add_cog(TeeTime(client))
