@@ -93,6 +93,12 @@ class Sanitize(commands.Cog):
                 if str(attachment.content_type).startswith('image'):
                     return
         if self.should_sanitize(message.channel.id):
+            if message.content.startswith('# '):
+                for line in message.content.split('\n'):
+                    if not line.strip().startswith('# '):
+                        break
+                await message.delete()
+                return
             await self.send_sanitized_message(message, get_reply=False)
 
     @lru_cache  # set max_size if server has more than 128 channels
