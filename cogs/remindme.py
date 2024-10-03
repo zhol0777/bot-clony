@@ -134,8 +134,7 @@ class TeeTime(commands.Cog):
         if self.seconds_left_until_tee_time() < 60:
             guild = await util.fetch_primary_guild(self.client)
             ping_channel = guild.get_channel(self.ping_channel_id)
-            if isinstance(ping_channel, discord.TextChannel):
-                await ping_channel.send(f"<@&{self.club_role_id}> it's time to tee up!")
+            await ping_channel.send(f"<@&{self.club_role_id}> it's time to tee up!")
 
     @commands.Cog.listener()
     async def on_ready(self):
