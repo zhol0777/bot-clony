@@ -3,15 +3,12 @@ Handle purgatory role assignment requiring multiple helper votes and log the ass
 '''
 import time
 import os
-from cogs.eject import ZHOLBOT_CHANNEL_ID
 from discord.ext import commands
 import db
 import util
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
-ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
-log = logging.getLogger(__name__)
 
 REQUIRED_VOTES = 2
 
