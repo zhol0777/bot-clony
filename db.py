@@ -12,6 +12,16 @@ class BaseModel(peewee.Model):
         '''connects model to db'''
         database = bot_db
 
+class PurgatoryVote(BaseModel):
+    '''
+    tracking votes for putting a user in purgatory
+    requires multiple helpers to agree before applying role
+    '''
+    user_id = peewee.IntegerField()
+    helper_id = peewee.IntegerField()
+    vote_epoch_time = peewee.BigIntegerField()
+    reason = peewee.CharField()
+
 
 class WarningMemberReason(BaseModel):
     '''
@@ -164,7 +174,8 @@ def create_tables():
                               BannedUser, SanitizedChannel,
                               SillyPage, ThockTrackingChannel,
                               MechmarketPost, MechmarketQuery,
-                              StupidMessage, MessageIdentifier])
+                              StupidMessage, MessageIdentifier,
+                              PurgatoryVote])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',
