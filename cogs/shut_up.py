@@ -15,7 +15,7 @@ import db
 import util
 
 ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
-CONTAINMENT_CHANNEL_ID = int(os.getenv('CONTAINMENT_CHANNEL_ID', '0'))
+SPAM_CONTAINMENT_CHANNEL = int(os.getenv('SPAM_CONTAINMENT_CHANNEL', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -101,7 +101,7 @@ class DoublePosting(commands.Cog):
                     db.MessageIdentifier.id == message_identifier.id,  # pylint: disable=no-member
                 ).execute()
 
-            channel = self.client.get_channel(CONTAINMENT_CHANNEL_ID)
+            channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL)
             if not channel:
                 channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
                 if not channel:

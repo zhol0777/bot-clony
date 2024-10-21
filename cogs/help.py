@@ -41,6 +41,8 @@ Helper Commands:
                         !ejectwarn [reason...] (as reply)
                         !ejectwarn list [@ user tag]
                         !ejectwarn delete [reason ID]
+  purgatory:    Usage:  !purgatory [@ user tag] [reason...]
+                [reply] !purgatory [reason...]
   socialcredit
                 Usage:  !socialcredit [user tag]
                 [reply] !socialcredit
