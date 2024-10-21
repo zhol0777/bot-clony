@@ -2,7 +2,6 @@
 Handle purgatory role assignment requiring multiple helper votes and log the assignment
 '''
 import time
-import logging
 import os
 from cogs.eject import ZHOLBOT_CHANNEL_ID
 from discord.ext import commands
