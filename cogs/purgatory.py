@@ -4,6 +4,9 @@ Handle purgatory role assignment requiring multiple helper votes and log the ass
 import logging
 import os
 
+import asyncio
+from datetime import datetime, timedelta, timezone
+
 import discord
 from discord.ext import commands
 
@@ -14,7 +17,8 @@ HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 TOXIC_CONTAINMENT_CHANNEL = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL', '0'))
 
 log = logging.getLogger(__name__)
-PURGE_HISTORY_LIMIT = 50
+PURGE_COUNT = 80
+PURGE_HISTORY_LIMIT = 400
 REQUIRED_VOTES = 2
 
 
@@ -94,7 +98,7 @@ class Purgatory(commands.Cog):
         vote_count = len(self.vote_tracker[purged_user_id])
 
         if vote_count >= REQUIRED_VOTES:
-            await self.easy_purge(ctx.guild, purged_user_id)
+            await self.easy_purge(ctx.guild, purged_user_id, ctx.channel)
             votes = self.vote_tracker.pop(purged_user_id)
             reasons = "\n".join([f"* {vote.get('reason')}" for vote in votes])
 
@@ -106,31 +110,63 @@ class Purgatory(commands.Cog):
             embed.add_field(name="Reasons", value=reasons)  # type: ignore
 
             await util.apply_role(purgatory_member, purged_user_id, 'Razer Hate', reason)
-            await notification_channel.send(content=content, embed=embed)  # type: ignore
+            await notification_channel.send(embed=embed)  # type: ignore
         else:
             votes_required_for_purgatory = REQUIRED_VOTES - vote_count
             await ctx.channel.send(f"Vote recorded. {votes_required_for_purgatory} more vote"
                                     f"{'s' if votes_required_for_purgatory > 1 else ''} "
                                     "required to place user in purgatory")
 
-    async def easy_purge(self, guild: discord.Guild, user_id):
+    async def easy_purge(self, guild: discord.Guild, user_id: int, command_channel: discord.TextChannel):
         '''
-        purge all messages from some user within some limit
+        Purge messages from a specific user across all text channels
         '''
-        for channel in guild.channels:
-            if not isinstance(channel, discord.TextChannel):
-                continue
+        total_deleted = 0
+        messages_to_delete = []
+
+        member = guild.get_member(user_id)
+
+        # list of channels to purge, beginning with the one where the command was sent
+        channels_to_purge = [command_channel] + [
+            channel for channel in guild.channels
+            if isinstance(channel, discord.TextChannel)
+            and channel != command_channel
+            and channel.permissions_for(member).send_messages
+        ]
+        # only messages younger than 14 days can be purged
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)
+
+        for channel in channels_to_purge:
+            print(f"Checking channel {channel.name}")
+            print(channel.permissions_for(member))
+            if total_deleted >= PURGE_COUNT:
+                break
             try:
                 async for message in channel.history(limit=PURGE_HISTORY_LIMIT):
-                    if message.author.id == user_id:
-                        try:
-                            await message.delete()
-                        except discord.NotFound:
-                            pass  # hopefully already deleted?
+                    if message.author.id == user_id and message.created_at > cutoff_time:
+                        messages_to_delete.append(message)
+                        if len(messages_to_delete) >= PURGE_COUNT - total_deleted:
+                            break
+
+                if messages_to_delete:
+                    await channel.delete_messages(messages_to_delete)
+                    batch_count = len(messages_to_delete)
+                    total_deleted += batch_count
+                    log.info(f"Purged {batch_count} messages in channel #{channel} for user {user_id}. Total: {total_deleted}")
+                    messages_to_delete.clear()
+
+
+
             except discord.errors.Forbidden:
-                pass
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                log.error("Cant purge from %s due to %s...", channel.name, exc)
+                continue # hopefully already deleted?
+            except discord.errors.HTTPException as exc:
+                log.error(f"Rate-limited during purge in #{channel.name}: {exc}")
+                await asyncio.sleep(5)  # wait if rate-limited (i don't think this applies because i changed the logic)
+            except Exception as exc:
+                log.error(f"Error purging messages in #{channel.name}: {exc}")
+
+        log.info(f"Total messages purged for user {user_id}: {total_deleted}")
+        return total_deleted
 
 
 async def setup(client):
