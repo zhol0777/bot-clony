@@ -14,7 +14,7 @@ import util
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
-TOXIC_CONTAINMENT_CHANNEL = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL', '0'))
+TOXIC_CONTAINMENT_CHANNEL_ID = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL_ID', '0'))
 
 log = logging.getLogger(__name__)
 PURGE_COUNT = 80
@@ -51,7 +51,7 @@ class Purgatory(commands.Cog):
         if not ctx.guild:
             return
 
-        notification_channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL)
+        notification_channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL_ID)
         if not notification_channel:
             return
 
