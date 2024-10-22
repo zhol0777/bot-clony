@@ -1,44 +1,68 @@
 '''
 Handle purgatory role assignment requiring multiple helper votes and log the assignment
 '''
-import time
+import logging
 import os
+
+import asyncio
+from datetime import datetime, timedelta, timezone
+
+import discord
 from discord.ext import commands
-import db
+
 import util
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
+TOXIC_CONTAINMENT_CHANNEL = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL', '0'))
 
+log = logging.getLogger(__name__)
+PURGE_COUNT = 80
+PURGE_HISTORY_LIMIT = 400
 REQUIRED_VOTES = 2
+
 
 class Purgatory(commands.Cog):
     '''Place users in purgatory'''
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
-        self.guild = None
+        self.vote_tracker: dict[int, list[dict[str, str | int]]] = {}
+        # {
+        #   261759221: [  # doomed user ID
+        #       {
+        #           'voter_id': '236537142',  # helper user ID
+        #           'reason': 'he is stinky'
+        #       },
+        #       {
+        #           'voter_id': '281502869',
+        #           'reason': 'he has booger brain'
+        #       },
+        #   ],
+        # }
 
     @commands.command()
     @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
-    async def purgatory(self, ctx: commands.Context, *args):
-        f'''
+    async def purgatory(self, ctx: commands.Context, *args):  # pylint: disable=too-many-locals,too-many-branches
+        '''
         Usage: !purgatory [@ user tag] [reason...]
         [reply] !purgatory [reason...]
-        Requires {REQUIRED_VOTES} helpers to vote before applying purgatory role
+        Requires 2 helpers to vote before applying purgatory role
         '''
         if not ctx.guild:
             return
 
-        helper_id = ctx.author.id
-        current_time = int(time.time())
+        notification_channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL)
+        if not notification_channel:
+            return
+
+        helper_id: int = ctx.author.id
 
         if not args:
             if ctx.message.reference:
-                await ctx.channel.send("Please provide a reason for purgatory.")
+                await util.handle_error(ctx, "Please provide a reason for purgatory.")
             else:
-                await ctx.channel.send("Please provide a user to place in purgatory.")
+                await util.handle_error(ctx, "Please provide a user to place in purgatory.")
             return
-
 
         if ctx.message.reference and ctx.message.reference.message_id:
             # replying to someone who is about to be placed in purgatory
@@ -46,54 +70,104 @@ class Purgatory(commands.Cog):
                 ctx.message.reference.message_id
             )
             purgatory_user = original_msg.author
-            user_id = purgatory_user.id
+            purged_user_id = purgatory_user.id
             reason = ' '.join(args)
         else:
             # purgatory command was not a reply
-            user_id = util.get_id_from_tag(args[0])
+            purged_user_id = util.get_id_from_tag(args[0])
             reason = ' '.join(args[1:])
 
-        purgatory_member = await ctx.guild.fetch_member(user_id)
-        if not purgatory_member:
-            return
-
         if not reason:
-            await ctx.channel.send("Please provide a reason for purgatory.")
+            await util.handle_error(ctx, "Must provide reason to put user in purgatory")
             return
 
+        try:
+            purgatory_member = await ctx.guild.fetch_member(purged_user_id)
+        except discord.errors.NotFound:
+            await util.handle_error(ctx, "Could not find guild member to throw into purgatory")
+            return
 
-        with db.bot_db:
-            existing_vote = db.PurgatoryVote.get_or_none(helper_id=helper_id, user_id=user_id)
-            if existing_vote:
-                await ctx.channel.send("You have already voted to place this user in purgatory.")
-                return
+        if ctx.author.id in [vote.get('voter_id') for vote in self.vote_tracker.get(purged_user_id, [])]:
+            await util.handle_error(ctx, "You have already voted to place this user in purgatory")
+            return
 
-            db.PurgatoryVote.create(
-                user_id=user_id,
-                helper_id=helper_id,
-                vote_epoch_time=current_time,
-                reason=reason
-            )
+        if not self.vote_tracker.get(purged_user_id):  # TODO: defaultdict
+            self.vote_tracker[purged_user_id] = []
+        self.vote_tracker[purged_user_id].append({'voter_id': helper_id, 'reason': reason})
 
-            vote_count = db.PurgatoryVote.select().where(db.PurgatoryVote.user_id == user_id).count()
+        vote_count = len(self.vote_tracker[purged_user_id])
 
-            if vote_count >= REQUIRED_VOTES:
-                await util.apply_role(purgatory_member, user_id, 'purgatory', reason)
+        if vote_count >= REQUIRED_VOTES:
+            await self.easy_purge(ctx.guild, purged_user_id, ctx.channel)
+            votes = self.vote_tracker.pop(purged_user_id)
+            reasons = "\n".join([f"* {vote.get('reason')}" for vote in votes])
 
-                votes = db.PurgatoryVote.select().where(db.PurgatoryVote.user_id == user_id)
+            embed = discord.Embed(color=discord.Colour.orange())
+            embed.set_author(name="Hateful User Signal")
+            embed.add_field(name="User", value=f'<@{purged_user_id}>')
+            embed.add_field(name="Information", value='User has been given Razer Hate due to suspected hateful '
+                                                      'messaging. Please check #deleted-messages to confirm.')
+            embed.add_field(name="Reasons", value=reasons)  # type: ignore
 
-                reasons = "\n".join([f"- {vote.reason}" for vote in votes])
+            await util.apply_role(purgatory_member, purged_user_id, 'Razer Hate', reason)
+            await notification_channel.send(embed=embed)  # type: ignore
+        else:
+            votes_required_for_purgatory = REQUIRED_VOTES - vote_count
+            await ctx.channel.send(f"Vote recorded. {votes_required_for_purgatory} more vote"
+                                    f"{'s' if votes_required_for_purgatory > 1 else ''} "
+                                    "required to place user in purgatory")
 
-                await ctx.channel.send(
-                    f"User <@{user_id}> has been placed in purgatory.\n"
-                    f"Reasons:\n{reasons}"
-                )
+    async def easy_purge(self, guild: discord.Guild, user_id: int, command_channel: discord.TextChannel):
+        '''
+        Purge messages from a specific user across all text channels
+        '''
+        total_deleted = 0
+        messages_to_delete = []
 
-                db.PurgatoryVote.delete().where(db.PurgatoryVote.user_id == user_id).execute()
+        member = guild.get_member(user_id)
 
-            else:
-                votes_required_for_purgatory = REQUIRED_VOTES - vote_count
-                await ctx.channel.send(f"Vote recorded. {votes_required_for_purgatory} more vote{'s' if votes_required_for_purgatory > 1 else ''} required to place user in purgatory")
+        # list of channels to purge, beginning with the one where the command was sent
+        channels_to_purge = [command_channel] + [
+            channel for channel in guild.channels
+            if isinstance(channel, discord.TextChannel)
+            and channel != command_channel
+            and channel.permissions_for(member).send_messages
+        ]
+        # only messages younger than 14 days can be purged
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)
+
+        for channel in channels_to_purge:
+            print(f"Checking channel {channel.name}")
+            print(channel.permissions_for(member))
+            if total_deleted >= PURGE_COUNT:
+                break
+            try:
+                async for message in channel.history(limit=PURGE_HISTORY_LIMIT):
+                    if message.author.id == user_id and message.created_at > cutoff_time:
+                        messages_to_delete.append(message)
+                        if len(messages_to_delete) >= PURGE_COUNT - total_deleted:
+                            break
+
+                if messages_to_delete:
+                    await channel.delete_messages(messages_to_delete)
+                    batch_count = len(messages_to_delete)
+                    total_deleted += batch_count
+                    log.info(f"Purged {batch_count} messages in channel #{channel} for user {user_id}. Total: {total_deleted}")
+                    messages_to_delete.clear()
+
+
+
+            except discord.errors.Forbidden:
+                continue # hopefully already deleted?
+            except discord.errors.HTTPException as exc:
+                log.error(f"Rate-limited during purge in #{channel.name}: {exc}")
+                await asyncio.sleep(5)  # wait if rate-limited (i don't think this applies because i changed the logic)
+            except Exception as exc:
+                log.error(f"Error purging messages in #{channel.name}: {exc}")
+
+        log.info(f"Total messages purged for user {user_id}: {total_deleted}")
+        return total_deleted
+
 
 async def setup(client):
     ''''setup'''
