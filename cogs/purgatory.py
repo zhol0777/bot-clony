@@ -152,20 +152,21 @@ class Purgatory(commands.Cog):
                     await channel.delete_messages(messages_to_delete)
                     batch_count = len(messages_to_delete)
                     total_deleted += batch_count
-                    log.info(f"Purged {batch_count} messages in channel #{channel} for user {user_id}. Total: {total_deleted}")
+                    log.info("Purged %s messages in channel #%s for user %s. Total: %s",
+                             batch_count, channel, user_id, total_deleted)
                     messages_to_delete.clear()
 
 
 
             except discord.errors.Forbidden:
-                continue # hopefully already deleted?
+                continue  # hopefully already deleted?
             except discord.errors.HTTPException as exc:
-                log.error(f"Rate-limited during purge in #{channel.name}: {exc}")
+                log.error("Rate-limited during purge in #%s: %s", channel.name, exc)
                 await asyncio.sleep(5)  # wait if rate-limited (i don't think this applies because i changed the logic)
-            except Exception as exc:
-                log.error(f"Error purging messages in #{channel.name}: {exc}")
+            except Exception as exc:  # pylint: disable=broad-exception-caught
+                log.error("Error purging messages in #%s: %s", channel.name, exc)
 
-        log.info(f"Total messages purged for user {user_id}: {total_deleted}")
+        log.info("Total messages purged for user %s: %s", user_id, total_deleted)
         return total_deleted
 
 
