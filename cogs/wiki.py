@@ -127,6 +127,7 @@ class Wiki(commands.Cog):
         Usage: !wiki listall
         List all available wiki pages
         '''
+        await ctx.message.add_reaction("✉️")
         with db.bot_db:
             pages = db.WikiPage.select()
             page_listing = '\n'.join(sorted(p.shortname for p in pages))
