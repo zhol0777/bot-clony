@@ -4,6 +4,7 @@ Handle purgatory role assignment requiring multiple helper votes and log the ass
 import asyncio
 import logging
 import os
+import typing
 from datetime import datetime, timedelta, timezone
 
 import discord
@@ -117,7 +118,7 @@ class Purgatory(commands.Cog):
                                     "required to place user in purgatory")
 
     async def easy_purge(self, guild: discord.Guild, user_id: int,
-                         command_channel: discord.abc.MessageableChannel):
+                         command_channel: typing.Any):
         '''
         Purge messages from a specific user across all text channels
         '''
