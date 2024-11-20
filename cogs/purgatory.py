@@ -1,10 +1,9 @@
 '''
 Handle purgatory role assignment requiring multiple helper votes and log the assignment
 '''
+import asyncio
 import logging
 import os
-
-import asyncio
 from datetime import datetime, timedelta, timezone
 
 import discord
@@ -117,7 +116,8 @@ class Purgatory(commands.Cog):
                                     f"{'s' if votes_required_for_purgatory > 1 else ''} "
                                     "required to place user in purgatory")
 
-    async def easy_purge(self, guild: discord.Guild, user_id: int, command_channel: discord.TextChannel):
+    async def easy_purge(self, guild: discord.Guild, user_id: int,
+                         command_channel: discord.abc.MessageableChannel):
         '''
         Purge messages from a specific user across all text channels
         '''
@@ -155,8 +155,6 @@ class Purgatory(commands.Cog):
                     log.info("Purged %s messages in channel #%s for user %s. Total: %s",
                              batch_count, channel, user_id, total_deleted)
                     messages_to_delete.clear()
-
-
 
             except discord.errors.Forbidden:
                 continue  # hopefully already deleted?
