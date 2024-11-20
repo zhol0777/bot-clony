@@ -38,6 +38,7 @@ class Wiki(commands.Cog):
             await ctx.message.delete()
 
         if len(ctx.message.content.split()) < 2:
+            await ctx.channel.send("Sending list of all wiki pages in DMs...")
             await self.listall(ctx)
             return
 
@@ -46,7 +47,8 @@ class Wiki(commands.Cog):
             wiki_page = db.WikiPage.get_or_none(shortname=page_name)
 
             if not wiki_page:
-                await ctx.channel.send(f"Page {page_name} does not exist!",
+                await ctx.channel.send(f"Page {page_name} does not exist! "
+                                       "Sending list of all wiki pages in DMs...",
                                        reference=reply_message)
                 await self.listall(ctx)
                 return
@@ -128,9 +130,11 @@ class Wiki(commands.Cog):
         with db.bot_db:
             pages = db.WikiPage.select()
             page_listing = '\n'.join(sorted(p.shortname for p in pages))
-            await ctx.message.channel.send(
+            dm_channel = await ctx.message.author.create_dm()
+            await dm_channel.send(
                 "```"
                 "Usage: !wiki [page]\n\n"
+                "Feel free to use this in DMs with bot!\n"
                 "Available pages:\n"
                 f"{page_listing}\n"
                 "```"
