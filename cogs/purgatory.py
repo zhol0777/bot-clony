@@ -98,7 +98,9 @@ class Purgatory(commands.Cog):
         vote_count = len(self.vote_tracker[purged_user_id])
 
         if vote_count >= REQUIRED_VOTES:
+            await util.apply_role(purgatory_member, purged_user_id, 'Razer Hate', reason)
             await self.easy_purge(ctx.guild, purged_user_id, ctx.channel)
+
             votes = self.vote_tracker.pop(purged_user_id)
             reasons = "\n".join([f"* {vote.get('reason')}" for vote in votes])
 
@@ -109,7 +111,6 @@ class Purgatory(commands.Cog):
                                                       'messaging. Please check #deleted-messages to confirm.')
             embed.add_field(name="Reasons", value=reasons)  # type: ignore
 
-            await util.apply_role(purgatory_member, purged_user_id, 'Razer Hate', reason)
             await notification_channel.send(embed=embed)  # type: ignore
         else:
             votes_required_for_purgatory = REQUIRED_VOTES - vote_count
