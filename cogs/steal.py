@@ -49,9 +49,9 @@ class Steal(commands.Cog):
             await util.handle_error(ctx, f"Image download from {img_request} received HTTP {img_request.status_code}")
             return
         try:
-            created_emoji = await ctx.message.guild.create_custom_emoji(
+            created_emoji = await ctx.message.guild.create_custom_emoji(  # type: ignore
                 name=emoji_name,  # type: ignore
-                image=reduced_image(img_request.content, limit=2 ** 18, format='PNG'))
+                image=reduced_image(img_request.content, limit=2 ** 18, img_format='PNG'))
         except ValueError:
             await util.handle_error(ctx, "Could not create emoji...")
         await ctx.message.add_reaction(created_emoji)
