@@ -19,7 +19,7 @@ class Sigh(commands.Cog):
         Usage: !sigh
         '''
         if Path('sigh.pickle').exists():
-            with open('sigh.pickle', 'wb') as _file:
+            with open('sigh.pickle', 'rb') as _file:
                 sigh_count = pickle.load(_file)
         else:
             sigh_count = 0
