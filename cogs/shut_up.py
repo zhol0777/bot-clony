@@ -33,8 +33,6 @@ class DoublePosting(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.sonar = Sonar()
-        log.warning("Checking channel IDs %s and %s", SPAM_CONTAINMENT_CHANNEL_ID,
-                    TOXIC_CONTAINMENT_CHANNEL_ID)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -78,7 +76,7 @@ class DoublePosting(commands.Cog):
         msg_reading = self.sonar.ping(message.content)
         hate_metric = msg_reading.get('classes')[0]['confidence']
         # log.warning("%s: %s (%s)", message.content, msg_reading['classes'][0], message.jump_url)
-        if hate_metric >= 0.4:  # magic number based off vibes
+        if hate_metric >= 0.6:  # magic number based off vibes
             await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
                                   'saying something awful probably')
             await self.send_hate_alert(message)
@@ -92,7 +90,7 @@ class DoublePosting(commands.Cog):
             break
         if not has_link:
             return
-        
+
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
@@ -125,11 +123,11 @@ class DoublePosting(commands.Cog):
         Alert channel for guy spreading likely hate speech
         '''
         embed = discord.Embed(color=discord.Colour.orange())
-        embed.set_author(name="Spam Signal")
+        embed.set_author(name="Hate Signal")
         embed.add_field(name="User", value=f'<@{message.author.id}>')
         embed.add_field(name="Message Content", value=f'`{message.content}`')
         embed.add_field(name="Message link", value=str(message.jump_url))
-        content = f'<@688959322708901907>: <@{message.author.id}> is sending messages that can be interpreted !'
+        content = f'<@688959322708901907>: <@{message.author.id}> is sending messages that can be interpreted '
         content += 'as hateful. \nIf this is not the case, please explain what happened so mute can be lifted.'
         if channel := await self.get_containment_channel():
             await channel.send(content=content, embed=embed)
@@ -184,7 +182,7 @@ class DoublePosting(commands.Cog):
                 log.error("Please set up a containment channel!")
                 return
         return channel
-    
+
     async def purge(self, purged_user_id: int, guild: discord.Guild,
                     message_content: str):
         '''
