@@ -15,7 +15,7 @@ from urlextract import URLExtract
 import db
 import util
 
-SCIF_CHANNEL_ID = int(os.getenv('SCIF_CHANNEL_ID', '0'))
+TOXIC_CONTAINMENT_CHANNEL_ID = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL_ID', '0'))
 SPAM_CONTAINMENT_CHANNEL_ID = int(os.getenv('SPAM_CONTAINMENT_CHANNEL_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
@@ -35,7 +35,7 @@ class DoublePosting(commands.Cog):
         self.sonar = Sonar()
         self.channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL_ID)
         if not self.channel:
-            self.channel = self.client.get_channel(SCIF_CHANNEL_ID)
+            self.channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL_ID)
             if not self.channel:
                 log.error("Please set up a containment channel!")
 
@@ -132,6 +132,7 @@ class DoublePosting(commands.Cog):
         embed.add_field(name="Message link", value=str(message.jump_url))
         content = f'<@688959322708901907>: <@{message.author.id}> is sending messages that can be interpreted !'
         content += 'as hateful. \nIf this is not the case, please explain what happened so mute can be lifted.'
+        await self.channel.send(content=content, embed=embed)
 
     async def send_spam_alert(self, message, message_identifier):
         '''
