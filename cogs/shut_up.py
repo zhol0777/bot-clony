@@ -70,7 +70,7 @@ class DoublePosting(commands.Cog):
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
         if any([message.author.id == self.client.user.id, message.stickers,
-                not message.content and not message.embed]):
+                not message.content and not message.embeds]):
             return
 
         msg_reading = self.sonar.ping(message.content)
@@ -78,7 +78,8 @@ class DoublePosting(commands.Cog):
         # log.warning("%s: %s (%s)", message.content, msg_reading['classes'][0], message.jump_url)
         if hate_metric >= 0.6:  # magic number based off vibes
             await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
-                                  'saying something awful probably')
+                                  'hatesonar set off by following message: '
+                                  f'{message.content[:100]}...')
             await self.send_hate_alert(message)
 
         # NOTE: link won't detect if content is something like "discord dot gg"
@@ -157,8 +158,8 @@ class DoublePosting(commands.Cog):
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
             await self.purge(message.author.id, message.guild, message.content)  # type: ignore
-        else:
-            original_message = await self.channel.fetch_message(
+        elif channel := await self.get_containment_channel():
+            original_message = await channel.fetch_message(
                 message_identifier.tracking_message_id)  # type: ignore
             await original_message.edit(content=content, embed=embed)
 
