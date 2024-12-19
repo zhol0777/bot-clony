@@ -76,11 +76,11 @@ class DoublePosting(commands.Cog):
         msg_reading = self.sonar.ping(message.content)
         hate_metric = msg_reading.get('classes')[0]['confidence']
         # log.warning("%s: %s (%s)", message.content, msg_reading['classes'][0], message.jump_url)
-        if hate_metric >= 0.6:  # magic number based off vibes
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
-                                  'hatesonar set off by following message: '
-                                  f'{message.content[:100]}...')
-            await self.send_hate_alert(message)
+        # if hate_metric >= 0.6:  # magic number based off vibes
+        #     await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+        #                           'hatesonar set off by following message: '
+        #                           f'{message.content[:100]}...')
+        #     await self.send_hate_alert(message)
 
         # NOTE: link won't detect if content is something like "discord dot gg"
         # so, uh, watch out! most spam we're getting is steamcommunity phishing
