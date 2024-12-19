@@ -1,8 +1,9 @@
-__pycache__
 .DS_Store
 .env
 .mypy_cache
-.vscode
 .ruff_cache
+.venv
+.vscode
+__pycache__
 bot.db
 venv

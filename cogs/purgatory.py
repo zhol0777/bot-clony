@@ -133,7 +133,7 @@ class Purgatory(commands.Cog):
             channel for channel in guild.channels
             if isinstance(channel, discord.TextChannel)
             and channel != command_channel
-            and channel.permissions_for(member).send_messages
+            and channel.permissions_for(member).send_messages  # type: ignore
         ]
         # only messages younger than 14 days can be purged
         cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)

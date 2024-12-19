@@ -16,11 +16,8 @@ venv:
 install-requirements: source
 	python3 -m pip install -U -r requirements.txt
 
-install-unfrozen:
-	python3 -m pip install -U -r requirements-unfrozen.txt
-
 update-requirements:
-	pip freeze > requirements.txt
+	pip freeze > requirements-frozen.txt
 
 ###########
 # testing #

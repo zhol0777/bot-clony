@@ -10,5 +10,6 @@ RUN git clone https://github.com/zhol0777/bot-clony.git .
 
 RUN git checkout bot-lite
 
-RUN pip3 install -U --no-cache-dir -r requirements.txt
+RUN pip install uv
+RUN uv pip install -r requirements-unfrozen.txt
 CMD ["python3", "./main.py"]

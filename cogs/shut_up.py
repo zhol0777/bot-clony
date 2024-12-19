@@ -9,12 +9,13 @@ from datetime import datetime
 
 import discord
 from discord.ext import commands, tasks
+from hatesonar import Sonar
 from urlextract import URLExtract
 
 import db
 import util
 
-ZHOLBOT_CHANNEL_ID = int(os.getenv('ZHOLBOT_CHANNEL_ID', '0'))
+SCIF_CHANNEL_ID = int(os.getenv('SCIF_CHANNEL_ID', '0'))
 SPAM_CONTAINMENT_CHANNEL_ID = int(os.getenv('SPAM_CONTAINMENT_CHANNEL_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
@@ -31,6 +32,12 @@ class DoublePosting(commands.Cog):
     '''Oh My God Stop Posting Multiple Times In Every Channel'''
     def __init__(self, client):
         self.client = client
+        self.sonar = Sonar()
+        self.channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL_ID)
+        if not self.channel:
+            self.channel = self.client.get_channel(SCIF_CHANNEL_ID)
+            if not self.channel:
+                log.error("Please set up a containment channel!")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -80,6 +87,13 @@ class DoublePosting(commands.Cog):
         if not has_link:
             return
 
+        msg_reading = self.sonar.ping(message.content)
+        hate_metric = msg_reading.get('classes')[0]['confidence']
+        if hate_metric >= 0.4:  # magic number based off vibes
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+                                  'saying something awful probably')
+            await self.send_hate_alert(message)
+
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 
@@ -101,41 +115,52 @@ class DoublePosting(commands.Cog):
                     db.MessageIdentifier.id == message_identifier.id,  # pylint: disable=no-member
                 ).execute()
 
-            channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL_ID)
-            if not channel:
-                channel = self.client.get_channel(ZHOLBOT_CHANNEL_ID)
-                if not channel:
-                    log.error("Please set up a containment channel!")
-                    return
-
             # send message if over threshold
             message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
             if message_identifier.instance_count < 5:  # type: ignore
                 return
+            await self.send_spam_alert(message, message_identifier)
 
-            embed = discord.Embed(color=discord.Colour.orange())
-            embed.set_author(name="Spam Signal")
-            embed.add_field(name="User", value=f'<@{message.author.id}>')
-            embed.add_field(name="Message Content", value=f'`{message.content}`')
-            embed.add_field(name="Instance Count", value=message_identifier.instance_count)  # type: ignore
-            embed.add_field(name="Message link", value=str(message.jump_url))
-            content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
-            content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
-            # need as fresh as possible because i don't know how to handle race conditions
-            message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
-            if not message_identifier.tracking_message_id:  # type: ignore
-                await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
-                                      'this guy might be spamming')
-                tracking_message = await channel.send(content=content, embed=embed)
-                db.MessageIdentifier.update(
-                    tracking_message_id=tracking_message.id).where(
-                        db.MessageIdentifier.user_id == message.author.id,
-                        db.MessageIdentifier.message_hash == hash(message.content)
-                    ).execute()
-                await self.purge(message.author.id, message.guild, message.content)  # type: ignore
-            else:
-                original_message = await channel.fetch_message(message_identifier.tracking_message_id)  # type: ignore
-                await original_message.edit(content=content, embed=embed)
+    async def send_hate_alert(self, message):
+        '''
+        Alert channel for guy spreading likely hate speech
+        '''
+        embed = discord.Embed(color=discord.Colour.orange())
+        embed.set_author(name="Spam Signal")
+        embed.add_field(name="User", value=f'<@{message.author.id}>')
+        embed.add_field(name="Message Content", value=f'`{message.content}`')
+        embed.add_field(name="Message link", value=str(message.jump_url))
+        content = f'<@688959322708901907>: <@{message.author.id}> is sending messages that can be interpreted !'
+        content += 'as hateful. \nIf this is not the case, please explain what happened so mute can be lifted.'
+
+    async def send_spam_alert(self, message, message_identifier):
+        '''
+        Alert channel for likely compromised account
+        '''
+        embed = discord.Embed(color=discord.Colour.orange())
+        embed.set_author(name="Spam Signal")
+        embed.add_field(name="User", value=f'<@{message.author.id}>')
+        embed.add_field(name="Message Content", value=f'`{message.content}`')
+        embed.add_field(name="Instance Count", value=message_identifier.instance_count)  # type: ignore
+        embed.add_field(name="Message link", value=str(message.jump_url))
+        content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
+        content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
+        # need as fresh as possible because i don't know how to handle race conditions
+        message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
+        if not message_identifier.tracking_message_id:  # type: ignore
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+                                    'this guy might be spamming')
+            tracking_message = await self.channel.send(content=content, embed=embed)
+            db.MessageIdentifier.update(
+                tracking_message_id=tracking_message.id).where(
+                    db.MessageIdentifier.user_id == message.author.id,
+                    db.MessageIdentifier.message_hash == hash(message.content)
+                ).execute()
+            await self.purge(message.author.id, message.guild, message.content)  # type: ignore
+        else:
+            original_message = await self.channel.fetch_message(
+                message_identifier.tracking_message_id)  # type: ignore
+            await original_message.edit(content=content, embed=embed)
 
     def parse_date_time_str(self, date_time_str) -> datetime:
         "dates are sometimes saved in two different formats"

@@ -31,8 +31,8 @@ class Reboot(commands.Cog):
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update
-               !update pull-frozen    # pull dependencies from requirements.txt
-               !update pull-unfrozen  # pull dependencies from requirements-unfrozen.txt
+               !update pull-frozen    # pull dependencies from requirements-frozen.txt
+               !update pull-unfrozen  # pull dependencies from requirements.txt
         git pull, then bot reboot
         '''
         try:
@@ -41,10 +41,10 @@ class Reboot(commands.Cog):
             pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
         if 'pull-unfrozen' in ctx.message.content:
-            subprocess.run('pip3 install -U --no-cache-dir -r requirements-unfrozen.txt',
+            subprocess.run('pip3 install -U --no-cache-dir -r requirements.txt',
                            shell=True, check=True)
         if 'pull-frozen' in ctx.message.content:
-            subprocess.run('pip3 install -U --no-cache-dir -r requirements.txt',
+            subprocess.run('pip3 install -U --no-cache-dir -r requirements-frozen.txt',
                            shell=True, check=True)
         os.execv(sys.executable, ['python', *sys.argv])
 
