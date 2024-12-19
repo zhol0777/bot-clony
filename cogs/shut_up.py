@@ -131,7 +131,7 @@ class DoublePosting(commands.Cog):
         embed.add_field(name="Message link", value=str(message.jump_url))
         content = f'<@688959322708901907>: <@{message.author.id}> is sending messages that can be interpreted !'
         content += 'as hateful. \nIf this is not the case, please explain what happened so mute can be lifted.'
-        if channel := self.get_containment_channel():
+        if channel := await self.get_containment_channel():
             await channel.send(content=content, embed=embed)
 
     async def send_spam_alert(self, message, message_identifier):
@@ -151,8 +151,8 @@ class DoublePosting(commands.Cog):
         if not message_identifier.tracking_message_id:  # type: ignore
             await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
                                     'this guy might be spamming')
-            if self.get_containment_channel():
-                tracking_message = await self.channel.send(content=content, embed=embed)
+            if channel := await self.get_containment_channel():
+                tracking_message = await channel.send(content=content, embed=embed)
                 db.MessageIdentifier.update(
                     tracking_message_id=tracking_message.id).where(
                         db.MessageIdentifier.user_id == message.author.id,
