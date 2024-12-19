@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 RUN apt update
-RUN apt install -y git
+RUN apt install -y git build-essential
 
 RUN mkdir -p /usr/src/bot
 WORKDIR /usr/src/bot
