@@ -89,6 +89,7 @@ class DoublePosting(commands.Cog):
 
         msg_reading = self.sonar.ping(message.content)
         hate_metric = msg_reading.get('classes')[0]['confidence']
+        log.warning("%s: %s", message.content, msg_reading['classes'][0])
         if hate_metric >= 0.2:
             log.warning(message.jump_url)
         if hate_metric >= 0.4:  # magic number based off vibes
