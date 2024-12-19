@@ -1,7 +1,7 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
-RUN apk update
-RUN apk --no-cache add git
+RUN apt update
+RUN apt install -y git
 
 RUN mkdir -p /usr/src/bot
 WORKDIR /usr/src/bot
