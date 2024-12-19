@@ -9,7 +9,6 @@ import sys
 
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 
 import db
 
@@ -17,7 +16,6 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 db.create_tables()
-load_dotenv()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 

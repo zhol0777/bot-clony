@@ -33,6 +33,8 @@ class DoublePosting(commands.Cog):
     def __init__(self, client):
         self.client = client
         self.sonar = Sonar()
+        log.warning("Checking channel IDs %s and %s", SPAM_CONTAINMENT_CHANNEL_ID,
+                    TOXIC_CONTAINMENT_CHANNEL_ID)
         self.channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL_ID)
         if not self.channel:
             self.channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL_ID)
@@ -77,6 +79,14 @@ class DoublePosting(commands.Cog):
         if any([message.author.id == self.client.user.id, message.stickers, not message.content]):
             return
 
+        msg_reading = self.sonar.ping(message.content)
+        hate_metric = msg_reading.get('classes')[0]['confidence']
+        log.warning("%s: %s (%s)", message.content, msg_reading['classes'][0], message.jump_url)
+        if hate_metric >= 0.4:  # magic number based off vibes
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+                                  'saying something awful probably')
+            await self.send_hate_alert(message)
+
         # NOTE: link won't detect if content is something like "discord dot gg"
         # so, uh, watch out! most spam we're getting is steamcommunity phishing
         # links which would normally detect anyway
@@ -86,17 +96,7 @@ class DoublePosting(commands.Cog):
             break
         if not has_link:
             return
-
-        msg_reading = self.sonar.ping(message.content)
-        hate_metric = msg_reading.get('classes')[0]['confidence']
-        log.warning("%s: %s", message.content, msg_reading['classes'][0])
-        if hate_metric >= 0.2:
-            log.warning(message.jump_url)
-        if hate_metric >= 0.4:  # magic number based off vibes
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
-                                  'saying something awful probably')
-            await self.send_hate_alert(message)
-
+        
         with db.bot_db:
             message_identifier = self.get_message_identifier(message)
 

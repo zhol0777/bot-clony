@@ -7,7 +7,6 @@ mypy
 peewee
 Pillow
 pylint
-python-dotenv
 requests
 ruff
 tabulate
