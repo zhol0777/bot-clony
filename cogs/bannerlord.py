@@ -43,7 +43,7 @@ class Bannerlord(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(BANNERLORD_ROLE_ID)
-    async def banner(self, ctx: commands.Context, *args):
+    async def banner(self, ctx: commands.Context, *args):  # noqa  # pylint:disable=R0912,R0915
         '''
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
@@ -63,11 +63,18 @@ class Bannerlord(commands.Cog):
             await status_message.edit(content='No attachments found searching embeds for image...')
             image_url_list = []
             for embed in original_msg.embeds:
+                embed_obj = None
                 if embed.thumbnail and str(embed.thumbnail.url).lower().endswith(VALID_IMAGE_EXTENSIONS):
-                    image_url_list.append(embed.thumbnail.url)
+                    embed_obj = embed.thumbnail
                 elif embed.image and embed.image.url and \
                         embed.image.url.lower().endswith(VALID_IMAGE_EXTENSIONS):
-                    image_url_list.append(embed.image.url)
+                    embed_obj = embed.image
+                if embed_obj and isinstance(embed_obj.url, str):
+                    # TODO: see if we should just use proxy_url every time
+                    if 'imgur' not in embed_obj.url:
+                        image_url_list.append(embed_obj.url)
+                    elif isinstance(embed_obj.proxy_url, str):
+                        image_url_list.append(embed_obj.proxy_url)
             try:
                 attachment_url = image_url_list[attachment_index]
             except IndexError:

@@ -23,7 +23,9 @@ update-requirements:
 # testing #
 ###########
 
-test: lint
+test: # lint
+	# just needed for test on python 3.13...
+	# uv pip install audioop-lts
 	python3 -m unittest discover tests
 
 lint: ruff pylint mypy

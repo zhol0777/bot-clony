@@ -1,7 +1,7 @@
 asyncpraw
+better-profanity
 discord.py
 flake8
-git+https://github.com/k3KAW8Pnf7mkmdSMPHz27/HateSonar
 mock
 mypy
 peewee
@@ -10,7 +10,6 @@ pylint
 requests
 ruff
 tabulate
-typed-ast
 types-mock
 types-requests
 types-Pillow

@@ -1,4 +1,7 @@
 # pylint: skip-file
+import os
+import pickle
+import tempfile
 import unittest
 
 import mock
@@ -57,3 +60,16 @@ class TestSanitizer(unittest.TestCase):
                          'https://drop.com/buy/drop-ctrl-v2-mechanical-keyboard?defaultSelectionIds=981286%2C981288')
         self.assertEqual(sanitizer_utils.sanitize_url('https://x.com/testwhatever/status/20938409238423042?t=i&asdf=jlk'),
                          'https://x.com/testwhatever/status/20938409238423042?t=i')
+
+    def test_modify_params_at_runtime(self):
+        # check base
+        self.assertIn('p', sanitizer_utils.get_allowed_params())
+        self.assertNotIn('asdf', sanitizer_utils.get_allowed_params())
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_params = {'asdf', 'qwerty'}
+            tmp_pickle_path = os.path.join(tmpdir, 'tmp.pickle')
+            with open(tmp_pickle_path, 'wb') as _file:
+                pickle.dump(temp_params, _file)
+            assert os.path.exists(tmp_pickle_path)
+            self.assertIn('asdf', sanitizer_utils.get_allowed_params(tmp_pickle_path))

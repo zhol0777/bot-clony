@@ -1,8 +1,7 @@
-FROM python:3.12-slim
+FROM python:3.12-alpine
 
-RUN apt update
-RUN apt install -y git build-essential locales locales-all
-RUN locale-gen en_US.utf8
+RUN apk update
+RUN apk --no-cache add git
 
 RUN mkdir -p /usr/src/bot
 WORKDIR /usr/src/bot

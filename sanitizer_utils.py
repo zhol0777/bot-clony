@@ -2,7 +2,10 @@
 break out sanitizer functions to here so that backmerging changes is less annoying between branches
 """
 
-from typing import Tuple
+import logging
+import os
+import pickle
+from typing import Optional, Tuple
 from urllib.parse import urlparse
 
 import requests
@@ -11,50 +14,55 @@ from urlextract import URLExtract
 import consts
 import util
 
+ALLOWED_PARAMS_FILE = os.getenv('ALLOWED_PARAMS_FILE', '')
+logging.basicConfig(level=logging.INFO)
+log = logging.getLogger(__name__)
+
+
 # si (source identifier) is a tracking param but people kept whining
-ALLOWED_PARAMS = [
-    "t",
-    "variant",
-    "sku",
-    "defaultSelectionIds",
-    "q",
-    "v",
-    "id",
-    "tk",
-    "topic",
-    "quality",
-    "size",
-    "width",
-    "height",
-    "feature",
-    "p",
-    "l",
+ALLOWED_PARAMS = {
     "board",
     "c",
-    "route",
-    "product",
+    "defaultSelectionIds",
+    "dl",
+    "feature",
+    "gcode",
+    "h",
+    "hash",
+    "height",
+    "id",
+    "idx",
+    "iframe_url_utf8",
+    "k",
+    "key",
+    "l",
+    "language",
+    "list",
+    "m",
+    "p_id",
+    "p",
+    "page",
     "path",
     "product_id",
-    "idx",
-    "list",
-    "page",
-    "sort",
-    "iframe_url_utf8",
-    "si",
-    "gcode",
-    "url",
-    "h",
-    "w",
-    "hash",
-    "m",
-    "dl",
-    "th",
-    "language",
-    "k",
-    "m",
+    "product",
+    "q",
+    "quality",
+    "route",
     "s",
-    "key",
-]
+    "si",
+    "size",
+    "sku",
+    "sort",
+    "t",
+    "th",
+    "tk",
+    "topic",
+    "url",
+    "v",
+    "variant",
+    "w",
+    "width",
+}
 
 
 DOMAINS_TO_FIX = {
@@ -180,9 +188,22 @@ def sanitize_url(url: str) -> str:
     return url if url.endswith("?") else new_word
 
 
+# TODO: cache this function and discover why function would not cache in test
+def get_allowed_params(allowed_params_file: Optional[str] = '') -> set:
+    """merge hardcoded allowed params with those from"""
+    params_in_file = {}
+    if allowed_params_file and os.path.exists(allowed_params_file):
+        try:
+            with open(allowed_params_file, 'rb') as _file:
+                params_in_file = pickle.load(_file)
+        except pickle.UnpicklingError:
+            log.error("%s is not pickled properly, please investigate", allowed_params_file)
+    return ALLOWED_PARAMS.union(params_in_file)
+
+
 def valid_param(param: str) -> bool:
     """checks url query parameter against hard list of valid ones"""
-    for allowed_param in ALLOWED_PARAMS:
+    for allowed_param in get_allowed_params(ALLOWED_PARAMS_FILE):
         if param.startswith(f"{allowed_param}="):
             return True
     return False

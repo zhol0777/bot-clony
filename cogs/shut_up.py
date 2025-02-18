@@ -7,9 +7,9 @@ import os
 import typing
 from datetime import datetime
 
+import better_profanity
 import discord
 from discord.ext import commands, tasks
-from hatesonar import Sonar
 from urlextract import URLExtract
 
 import db
@@ -17,6 +17,7 @@ import util
 
 TOXIC_CONTAINMENT_CHANNEL_ID = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL_ID', '0'))
 SPAM_CONTAINMENT_CHANNEL_ID = int(os.getenv('SPAM_CONTAINMENT_CHANNEL_ID', '0'))
+BANNED_WORDLIST = os.getenv('BANNED_WORDLIST_FILE_PATH', '')
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -28,11 +29,17 @@ LOOP_TIME = 60
 SPAM_INTERVAL = 15
 
 
-class DoublePosting(commands.Cog):
+class ShutUp(commands.Cog):
     '''Oh My God Stop Posting Multiple Times In Every Channel'''
     def __init__(self, client):
         self.client = client
-        self.sonar = Sonar()
+        self.should_censor = False
+        if os.path.exists(BANNED_WORDLIST):
+            better_profanity.profanity.load_censor_words_from_file(BANNED_WORDLIST)
+            self.should_censor = True
+        else:
+            log.info("Censor word file %s not found, do not engage censorship", BANNED_WORDLIST)
+            better_profanity.profanity.load_censor_words([])
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -65,7 +72,10 @@ class DoublePosting(commands.Cog):
     # TODO: deal with race condition
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        '''send annoyance message if message has been sent multiple times in last 15s'''
+        '''
+        send annoyance message if message has been sent multiple times in last 15s
+        send user to jail if they're using a no-no word
+        '''
         # do not do this to zholbot and end up in infinite feedback loop
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
@@ -73,18 +83,16 @@ class DoublePosting(commands.Cog):
                 not message.content and not message.embeds]):
             return
 
-        msg_reading = self.sonar.ping(message.content)
-        hate_metric = msg_reading.get('classes')[0]['confidence']
-        # log.warning("%s: %s (%s)", message.content, msg_reading['classes'][0], message.jump_url)
-        # if hate_metric >= 0.6:  # magic number based off vibes
-        #     await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
-        #                           'hatesonar set off by following message: '
-        #                           f'{message.content[:100]}...')
-        #     await self.send_hate_alert(message)
+        if self.should_censor and better_profanity.profanity.contains_profanity(message.content):
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+                                  'hatesonar set off by following message: '
+                                  f'{message.content[:100]}...')
+            await self.send_hate_alert(message)
 
         # NOTE: link won't detect if content is something like "discord dot gg"
         # so, uh, watch out! most spam we're getting is steamcommunity phishing
         # links which would normally detect anyway
+        # NOTE: remove if some guy just spams the n word in every channel again
         has_link = False
         for _ in URLExtract().gen_urls(message.content):
             has_link = True
@@ -217,4 +225,4 @@ class DoublePosting(commands.Cog):
 
 async def setup(client):
     '''setup'''
-    await client.add_cog(DoublePosting(client))
+    await client.add_cog(ShutUp(client))
