@@ -20,9 +20,9 @@ I want more features.
 ## How do I run this?
 
 1. `cp .env-example .env` and modify values as needed
-2. `python3 -m venv venv`
-3. `source venv/bin/activate`
-4. `pip install -U -r requirements.txt`
+2. `uv venv`
+3. `source .venv/bin/activate`
+4. `uv pip install --system -r requirements.txt`
 5. `python3 ./main.py`
 
 or, you build with docker like this

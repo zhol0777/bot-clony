@@ -11,13 +11,14 @@ source:
 install: venv install-requirements source
 
 venv:
-	python3 -m venv venv
+	pip install uv
+	uv venv
 
 install-requirements: source
-	python3 -m pip install -U -r requirements.txt
+	uv pip install --system -r requirements.txt
 
 update-requirements:
-	pip freeze > requirements-frozen.txt
+	uv pip freeze > requirements-frozen.txt
 
 ###########
 # testing #

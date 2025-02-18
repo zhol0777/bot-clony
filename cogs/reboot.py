@@ -41,10 +41,10 @@ class Reboot(commands.Cog):
             pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
         if 'pull-unfrozen' in ctx.message.content:
-            subprocess.run('pip3 install -U --no-cache-dir -r requirements.txt',
+            subprocess.run('uv pip install --system -r requirements.txt',
                            shell=True, check=True)
         if 'pull-frozen' in ctx.message.content:
-            subprocess.run('pip3 install -U --no-cache-dir -r requirements-frozen.txt',
+            subprocess.run('uv pip install --system -r requirements-frozen.txt',
                            shell=True, check=True)
         os.execv(sys.executable, ['python', *sys.argv])
 
