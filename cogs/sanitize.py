@@ -119,7 +119,7 @@ class Sanitize(commands.Cog):
             try:
                 with open(ALLOWED_PARAMS_FILE, 'rb') as allowed_params_data:
                     non_hardcoded_params = pickle.load(allowed_params_data)
-            except pickle.PicklingError:
+            except (pickle.PicklingError, EOFError):
                 pass
             non_hardcoded_params.add(param)
             with open(ALLOWED_PARAMS_FILE, 'wb') as allowed_params_data:
@@ -133,7 +133,7 @@ class Sanitize(commands.Cog):
             try:
                 with open(ALLOWED_PARAMS_FILE, 'rb') as allowed_params_data:
                     non_hardcoded_params: Set[str] = pickle.load(allowed_params_data)
-            except (FileNotFoundError, pickle.UnpicklingError):
+            except (EOFError, pickle.UnpicklingError):
                 pass
             if param in non_hardcoded_params:
                 non_hardcoded_params.remove(param)
