@@ -41,7 +41,7 @@ Helper Commands:
                         !ejectwarn [reason...] (as reply)
                         !ejectwarn list [@ user tag]
                         !ejectwarn delete [reason ID]
-  purgatory:    Usage:  !purgatory [@ user tag] [reason...]
+  purgatory     Usage:  !purgatory [@ user tag] [reason...]
                 [reply] !purgatory [reason...]
   socialcredit
                 Usage:  !socialcredit [user tag]
@@ -80,6 +80,8 @@ Mod Commands:
   countthock    Enable thock-counting in channel:
                 !countthock true
                 Use false to disable counting
+  allow_param   Add allowed URL param to sanitizer
+  remove_param  Dis-allow URL param to sanitizer
 '''
 
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))

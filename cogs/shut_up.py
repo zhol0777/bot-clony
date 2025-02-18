@@ -36,6 +36,7 @@ class ShutUp(commands.Cog):
         self.should_censor = False
         if os.path.exists(BANNED_WORDLIST):
             better_profanity.profanity.load_censor_words_from_file(BANNED_WORDLIST)
+            log.info("Bad words have been loaded into the censor.")
             self.should_censor = True
         else:
             log.info("Censor word file %s not found, do not engage censorship", BANNED_WORDLIST)
