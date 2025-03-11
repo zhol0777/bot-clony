@@ -84,7 +84,7 @@ WHITELISTED_DOMAINS = [
 ]
 
 
-DOMAINS_TO_REDIRECT = ["a.aliexpress.com", "a.co"]  # "vm.tiktok.com",
+DOMAINS_TO_REDIRECT = ["a.aliexpress.com", "a.co", "s.click.aliexpress.com"]  # "vm.tiktok.com",
 
 
 REDIRECT_HEADERS = {
