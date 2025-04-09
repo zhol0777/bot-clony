@@ -3,8 +3,8 @@ Command to track usage of the word "thock"
 '''
 import os
 from functools import lru_cache
-from random import randint
 
+# from random import randint
 import discord
 from discord.ext import commands
 
@@ -61,13 +61,13 @@ class ThockCount(commands.Cog):
         '''increment thock-counter'''
         if message.author.bot:
             return
-        if LEMOKEY in message.content.lower():
-            if bool(randint(0, 1)):
-                emoji_list = ["🇱", "🇪", "🐵"]
-            else:
-                emoji_list = ["🍋", "🔑"]
-            for emoji in emoji_list:
-                await message.add_reaction(emoji)
+        # if LEMOKEY in message.content.lower():
+        #     if bool(randint(0, 1)):
+        #         emoji_list = ["🇱", "🇪", "🐵"]
+        #     else:
+        #         emoji_list = ["🍋", "🔑"]
+        #     for emoji in emoji_list:
+        #         await message.add_reaction(emoji)
         if THOCK not in message.content.lower() or message.content.lower().startswith(COMMAND_NAME):
             return
         if self.is_tracking(message.channel.id):
