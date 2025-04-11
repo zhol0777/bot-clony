@@ -80,6 +80,7 @@ WHITELISTED_DOMAINS = [
     "www.youtube.com",
     "youtu.be",
     "open.spotify.com",
+    "cdn.discordapp.com",
     *DOMAINS_TO_FIX.values(),
 ]
 
