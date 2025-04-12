@@ -175,7 +175,7 @@ def sanitize_url(url: str) -> str:
     new_word = url.split("?")[0]
 
     # do not sanitize image embeds
-    if util.is_image(new_word):
+    if util.is_image(new_word) or util.is_video(new_word):
         return url
 
     url_params = []
