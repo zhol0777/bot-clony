@@ -67,11 +67,12 @@ ALLOWED_PARAMS = {
 
 DOMAINS_TO_FIX = {
     # 'www.tiktok.com': 'proxitok.pussthecat.org',
-    # "www.tiktok.com": "vxtiktok.com",
+    "vm.tiktok.com": "d.tnktok.com",
+    "www.tiktok.com": "d.tnktok.com",
     "twitter.com": "fxtwitter.com",
     "x.com": "fixupx.com",
-    "instagram.com": "ddinstagram.com",
-    "www.instagram.com": "ddinstagram.com",
+    "instagram.com": "instagramez.com",
+    "www.instagram.com": "instagramez.com",
 }
 
 
@@ -155,14 +156,13 @@ def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
             # this was proxied, check for liveness
             if keep_embed:
                 try:
-                    req = requests.get(sanitized_url, timeout=10)
+                    if requests.get(sanitized_url, timeout=10).ok:
+                        sanitized_msg_word_list.append(sanitized_url)
+                        needs_sanitizing = True
+                        post_warning = False
+                    continue
                 except requests.exceptions.ReadTimeout:
                     continue  # he's dead jim
-                if "mp4" in req.text:
-                    sanitized_msg_word_list.append(sanitized_url)
-                    needs_sanitizing = True
-                    post_warning = False
-                    continue
             else:
                 needs_sanitizing, post_warning = True, True
                 sanitized_msg_word_list.append(f"<{sanitized_url}>")
