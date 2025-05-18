@@ -21,17 +21,22 @@ ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 
 
 DOMAINS_TO_FIX = {
     # 'www.tiktok.com': 'proxitok.pussthecat.org',
-    'www.tiktok.com': 'vxtiktok.com',
+    "vm.tiktok.com": "tnktok.com",
+    "www.tiktok.com": "tnktok.com",
     'twitter.com': 'fxtwitter.com',
     'x.com': 'fixupx.com',
-    'instagram.com': 'ddinstagram.com',
-    'www.instagram.com': 'ddinstagram.com',
-    'reddit.com': 'rxddit.com',
-    'www.reddit.com': 'rxddit.com',
+    'instagram.com': 'instagramez.com',
+    'www.instagram.com': 'instagramez.com',
 }
 
 
-WHITELISTED_DOMAINS = ['youtube.com', 'www.youtube.com', 'youtu.be', 'open.spotify.com', *DOMAINS_TO_FIX.values()]
+WHITELISTED_DOMAINS = [
+    'youtube.com',
+    'www.youtube.com',
+    'youtu.be',
+    'open.spotify.com',
+    'cdn.discordapp.com',
+    *DOMAINS_TO_FIX.values()]
 
 
 DOMAINS_TO_REDIRECT = ['a.aliexpress.com', 'vm.tiktok.com', 'a.co']
@@ -104,14 +109,13 @@ def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
             # this was proxied, check for liveness
             if keep_embed:
                 try:
-                    req = requests.get(sanitized_url, timeout=10)
+                    if requests.get(sanitized_url, timeout=10).ok:
+                        sanitized_msg_word_list.append(sanitized_url)
+                        needs_sanitizing = True
+                        post_warning = False
+                    continue
                 except requests.exceptions.ReadTimeout:
                     continue  # he's dead jim
-                if 'mp4' in req.text:
-                    sanitized_msg_word_list.append(sanitized_url)
-                    needs_sanitizing = True
-                    post_warning = False
-                    continue
             else:
                 needs_sanitizing, post_warning = True, True
                 sanitized_msg_word_list.append(f"<{sanitized_url}>")
@@ -124,7 +128,7 @@ def sanitize_url(url: str) -> str:
     new_word = url.split('?')[0]
 
     # do not sanitize image embeds
-    if util.is_image(new_word):
+    if util.is_image(new_word) or util.is_video(new_word):
         return url
 
     url_params = []

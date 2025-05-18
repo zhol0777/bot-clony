@@ -2,6 +2,7 @@
 Utility functions shared across cogs
 '''
 import os
+from mimetypes import guess_type
 from typing import Optional, Union
 
 import discord
@@ -24,6 +25,13 @@ def is_image(uri: str) -> bool:
             return True
     except KeyError:
         pass
+    return False
+
+
+def is_video(uri: str) -> bool:
+    '''see if a URI contains a video'''
+    if guess := guess_type(uri)[0]:
+        return 'video' in guess
     return False
 
 
