@@ -2,7 +2,7 @@ start: source
 	python3 ./main.py
 
 source:
-	source venv/bin/activate
+	source .venv/bin/activate
 
 ################
 # installation #
