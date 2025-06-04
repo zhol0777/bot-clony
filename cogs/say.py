@@ -12,12 +12,12 @@ class Say(commands.Cog):
         self.client = client
 
     @commands.command()
-    async def say(self, ctx: commands.Context):
+    async def say(self, ctx: commands.Context, *args):
         '''
         Usage: !say hello world
         '''
         url_params = urlencode({
-            'text': ctx.message.content
+            'text': ' '.join(args)
         })
         await ctx.channel.send(f"!play https://api.flowery.pw/v1/tts?{url_params}")
 
