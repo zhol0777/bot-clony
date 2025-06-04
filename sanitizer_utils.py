@@ -16,7 +16,7 @@ ALLOWED_PARAMS = ['t', 'variant', 'sku', 'defaultSelectionIds', 'q', 'v', 'id', 
                   'quality', 'size', 'width', 'height', 'feature', 'p', 'l', 'board', 'c',
                   'route', 'product', 'path', 'product_id', 'idx', 'list', 'page', 'sort',
                   'iframe_url_utf8', 'si', 'gcode', 'url', 'h', 'w', 'hash', 'm', 'dl', 'th',
-                  'language', 'k', 'm', 's', 'key']
+                  'language', 'k', 'm', 's', 'key', 'text']
 
 
 DOMAINS_TO_FIX = {
