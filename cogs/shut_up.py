@@ -80,8 +80,10 @@ class ShutUp(commands.Cog):
         # do not do this to zholbot and end up in infinite feedback loop
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
-        if any([message.author.id == self.client.user.id, message.stickers,
-                not message.content and not message.embeds]):
+        if any([message.author.id == self.client.user.id,
+                message.stickers,
+                not message.content and not message.embeds,
+                discord.utils.get(message.author.guild.roles, name='Razer Hate')]):  # type: ignore
             return
 
         if self.should_censor and better_profanity.profanity.contains_profanity(message.content):
