@@ -66,9 +66,9 @@ ALLOWED_PARAMS = {
 
 
 DOMAINS_TO_FIX = {
-    # 'www.tiktok.com': 'proxitok.pussthecat.org',
     "vm.tiktok.com": "tnktok.com",
     "www.tiktok.com": "tnktok.com",
+    "vt.tiktok.com": "tnktok.com",
     "twitter.com": "fxtwitter.com",
     "x.com": "fixupx.com",
     "instagram.com": "instagramez.com",
