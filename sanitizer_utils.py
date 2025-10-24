@@ -71,8 +71,8 @@ DOMAINS_TO_FIX = {
     "vt.tiktok.com": "tnktok.com",
     "twitter.com": "fxtwitter.com",
     "x.com": "fixupx.com",
-    "instagram.com": "instagramez.com",
-    "www.instagram.com": "instagramez.com",
+    "instagram.com": "kkinstagram.com",
+    "www.instagram.com": "kkinstagram.com",
 }
 
 
