@@ -172,7 +172,7 @@ def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
 
 def sanitize_url(url: str) -> str:
     """remove unnecessary url parameters from a url"""
-    new_word = url.split("?")[0]
+    new_word = url.split("?", maxsplit=1)[0]
 
     # do not sanitize image embeds
     if util.is_image(new_word) or util.is_video(new_word):
