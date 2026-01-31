@@ -69,7 +69,7 @@ class TestSanitizer(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             temp_params = {'asdf', 'qwerty'}
             tmp_pickle_path = os.path.join(tmpdir, 'tmp.pickle')
-            with open(tmp_pickle_path, 'wb') as _file:
-                pickle.dump(temp_params, _file)
+            with open(tmp_pickle_path, 'wb') as file:
+                pickle.dump(temp_params, file)
             assert os.path.exists(tmp_pickle_path)
             self.assertIn('asdf', sanitizer_utils.get_allowed_params(tmp_pickle_path))

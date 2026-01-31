@@ -2,6 +2,7 @@ asyncpraw
 better-profanity
 discord.py
 flake8
+imagehash
 mock
 mypy
 peewee

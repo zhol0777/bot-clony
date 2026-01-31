@@ -4,12 +4,14 @@ that triggers response
 '''
 import logging
 import os
-import typing
 from datetime import datetime
+from io import BytesIO
 
 import better_profanity
 import discord
+import imagehash
 from discord.ext import commands, tasks
+from PIL import Image
 from urlextract import URLExtract
 
 import db
@@ -31,7 +33,7 @@ SPAM_INTERVAL = 15
 
 class ShutUp(commands.Cog):
     '''Oh My God Stop Posting Multiple Times In Every Channel'''
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
         self.should_censor = False
         if os.path.exists(BANNED_WORDLIST):
@@ -62,13 +64,13 @@ class ShutUp(commands.Cog):
         #         if time_delta.seconds > 60:
         #             message.delete_instance()
 
-    def get_message_identifier(self, message: discord.Message,
-                               row_id: int | None = None) -> typing.Union[db.MessageIdentifier, None]:
+    def get_message_identifier(self, message_hash: str | int, author_id: int,
+                               row_id: int | None = None,) -> db.MessageIdentifier | None:
         '''kind of a macro'''
         if row_id:
             return db.MessageIdentifier.get_or_none(id=row_id)
-        return db.MessageIdentifier.get_or_none(message_hash=hash(message.content),
-                                                user_id=message.author.id)
+        return db.MessageIdentifier.get_or_none(message_hash=message_hash,
+                                                user_id=author_id)
 
     # TODO: deal with race condition
     @commands.Cog.listener()
@@ -81,9 +83,9 @@ class ShutUp(commands.Cog):
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
         # do not do this if the guy's already been contained
-        if any([message.author.id == self.client.user.id,
+        if any([message.author.id == self.client.user.id,  # type: ignore
                 message.stickers,
-                not message.content and not message.embeds,
+                not message.content and not message.attachments and not message.embeds,
                 message.channel.id in {TOXIC_CONTAINMENT_CHANNEL_ID,
                                        SPAM_CONTAINMENT_CHANNEL_ID}]):  # type: ignore
             return
@@ -94,22 +96,26 @@ class ShutUp(commands.Cog):
                                   f'{message.content[:100]}...')
             await self.send_hate_alert(message)
 
+        if message.attachments:
+            attachment = message.attachments[0]
+            buffer = BytesIO()
+            await attachment.save(buffer)
+            buffer.seek(0)
+            img = Image.open(buffer)
+            message_hash = str(imagehash.average_hash(img))
         # NOTE: link won't detect if content is something like "discord dot gg"
-        # so, uh, watch out! most spam we're getting is steamcommunity phishing
-        # links which would normally detect anyway
-        # NOTE: remove if some guy just spams the n word in every channel again
-        has_link = False
-        for _ in URLExtract().gen_urls(message.content):
-            has_link = True
-            break
-        if not has_link:
+        # so, uh, watch out!
+        elif message.mention_everyone or message.role_mentions or URLExtract().gen_urls(message.content):
+            message_hash = str(hash(message.content))
+        else:
             return
 
         with db.bot_db:
-            message_identifier = self.get_message_identifier(message)
+            message_identifier = self.get_message_identifier(message_hash, message.author.id)
 
             if not message_identifier:
-                db.MessageIdentifier.create(message_hash=hash(message.content),
+                log.debug("Tracking message from %s using hash %s", message.author.name, message_hash)
+                db.MessageIdentifier.create(message_hash=message_hash,
                                             user_id=message.author.id,
                                             instance_count=1,
                                             created_at=message.created_at)
@@ -127,10 +133,11 @@ class ShutUp(commands.Cog):
                 ).execute()
 
             # send message if over threshold
-            message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
+            message_identifier = self.get_message_identifier(message_hash, message.author.id)  # type: ignore
+            log.debug("%s has repeated message: %s times", message.author.name, message_identifier.instance_count)  # type: ignore
             if message_identifier.instance_count < 5:  # type: ignore
                 return
-            await self.send_spam_alert(message, message_identifier)
+            await self.send_spam_alert(message, message_hash, message_identifier)
 
     async def send_hate_alert(self, message):
         '''
@@ -146,7 +153,7 @@ class ShutUp(commands.Cog):
         if channel := await self.get_containment_channel():
             await channel.send(content=content, embed=embed)
 
-    async def send_spam_alert(self, message, message_identifier):
+    async def send_spam_alert(self, message, message_hash, message_identifier):
         '''
         Alert channel for likely compromised account
         '''
@@ -159,7 +166,7 @@ class ShutUp(commands.Cog):
         content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
         content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
         # need as fresh as possible because i don't know how to handle race conditions
-        message_identifier = self.get_message_identifier(message, message_identifier.id)  # type: ignore
+        message_identifier = self.get_message_identifier(message_hash, message.author.id)  # type: ignore
         if not message_identifier.tracking_message_id:  # type: ignore
             await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
                                     'this guy might be spamming')
@@ -203,9 +210,10 @@ class ShutUp(commands.Cog):
         Go through last 100 messages and purge those from user
         tagged or replied to
         '''
+        content_hash = hash(message_content)
 
         def should_be_purged(message: discord.Message):
-            return message.author.id == purged_user_id and hash(message_content) == hash(message.content)
+            return message.author.id == purged_user_id and content_hash == hash(message.content)
 
         # TODO: figure out less dumb way to do this
         # TODO: async purge

@@ -195,8 +195,8 @@ def get_allowed_params(allowed_params_file: Optional[str] = '') -> set:
     params_in_file = {}
     if allowed_params_file and os.path.exists(allowed_params_file):
         try:
-            with open(allowed_params_file, 'rb') as _file:
-                params_in_file = pickle.load(_file)
+            with open(allowed_params_file, 'rb') as file_brs:
+                params_in_file = pickle.load(file_brs)
         except pickle.UnpicklingError:
             log.error("%s is not pickled properly, please investigate", allowed_params_file)
     return ALLOWED_PARAMS.union(params_in_file)

@@ -15,7 +15,7 @@ venv:
 	uv venv
 
 install-requirements: source
-	uv pip install --system -r requirements.txt
+	uv pip install -r requirements.txt
 
 update-requirements:
 	uv pip freeze > requirements-frozen.txt
