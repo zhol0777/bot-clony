@@ -21,7 +21,7 @@ class SocialCredit(commands.Cog):
     # later. -zhol
     @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     @commands.command()
-    async def socialcredit(self, ctx, *args):
+    async def socialcredit(self, ctx: commands.Context, *args):
         '''
         general socialcredit operations: read, add, remove
         Usage:         !socialcredit [user tag]
@@ -39,7 +39,7 @@ class SocialCredit(commands.Cog):
             if ctx.message.reference is not None:
                 # replying to someone who is about to be ejected
                 original_msg = await ctx.fetch_message(
-                    ctx.message.reference.message_id)
+                    ctx.message.reference.message_id)  # ty: ignore[invalid-argument-type]
                 relevant_user = original_msg.author
                 user_id = relevant_user.id
                 amount = float(args[1])
@@ -49,7 +49,7 @@ class SocialCredit(commands.Cog):
         elif ctx.message.reference is not None:
             # replying to someone who is about to be ejected
             original_msg = await ctx.fetch_message(
-                ctx.message.reference.message_id)
+                ctx.message.reference.message_id)  # ty: ignore[invalid-argument-type]
             relevant_user = original_msg.author
             user_id = relevant_user.id
         else:

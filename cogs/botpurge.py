@@ -13,7 +13,7 @@ from collections import Counter
 from datetime import date, datetime
 
 import discord
-from discord.ext import commands, tasks  # type: ignore
+from discord.ext import commands, tasks
 
 import db
 import util
@@ -81,7 +81,7 @@ class BotPurger(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
-    async def populatekickedusertable(self, ctx, *args):
+    async def populatekickedusertable(self, ctx: commands.Context, *args):
         '''go through a bunch of messages and count how many times sus users have returned'''
         if not ctx.guild:
             return
@@ -117,15 +117,18 @@ class BotPurger(commands.Cog):
                         kick_count=kick_count
                     ).on_conflict(
                         conflict_target=[db.KickedUser.user_id],
-                        update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
+                        update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}  # ty: ignore[invalid-argument-type]
                     ).execute()
         except Exception:  # pylint: disable=broad-except
             util.handle_error(ctx, traceback.format_exc())
 
     @commands.command()
     @commands.has_any_role((MOD_ROLE_ID))
-    async def greatpurge(self, ctx, *args):  # pylint: disable=unused-argument
+    async def greatpurge(self, ctx: commands.Context, *args):  # pylint: disable=unused-argument
         '''ban any account that has rejoined after being kicked a certain number of times'''
+        if not ctx.guild:
+            log.error("greatpurge called outside of guild")
+            return
         kick_limit = int(args[0]) if len(args) > 0 else DEFAULT_LIMIT
         dm_channel = await ctx.message.author.create_dm()
         status_message = await dm_channel.send(f"banning any account created after {BOT_BIRTHDAY!s} "
@@ -161,7 +164,7 @@ class BotPurger(commands.Cog):
 
     @commands.command()
     @commands.has_any_role((MOD_ROLE_ID))
-    async def greatpurge2(self, ctx, *args):  # pylint: disable=unused-argument,too-many-locals,too-many-branches
+    async def greatpurge2(self, ctx: commands.Context, *args):  # pylint: disable=unused-argument,too-many-locals,too-many-branches
         '''re-attempt great purge, fewer awaits'''
         if not ctx.guild:
             return
@@ -222,7 +225,7 @@ class BotPurger(commands.Cog):
                     kick_count=kick_count
                 ).on_conflict(
                     conflict_target=[db.KickedUser.user_id],
-                    update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}
+                    update={db.KickedUser.kick_count: max(db.KickedUser.kick_count, kick_count)}  # ty: ignore[invalid-argument-type]
                 ).execute()
 
     # @commands.Cog.listener()
@@ -235,7 +238,7 @@ class BotPurger(commands.Cog):
     #         pass
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         '''add suspiciously new account to monitoring database'''
         if member.created_at.replace(tzinfo=None) > BOT_BIRTHDAY:
             with db.bot_db:
@@ -253,6 +256,8 @@ class BotPurger(commands.Cog):
     @tasks.loop(seconds=LOOP_TIME)
     async def purge_loop_function(self):
         '''iterate through db of suspicious users and delete monitoring if they verify, kick if not'''
+        if not self.guild:
+            return
         current_time = int(time.time())
         with db.bot_db:
             suspicious_users = db.SuspiciousUser.select()

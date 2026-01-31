@@ -7,7 +7,7 @@ import os
 import time
 
 from discord.errors import NotFound
-from discord.ext import commands, tasks  # type: ignore
+from discord.ext import commands, tasks
 
 import db
 import util

@@ -5,8 +5,10 @@ import logging
 import os
 import sys
 import traceback
+from typing import Any
 from urllib.parse import urljoin
 
+import discord
 from discord.ext import commands
 
 import db
@@ -25,7 +27,7 @@ class ModListeners(commands.Cog):
         self.client = client
 
     @commands.Cog.listener()
-    async def on_member_join(self, member):
+    async def on_member_join(self, member: discord.Member):
         '''mostly reapply roles to returning users'''
         # finlacoin compromised accounts
         if member.display_name.lower() == 'finlacoin':
@@ -42,7 +44,7 @@ class ModListeners(commands.Cog):
                                       enter_in_db=False)
 
     @commands.Cog.listener()
-    async def on_member_update(self, before, after):
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
         '''mostly for eject role monitoring, can be expanded to other roles'''
 
         removed_roles = set(before.roles) - set(after.roles)
@@ -63,7 +65,7 @@ class ModListeners(commands.Cog):
                     )
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):  # pylint: disable=unused-argument
+    async def on_command_error(self, ctx: commands.Context, error: Any):
         '''
         quiet logging on any cmd that doesn't exist or is handled elsewhere
         cribbed from https://gist.github.com/EvieePy/7822af90858ef65012ea500bcecf1612

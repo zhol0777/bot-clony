@@ -65,12 +65,12 @@ class ShutUp(commands.Cog):
         #             message.delete_instance()
 
     def get_message_identifier(self, message_hash: str | int, author_id: int,
-                               row_id: int | None = None,) -> db.MessageIdentifier | None:
+                               row_id: int | None = None,) -> db.MessageIdentifier:
         '''kind of a macro'''
         if row_id:
-            return db.MessageIdentifier.get_or_none(id=row_id)
-        return db.MessageIdentifier.get_or_none(message_hash=message_hash,
-                                                user_id=author_id)
+            return db.MessageIdentifier.get(id=row_id)
+        return db.MessageIdentifier.get(message_hash=message_hash,
+                                        user_id=author_id)
 
     # TODO: deal with race condition
     @commands.Cog.listener()
@@ -83,21 +83,27 @@ class ShutUp(commands.Cog):
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
         # do not do this if the guy's already been contained
-        if any([message.author.id == self.client.user.id,  # type: ignore
+        if any([message.author.id == self.client.user.id,  # ty: ignore[possibly-missing-attribute]
                 message.stickers,
                 not message.content and not message.attachments and not message.embeds,
                 message.channel.id in {TOXIC_CONTAINMENT_CHANNEL_ID,
-                                       SPAM_CONTAINMENT_CHANNEL_ID}]):  # type: ignore
+                                       SPAM_CONTAINMENT_CHANNEL_ID}]):
             return
 
         if self.should_censor and better_profanity.profanity.contains_profanity(message.content):
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # ty: ignore[invalid-argument-type]
                                   'hatesonar set off by following message: '
                                   f'{message.content[:100]}...')
             await self.send_hate_alert(message)
 
         if message.attachments:
-            attachment = message.attachments[0]
+            attachment = None
+            for att in message.attachments:
+                if att.content_type and att.content_type.startswith('image/'):
+                    attachment = att
+                    break
+            if not attachment:
+                return
             buffer = BytesIO()
             await attachment.save(buffer)
             buffer.seek(0)
@@ -110,36 +116,28 @@ class ShutUp(commands.Cog):
         else:
             return
 
+        with db.bot_db.atomic():
+            db.bot_db.execute_sql(
+                "INSERT INTO messageidentifier (message_hash, user_id, instance_count, created_at) "
+                "VALUES (?, ?, 1, ?) "
+                "ON CONFLICT(message_hash, user_id) DO UPDATE SET instance_count = instance_count + 1",
+                (message_hash, message.author.id, message.created_at)
+            )
+
         with db.bot_db:
+            # Then fetch the updated row if you need instance_count:
             message_identifier = self.get_message_identifier(message_hash, message.author.id)
-
-            if not message_identifier:
-                log.debug("Tracking message from %s using hash %s", message.author.name, message_hash)
-                db.MessageIdentifier.create(message_hash=message_hash,
-                                            user_id=message.author.id,
-                                            instance_count=1,
-                                            created_at=message.created_at)
-                return
-
-            time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
+            time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)  # ty: ignore[invalid-argument-type]
             # send annoyance message if message has been sent multiple times in last 15s
+            log.info("%s has repeated message hash %s %s times", message.author.name, message_hash,
+                     message_identifier.instance_count)
             if time_delta.seconds > SPAM_INTERVAL:
                 return
-
-            # increment count
-            db.MessageIdentifier.update(
-                instance_count=db.MessageIdentifier.instance_count + 1).where(
-                    db.MessageIdentifier.id == message_identifier.id,  # pylint: disable=no-member
-                ).execute()
-
-            # send message if over threshold
-            message_identifier = self.get_message_identifier(message_hash, message.author.id)  # type: ignore
-            log.debug("%s has repeated message: %s times", message.author.name, message_identifier.instance_count)  # type: ignore
-            if message_identifier.instance_count < 5:  # type: ignore
+            if message_identifier.instance_count < 5:
                 return
             await self.send_spam_alert(message, message_hash, message_identifier)
 
-    async def send_hate_alert(self, message):
+    async def send_hate_alert(self, message: discord.Message):
         '''
         Alert channel for guy spreading likely hate speech
         '''
@@ -153,7 +151,8 @@ class ShutUp(commands.Cog):
         if channel := await self.get_containment_channel():
             await channel.send(content=content, embed=embed)
 
-    async def send_spam_alert(self, message, message_hash, message_identifier):
+    async def send_spam_alert(self, message: discord.Message, message_hash: str | int,
+                              message_identifier: db.MessageIdentifier):
         '''
         Alert channel for likely compromised account
         '''
@@ -161,14 +160,18 @@ class ShutUp(commands.Cog):
         embed.set_author(name="Spam Signal")
         embed.add_field(name="User", value=f'<@{message.author.id}>')
         embed.add_field(name="Message Content", value=f'`{message.content}`')
-        embed.add_field(name="Instance Count", value=message_identifier.instance_count)  # type: ignore
+        attachment_str_field = \
+            ' '.join(f"[{idx}]({attachment.url})" for idx, attachment in enumerate(message.attachments))
+        if attachment_str_field:
+            embed.add_field(name="Message attachments", value=attachment_str_field)
+        embed.add_field(name="Instance Count", value=message_identifier.instance_count)
         embed.add_field(name="Message link", value=str(message.jump_url))
         content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
         content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
         # need as fresh as possible because i don't know how to handle race conditions
-        message_identifier = self.get_message_identifier(message_hash, message.author.id)  # type: ignore
-        if not message_identifier.tracking_message_id:  # type: ignore
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # type: ignore
+        message_identifier = self.get_message_identifier(message_hash, message.author.id)
+        if not message_identifier.tracking_message_id:
+            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # ty: ignore[invalid-argument-type]
                                     'this guy might be spamming')
             if channel := await self.get_containment_channel():
                 tracking_message = await channel.send(content=content, embed=embed)
@@ -177,13 +180,13 @@ class ShutUp(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
-            await self.purge(message.author.id, message.guild, message.content)  # type: ignore
+            await self.purge(message.author.id, message.guild, message.content)  # ty: ignore[invalid-argument-type]
         elif channel := await self.get_containment_channel():
             original_message = await channel.fetch_message(
-                message_identifier.tracking_message_id)  # type: ignore
+                message_identifier.tracking_message_id)
             await original_message.edit(content=content, embed=embed)
 
-    def parse_date_time_str(self, date_time_str) -> datetime:
+    def parse_date_time_str(self, date_time_str: str | datetime) -> datetime:
         "dates are sometimes saved in two different formats"
         if isinstance(date_time_str, datetime):
             return date_time_str

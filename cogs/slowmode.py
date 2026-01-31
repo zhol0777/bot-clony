@@ -66,7 +66,7 @@ class SlowMode(commands.Cog):
         if messages_int in self.slowmode_config and delay is not None:
             delay_int = util.get_id_from_tag(delay)
             self.slowmode_config[messages_int] = delay_int
-            await ctx.channel.send(self.slowmode_config)
+            await ctx.channel.send(self.slowmode_config)  # ty: ignore[no-matching-overload]
         else:
             await ctx.channel.send("Key not in dict")
 

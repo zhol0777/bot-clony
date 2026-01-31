@@ -151,6 +151,10 @@ class MessageIdentifier(BaseModel):
     # a bot channel or something to explain to user and mods why they
     # they got muted
     tracking_message_id = peewee.CharField(null=True)
+    class Meta:
+        indexes = (
+            (('message_hash', 'user_id'), True),  # unique composite key
+        )
 
 
 def create_tables():

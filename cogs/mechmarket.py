@@ -1,6 +1,7 @@
 '''
 Scrape mechmarket periodically
 '''
+import asyncio
 import logging
 import os
 import re
@@ -15,7 +16,7 @@ import util
 
 MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
-LOOP_TIME = 60
+LOOP_TIME = 300
 BACKOFF_TIME_MS = 10000
 
 EXPLANATION = '''
@@ -41,18 +42,38 @@ class MechmarketScraper(commands.Cog):
     '''scrape mechmarket posts from reddit feed'''
     def __init__(self, client):
         self.client = client
+        self.reddit = None
+
+    @commands.Cog.listener()
+    async def on_ready(self):
+        '''mostly to start task loop on bringup'''
+        try:
+            self.reddit = asyncpraw.Reddit(
+                username=os.getenv('REDDIT_USERNAME', ''),
+                password=os.getenv('REDDIT_PASSWORD', ''),
+                client_id=os.getenv('REDDIT_CLIENT_ID', ''),
+                client_secret=os.getenv('REDDIT_CLIENT_SECRET', ''),
+                user_agent=util.MECHMARKET_SCRAPE_HEADERS['user-agent']
+            )
+            self.scrape.start()  # pylint: disable=no-member
+        except RuntimeError:
+            pass
+
+    async def cog_unload(self):
+        if self.reddit:
+            try:
+                await self.reddit.close()
+            except Exception:
+                log.exception("Error closing reddit client")
 
     @tasks.loop(seconds=LOOP_TIME)
     # pylint: disable=too-many-locals,too-many-branches
     async def scrape(self):
         '''run periodic scrape'''
-        reddit = asyncpraw.Reddit(
-            username=os.getenv('REDDIT_USERNAME', ''),
-            password=os.getenv('REDDIT_PASSWORD', ''),
-            client_id=os.getenv('REDDIT_CLIENT_ID', ''),
-            client_secret=os.getenv('REDDIT_CLIENT_SECRET', ''),
-            user_agent=util.MECHMARKET_SCRAPE_HEADERS['user-agent']
-        )
+        reddit = self.reddit
+        if not reddit:
+            log.error("Reddit client not initialized, cannot scrape mechmarket")
+            return
         mechmarket = await reddit.subreddit('mechmarket')
         try:
             async for post in mechmarket.search('flair:"Selling"', sort='new', limit=25):
@@ -89,8 +110,14 @@ class MechmarketScraper(commands.Cog):
                         await channel.send(text)
                     db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
         except Exception:  # pylint:disable=broad-exception-caught
-            pass  # TODO: cry I guess
-        await reddit.close()
+            # TODO: cry I guess
+            log.exception("Error scraping mechmarket")
+            await asyncio.sleep(BACKOFF_TIME_MS / 1000)
+            try:
+                await reddit.close()
+                await self.on_ready()
+            except Exception:
+                log.exception("Error reinitializing reddit client after error")
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):
@@ -106,7 +133,7 @@ class MechmarketScraper(commands.Cog):
                             f"{search_string}&sort=new&restrict_sr=on>"
         await ctx.message.channel.send(response_text)
 
-    @mechmarket.command()  # type: ignore
+    @mechmarket.command()
     async def add(self, ctx: commands.Context):
         '''add a mechmarketquery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
@@ -120,7 +147,7 @@ class MechmarketScraper(commands.Cog):
         dm_channel = await ctx.message.author.create_dm()
         await dm_channel.send(f"Scraping mechmarket to look for `{query}`")
 
-    @mechmarket.command()  # type: ignore
+    @mechmarket.command()
     async def delete(self, ctx: commands.Context, *args):
         '''delete a MechmarketQuery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
@@ -139,35 +166,27 @@ class MechmarketScraper(commands.Cog):
                     await ctx.channel.send(f"Deleting running query for `{query.search_string}`")
                     query.delete_instance()
 
-    @mechmarket.command()  # type: ignore
+    @mechmarket.command()
     async def list(self, ctx: commands.Context):
         '''list mechmarket queries'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
+        dm_channel = await ctx.message.author.create_dm()
         with db.bot_db:
-            dm_channel = await ctx.message.author.create_dm()
-            queries = db.MechmarketQuery.select().where(db.MechmarketQuery.user_id == ctx.message.author.id)
+            queries = list(db.MechmarketQuery.select().where(db.MechmarketQuery.user_id == ctx.message.author.id))
             # pylint: disable=not-an-iterable
-            table = []
-            for query in queries:
-                table.append([query.id, query.search_string])  # noqa
-            msg_text = f"```{tabulate(table, headers=['query_id', 'query string'])}```"
-            await dm_channel.send(msg_text)
+        table = []
+        for query in queries:
+            table.append([query.id, query.search_string])  # noqa
+        msg_text = f"```{tabulate(table, headers=['query_id', 'query string'])}```"
+        await dm_channel.send(msg_text)
 
-    @mechmarket.command()  # type: ignore
+    @mechmarket.command()
     async def help(self, ctx: commands.Context):
         '''explain set of mechmarket commands'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
         await ctx.message.channel.send(f'```{EXPLANATION}```')
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        '''mostly to start task loop on bringup'''
-        try:
-            self.scrape.start()  # pylint: disable=no-member
-        except RuntimeError:
-            pass
 
 
 async def setup(client):

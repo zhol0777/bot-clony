@@ -31,8 +31,6 @@ class Reboot(commands.Cog):
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update
-               !update pull-frozen    # pull dependencies from requirements-frozen.txt
-               !update pull-unfrozen  # pull dependencies from requirements.txt
         git pull, then bot reboot
         '''
         try:
@@ -40,12 +38,10 @@ class Reboot(commands.Cog):
         except Forbidden:
             pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
-        if 'pull-unfrozen' in ctx.message.content:
-            subprocess.run('uv pip install --system -r requirements.txt',
-                           shell=True, check=True)
-        if 'pull-frozen' in ctx.message.content:
-            subprocess.run('uv pip install --system -r requirements-frozen.txt',
-                           shell=True, check=True)
+        subprocess.run('uv pip compile pyproject.toml --extra dev --output-file requirements.txt',
+                       shell=True, check=True)
+        subprocess.run('uv pip install -U -r requirements.txt',
+                       shell=True, check=True)
         os.execv(sys.executable, ['python', *sys.argv])
 
 

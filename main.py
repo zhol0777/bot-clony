@@ -8,6 +8,7 @@ import os
 import sys
 
 import discord
+import dotenv
 from discord.ext import commands
 
 import db
@@ -15,11 +16,13 @@ import db
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
+dotenv.load_dotenv()
+
 db.create_tables()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 
-bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # type: ignore
+bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # ty: ignore[invalid-argument-type]
                    intents=discord.Intents.all())
 bot.remove_command('help')
 
@@ -35,4 +38,4 @@ asyncio.run(load_extensions())
 if not DISCORD_TOKEN:
     log.error("DISCORD_TOKEN os env not found, exiting")
     sys.exit(1)
-bot.run(DISCORD_TOKEN)
+bot.run(DISCORD_TOKEN)  # ty: ignore[invalid-argument-type]

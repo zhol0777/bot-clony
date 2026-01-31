@@ -28,7 +28,7 @@ ALLOWED_PARAMS_FILE = os.getenv('ALLOWED_PARAMS_FILE', '')
 
 class Sanitize(commands.Cog):
     '''Cog to sanitize messages'''
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
 
     async def send_sanitized_message(self, message: discord.Message,
@@ -64,7 +64,7 @@ class Sanitize(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID)
-    async def autosanitize(self, ctx, value: bool) -> None:
+    async def autosanitize(self, ctx: commands.Context, value: bool) -> None:
         '''
         Usage: !autosanitize True
                !autosanitize False
@@ -75,12 +75,12 @@ class Sanitize(commands.Cog):
                 db.SanitizedChannel.create(
                     channel_id=ctx.channel.id
                 )
-                await ctx.channel.send(f"Enabling auto-sanitizer for {ctx.channel.name}")
+                await ctx.channel.send(f"Enabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
             else:
                 db.SanitizedChannel.delete().where(
                     db.SanitizedChannel.channel_id == ctx.channel.id
                 ).execute()
-                await ctx.channel.send(f"Disabling auto-sanitizer for {ctx.channel.name}")
+                await ctx.channel.send(f"Disabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
         self.should_sanitize.cache_clear()  # pylint: disable=no-member
 
     @commands.Cog.listener()
@@ -112,7 +112,7 @@ class Sanitize(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
-    async def allow_param(self, ctx, param) -> None:  # noqa: ARG002  # pylint: disable=W0613
+    async def allow_param(self, ctx: commands.Context, param: str) -> None:  # noqa: ARG002  # pylint: disable=W0613
         """command to add allowed param at runtime"""
         non_hardcoded_params: Set[str] = set()
         if ALLOWED_PARAMS_FILE and os.path.exists(ALLOWED_PARAMS_FILE):
@@ -127,7 +127,7 @@ class Sanitize(commands.Cog):
 
     @commands.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
-    async def remove_param(self, ctx, param) -> None:  # noqa: ARG002  # pylint: disable=W0613
+    async def remove_param(self, ctx: commands.Context, param: str) -> None:  # noqa: ARG002  # pylint: disable=W0613
         """command to remove allowed param at runtime"""
         if ALLOWED_PARAMS_FILE and os.path.exists(ALLOWED_PARAMS_FILE):
             try:

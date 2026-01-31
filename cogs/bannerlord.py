@@ -38,7 +38,7 @@ log = logging.getLogger(__name__)
 
 class Bannerlord(commands.Cog):
     '''banner-ify a message'''
-    def __init__(self, client):
+    def __init__(self, client: discord.Client):
         self.client = client
 
     @commands.command()
@@ -48,6 +48,8 @@ class Bannerlord(commands.Cog):
         make the message this replies to banner!
         usage: [as a reply] !banner [# picture in reply message]
         '''
+        if not ctx.guild:
+            return
         dm_channel = await ctx.message.author.create_dm()
         status_message = await dm_channel.send('Starting banner upload process!')
         if ctx.channel.id != BANNERLORD_CHANNEL_ID:
@@ -105,7 +107,7 @@ class Bannerlord(commands.Cog):
             image_content = reduced_image(image_content)
 
         await status_message.edit(content='banner uploading...')
-        await ctx.guild.edit(banner=image_content, splash=image_content,  # type: ignore
+        await ctx.guild.edit(banner=image_content, splash=image_content,
                              discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()

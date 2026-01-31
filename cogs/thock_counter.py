@@ -36,7 +36,7 @@ class ThockCount(commands.Cog):
 
     @commands.command()
     @commands.has_role(MOD_ROLE_ID)
-    async def countthock(self, ctx, value: bool) -> None:
+    async def countthock(self, ctx: commands.Context, value: bool) -> None:
         '''
         Usage: !countthock True
                !countthock False
@@ -48,12 +48,12 @@ class ThockCount(commands.Cog):
                     channel_id=ctx.channel.id,
                     counter=0
                 )
-                await ctx.channel.send(f"Enabling thock counting for {ctx.channel.name}")
+                await ctx.channel.send(f"Enabling thock counting for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
             else:
                 db.ThockTrackingChannel.delete().where(
                     db.ThockTrackingChannel.channel_id == ctx.channel.id
                 ).execute()
-                await ctx.channel.send(f"Disabling thock counting for {ctx.channel.name}")
+                await ctx.channel.send(f"Disabling thock counting for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
         self.is_tracking.cache_clear()  # pylint: disable=no-member
 
     @commands.Cog.listener()

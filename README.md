@@ -22,8 +22,8 @@ I want more features.
 1. `cp .env-example .env` and modify values as needed
 2. `uv venv`
 3. `source .venv/bin/activate`
-4. `uv pip install --system -r requirements.txt`
-5. `python3 ./main.py`
+4. `make install-requirements`
+5. `make start`
 
 or, you build with docker like this
 

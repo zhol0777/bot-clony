@@ -7,7 +7,7 @@ import time
 from typing import Union
 
 import discord
-from discord.ext import commands, tasks  # type: ignore
+from discord.ext import commands, tasks
 
 import db
 import util

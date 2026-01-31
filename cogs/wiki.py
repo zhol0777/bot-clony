@@ -6,6 +6,7 @@ import os
 from urllib.parse import urljoin
 
 import validators
+from discord import Client
 from discord.ext import commands
 
 import db
@@ -19,7 +20,7 @@ HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 
 class Wiki(commands.Cog):
     '''command'''
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     @commands.group()
@@ -62,7 +63,7 @@ class Wiki(commands.Cog):
             else:
                 await ctx.channel.send(wiki_page.page, reference=reply_message)
 
-    @wiki.command()  # type: ignore
+    @wiki.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def define(self, ctx: commands.Context, *args):
         '''
@@ -108,7 +109,7 @@ class Wiki(commands.Cog):
                 await ctx.channel.send(f"Root wiki made: <{root_url}>")
                 return
 
-    @wiki.command()  # type: ignore
+    @wiki.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def delete(self, ctx: commands.Context, shortname: str):
         '''
@@ -121,7 +122,7 @@ class Wiki(commands.Cog):
                 db_page.delete_instance()
                 await ctx.channel.send(f"Page {shortname} deleted from BotDB")
 
-    @wiki.command()  # type: ignore
+    @wiki.command()
     async def listall(self, ctx: commands.Context):
         '''
         Usage: !wiki listall
@@ -144,7 +145,7 @@ class Wiki(commands.Cog):
 
 class Silly(commands.Cog):
     '''command'''
-    def __init__(self, client):
+    def __init__(self, client: Client):
         self.client = client
 
     @commands.group()
@@ -159,7 +160,7 @@ class Silly(commands.Cog):
             if silly_page := db.SillyPage.get_or_none(shortname=shortname):
                 await ctx.channel.send(silly_page.response_text)
 
-    @silly.command()  # type: ignore
+    @silly.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def define(self, ctx: commands.Context, *args):
         '''
@@ -183,7 +184,7 @@ class Silly(commands.Cog):
                 f"!silly {shortname} -> {response_text}"
             )
 
-    @silly.command()  # type: ignore
+    @silly.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def delete(self, ctx: commands.Context, shortname: str):
         '''
@@ -196,7 +197,7 @@ class Silly(commands.Cog):
                 db_page.delete_instance()
                 await ctx.channel.send(f"Response {shortname} deleted from BotDB")
 
-    @silly.command()  # type: ignore
+    @silly.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def listall(self, ctx: commands.Context):
         '''

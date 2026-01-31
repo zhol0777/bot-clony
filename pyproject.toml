@@ -1,0 +1,77 @@
+[project]
+name = "bot-clony"
+version = "0.0.0"
+description = "Discord moderation for mechkeys"
+
+# Runtime dependencies (minimum versions inferred from requirements-frozen.txt)
+dependencies = [
+    "asyncpraw>=7.8.1",
+    "better-profanity>=0.7.0",
+    "discord.py>=2.6.4",
+    "imagehash>=4.3.2",
+    "peewee>=3.19.0",
+    "Pillow>=12.1.0",
+    "requests>=2.32.5",
+    "urlextract>=1.9.0",
+    "validators>=0.35.0",
+    "tabulate>=0.9.0",
+]
+
+[project.optional-dependencies]
+# Development / tooling
+dev = [
+    "flake8>=7.3.0",
+    "mock>=5.2.0",
+    "mypy>=1.19.1",
+    "pylint>=4.0.4",
+    "ruff>=0.14.14",
+    "types-mock>=5.2.0.20250924",
+    "types-requests>=2.32.4.20260107",
+    "types-peewee>=3.19.0.20260109",
+    "types-Pillow>=10.2.0.20240822",
+    "types-tabulate>=0.9.0.20241207",
+]
+
+[tool.ruff]
+line-length = 120
+indent-width = 4
+output-format = "concise"
+preview = true
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "I", "PL", "RUF", "PERF", "N", "INT", "ARG", "YTT", "ICN"]
+ignore = ["PLR2004", "PLR6301"]
+
+[tool.ruff.lint.pylint]
+max-branches = 14
+max-nested-blocks = 6
+max-returns = 8
+
+[tool.mypy]
+# Project-wide mypy config (module-specific missing-imports handled below)
+
+[tool.mypy."discord.*"]
+ignore_missing_imports = true
+
+[tool.mypy."validators.*"]
+ignore_missing_imports = true
+
+[tool.mypy."asyncpraw.*"]
+ignore_missing_imports = true
+
+[tool.mypy."urlextract.*"]
+ignore_missing_imports = true
+
+[tool.mypy."better_profanity.*"]
+ignore_missing_imports = true
+
+[tool.ty]
+terminal.output-format = "concise"
+src.include = [
+    "cogs",
+    "consts.py",
+    "db.py",
+    "main.py",
+    "util.py",
+]
+

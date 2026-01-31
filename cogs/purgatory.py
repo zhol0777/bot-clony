@@ -109,9 +109,9 @@ class Purgatory(commands.Cog):
             embed.add_field(name="User", value=f'<@{purged_user_id}>')
             embed.add_field(name="Information", value='User has been given Razer Hate due to suspected hateful '
                                                       'messaging. Please check #deleted-messages to confirm.')
-            embed.add_field(name="Reasons", value=reasons)  # type: ignore
+            embed.add_field(name="Reasons", value=reasons)
 
-            await notification_channel.send(embed=embed)  # type: ignore
+            await notification_channel.send(embed=embed)  # ty: ignore[possibly-missing-attribute]
         else:
             votes_required_for_purgatory = REQUIRED_VOTES - vote_count
             await ctx.channel.send(f"Vote recorded. {votes_required_for_purgatory} more vote"
@@ -133,14 +133,12 @@ class Purgatory(commands.Cog):
             channel for channel in guild.channels
             if isinstance(channel, discord.TextChannel)
             and channel != command_channel
-            and channel.permissions_for(member).send_messages  # type: ignore
+            and channel.permissions_for(member).send_messages
         ]
         # only messages younger than 14 days can be purged
         cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)
 
         for channel in channels_to_purge:
-            print(f"Checking channel {channel.name}")
-            print(channel.permissions_for(member))
             if total_deleted >= PURGE_COUNT:
                 break
             try:

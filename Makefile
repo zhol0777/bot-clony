@@ -1,44 +1,43 @@
-start: source
-	python3 ./main.py
-
-source:
-	source .venv/bin/activate
+start:
+	.venv/bin/python ./main.py
 
 ################
 # installation #
 ################
 
-install: venv install-requirements source
+install: venv install-requirements
 
 venv:
-	pip install uv
-	uv venv
+	python3 -m venv .venv
+	.venv/bin/python -m pip install -U pip uv
 
-install-requirements: source
-	uv pip install -r requirements.txt
+install-requirements:
+	.venv/bin/python -m uv pip compile pyproject.toml --extra dev --output-file requirements.txt
+	.venv/bin/python -m uv pip install -U -r requirements.txt
 
 update-requirements:
-	uv pip freeze > requirements-frozen.txt
+	.venv/bin/python -m uv pip freeze > requirements-frozen.txt
 
 ###########
 # testing #
 ###########
 
 test: # lint
-	# just needed for test on python 3.13...
-	# uv pip install audioop-lts
-	python3 -m unittest discover tests
+	.venv/bin/python -m unittest discover tests
 
-lint: ruff pylint mypy
+lint: ruff ty
 
 ruff:
-	python3 -m ruff check cogs/ tests/ *.py --config tests/ruff.toml
+	.venv/bin/python -m ruff check cogs/ tests/ *.py
+
+ty:
+	.venv/bin/python -m ty check cogs/ tests/ *.py
 
 pylint:
-	python3 -m pylint cogs/ tests/ *.py
+	.venv/bin/python -m pylint cogs/ tests/ *.py
 
 mypy:
-	python3 -m mypy cogs/ tests/ *.py --config-file tests/mypy.ini
+	.venv/bin/python -m mypy cogs/ tests/ *.py
 
 ##########
 # docker #

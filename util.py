@@ -99,7 +99,7 @@ async def remove_role(member: discord.Member, user_id: int,
                       role_name: str) -> None:
     '''Remove a role from a member, and remove it from db'''
     role = discord.utils.get(member.guild.roles, name=role_name)
-    await member.remove_roles(role)  # type: ignore
+    await member.remove_roles(role)  # ty: ignore[invalid-argument-type]
     with db.bot_db:
         db.RoleAssignment.delete().where(
             (db.RoleAssignment.user_id == user_id) &
@@ -127,5 +127,5 @@ def user_has_role_from_id(author: Union[discord.Member, discord.abc.User],
                           role_id: int) -> bool:
     '''determine if message author has corresponding role ID'''
     if hasattr(author, 'roles'):
-        return bool(discord.utils.get(author.roles, id=role_id))
+        return bool(discord.utils.get(author.roles, id=role_id))  # ty: ignore[no-matching-overload]
     return False

@@ -65,7 +65,7 @@ class MemberWarning(commands.Cog):
                 )
             await ctx.channel.send("hey, cool it")
 
-    @ejectwarn.command()  # type: ignore
+    @ejectwarn.command()
     @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     async def list(self, ctx: commands.Context, user_id_tag: str):
         '''
@@ -93,7 +93,7 @@ class MemberWarning(commands.Cog):
             embed.add_field(name="Message link", value=str(warning.message_url))
             await channel.send(embed=embed)
 
-    @ejectwarn.command()  # type: ignore
+    @ejectwarn.command()
     @commands.has_any_role(MOD_ROLE_ID, HELPER_ROLE_ID)
     async def delete(self, ctx: commands.Context, reason_id: int):
         '''

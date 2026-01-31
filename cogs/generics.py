@@ -25,14 +25,14 @@ class Generics(commands.Cog):
                                reference=reply_message)
 
     @commands.command()
-    async def bestgamingswitch(self, ctx):
+    async def bestgamingswitch(self, ctx: commands.Context):
         '''point out what the best gaming switch is'''
-        await ctx.channel.send('the best switch for gaming is a nintendo switch')
+        await ctx.channel.send('the best switch for gaming is the Nintendo Switch 2')
         await ctx.message.delete()
 
     @commands.has_any_role(HELPER_ROLE_ID, MOD_ROLE_ID)
     @commands.command(aliases=['say'])
-    async def parrot(self, ctx):
+    async def parrot(self, ctx: commands.Context):
         '''parrot a message back'''
         if len(ctx.message.content.split()) <= 1:
             return
@@ -47,7 +47,7 @@ class Generics(commands.Cog):
         await ctx.message.channel.send(content)
 
     @commands.command()
-    async def channeldescription(self, ctx):
+    async def channeldescription(self, ctx: commands.Context):
         '''print the channel description'''
         if isinstance(ctx.channel, TextChannel):
             await ctx.message.channel.send(ctx.channel.topic)

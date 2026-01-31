@@ -147,10 +147,10 @@ def sanitize_message(message_content: str) -> Tuple[str, bool, bool]:
     sanitized_msg_word_list = []
 
     for url in URLExtract().gen_urls(message_content):
-        if urlparse(url).netloc in WHITELISTED_DOMAINS:
+        if urlparse(url).netloc in WHITELISTED_DOMAINS:  # ty: ignore[no-matching-overload]
             continue
 
-        sanitized_url, keep_embed = proxy_url(url)
+        sanitized_url, keep_embed = proxy_url(url)  # ty: ignore[invalid-argument-type]
         sanitized_url = sanitize_url(sanitized_url)
         if sanitized_url != url:
             # this was proxied, check for liveness
