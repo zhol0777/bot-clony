@@ -8,15 +8,15 @@ import os
 import sys
 
 import discord
-import dotenv
 from discord.ext import commands
 
 import db
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s][%(levelname)s][%(module)s]: %(message)s"
+)
 log = logging.getLogger(__name__)
-
-dotenv.load_dotenv()
 
 db.create_tables()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')

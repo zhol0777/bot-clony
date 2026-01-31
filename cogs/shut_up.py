@@ -129,8 +129,9 @@ class ShutUp(commands.Cog):
             message_identifier = self.get_message_identifier(message_hash, message.author.id)
             time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)  # ty: ignore[invalid-argument-type]
             # send annoyance message if message has been sent multiple times in last 15s
-            log.info("%s has repeated message hash %s %s times", message.author.name, message_hash,
-                     message_identifier.instance_count)
+            if message_identifier.instance_count > 1:
+                log.info("%s has repeated message hash %s %s times", message.author.name, message_hash,
+                        message_identifier.instance_count)
             if time_delta.seconds > SPAM_INTERVAL:
                 return
             if message_identifier.instance_count < 5:
