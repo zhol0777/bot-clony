@@ -45,10 +45,10 @@ mypy:
 ##########
 
 docker-build:
-	docker build --no-cache -t bot-clony .
+	docker build --no-cache -t pasture-bot .
 
 docker-run:
-	docker-compose up -d
+	docker compose up -d
 
 container-restart:
 	docker-compose down

@@ -1,4 +1,4 @@
-FROM python:3.12-alpine
+FROM python:3.13-alpine
 
 RUN apk update
 RUN apk --no-cache add git
@@ -13,4 +13,4 @@ RUN git checkout pasture
 RUN pip install uv
 RUN uv venv
 RUN uv sync
-CMD ["python3", "./main.py"]
+CMD [".venv/bin/python", "./main.py"]

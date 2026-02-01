@@ -97,6 +97,7 @@ class Sanitize(commands.Cog):
                 with open(ALLOWED_PARAMS_FILE, 'wb') as allowed_params_data:
                     pickle.dump(non_hardcoded_params, allowed_params_data)
 
+    @commands.command()
     async def pink(self, ctx: commands.Context) -> None:
         '''
         Pink keys pink stabilizer pink keyboard I'm so cute aaaahhhh

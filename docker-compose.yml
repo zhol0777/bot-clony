@@ -1,4 +1,3 @@
-version: "3"
 services:
   pasture-bot:
     container_name: pasture-bot
