@@ -16,6 +16,7 @@ dependencies = [
     "validators>=0.35.0",
     "tabulate>=0.9.0",
     "python-dotenv>=1.2.1",
+    "ty>=0.0.14",
 ]
 
 [project.optional-dependencies]

@@ -2,7 +2,6 @@
 DM a user a reminder of something they needed to be reminded of
 '''
 import asyncio
-import os
 import time
 from typing import Union
 

@@ -5,12 +5,8 @@ import logging
 import sys
 import traceback
 from typing import Any
-from urllib.parse import urljoin
 
 from discord.ext import commands
-
-import db
-import util
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -38,26 +34,11 @@ class ModListeners(commands.Cog):
             # TODO: a lot of this is just copied-pasted from cogs/wiki.py, should
             # be made more modular
             try:
-                command = ctx.message.content.strip(self.client.command_prefix).split()[0]
+                _ = ctx.message.content.strip(self.client.command_prefix).split()[0]
             except IndexError:
                 return  # message with single exclamation mark or whatever prefix you use
-            # avoid running with bot-sony
-            if command in util.IGNORE_COMMAND_LIST:
-                return
-            with db.bot_db:
-                if wiki_page := db.WikiPage.get_or_none(shortname=command):
-                    if wiki_page.goes_to_root_domain:
-                        wiki_domain = db.WikiRootUrl.get_or_none(indicator='primary')
-                        if not wiki_domain:
-                            return
-                        url = urljoin(wiki_domain.domain, wiki_page.page)
-                        await ctx.channel.send(f"{url}")
-                    else:
-                        await ctx.channel.send(wiki_page.page)
-                if silly_page := db.SillyPage.get_or_none(shortname=command):
-                    await ctx.channel.send(silly_page.response_text)
             return
-        log.exception('Exception in command %s:', ctx.command)
+            log.exception('Exception in command %s:', ctx.command)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
 

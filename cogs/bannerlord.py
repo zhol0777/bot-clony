@@ -10,7 +10,6 @@ import requests
 from discord.ext import commands
 from PIL import Image
 
-import db
 import util
 
 VALID_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.tiff', '.bmp', '.gif')
@@ -90,25 +89,7 @@ class Bannerlord(commands.Cog):
                              discovery_splash=image_content)
         await status_message.edit(content='banner uploaded! have a nice day!')
         await ctx.message.delete()
-        with db.bot_db:
-            await self.clear_old_banner_pins(ctx)
-            db.BannerPost.create(message_id=ctx.message.reference.message_id)
         await original_msg.pin()
-
-    async def clear_old_banner_pins(self, ctx: commands.Context):
-        '''
-        latest bannered board gets pinned, and pin is tracked in BannerPost table
-        on new banner, go through old pinned post(s) to un-pin
-        '''
-        pins = db.BannerPost.select()
-        for pin in pins:
-            message_id = pin.message_id
-            pin.delete_instance()
-            try:
-                pin_msg = await ctx.fetch_message(message_id)
-                await pin_msg.unpin()
-            except discord.errors.NotFound:
-                pass
 
 
 def image_size_needs_reduction(image_content: bytes) -> bool:
