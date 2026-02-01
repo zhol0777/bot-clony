@@ -6,7 +6,5 @@
 .vscode
 __pycache__
 bot.db
-venv
 
-requirements.txt
-requirements-frozen.txt
+uv.lock

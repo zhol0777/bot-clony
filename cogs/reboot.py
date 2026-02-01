@@ -8,8 +8,6 @@ import sys
 from discord.errors import Forbidden
 from discord.ext import commands
 
-MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
-
 
 class Reboot(commands.Cog):
     '''Cog to reboot this thing when it needs to'''
@@ -17,7 +15,6 @@ class Reboot(commands.Cog):
         self.client = client
 
     @commands.command()
-    @commands.has_role(MOD_ROLE_ID)
     async def reboot(self, ctx: commands.Context):
         '''
         Usage: !reboot
@@ -27,7 +24,6 @@ class Reboot(commands.Cog):
         os.execv(sys.executable, ['python', *sys.argv])
 
     @commands.command()
-    @commands.has_role(MOD_ROLE_ID)
     async def update(self, ctx: commands.Context):
         '''
         Usage: !update
@@ -37,11 +33,8 @@ class Reboot(commands.Cog):
             await ctx.message.delete()
         except Forbidden:
             pass
-        subprocess.run('git pull origin bot-lite', shell=True, check=True)
-        subprocess.run('uv pip compile pyproject.toml --extra dev --output-file requirements.txt',
-                       shell=True, check=True)
-        subprocess.run('uv pip install -U -r requirements.txt',
-                       shell=True, check=True)
+        subprocess.run('git pull origin pasture', shell=True, check=True)
+        subprocess.run('uv sync', shell=True, check=True)
         os.execv(sys.executable, ['python', *sys.argv])
 
 

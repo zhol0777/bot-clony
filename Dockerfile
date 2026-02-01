@@ -8,9 +8,9 @@ WORKDIR /usr/src/bot
 
 RUN git clone https://github.com/zhol0777/bot-clony.git .
 
-RUN git checkout bot-lite
+RUN git checkout pasture
 
 RUN pip install uv
-RUN uv pip compile pyproject.toml --extra dev --output-file requirements.txt
-RUN uv pip install --system -U -r requirements.txt
+RUN uv venv
+RUN uv sync
 CMD ["python3", "./main.py"]

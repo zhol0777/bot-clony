@@ -12,8 +12,9 @@ venv:
 	.venv/bin/python -m pip install -U pip uv
 
 install-requirements:
-	.venv/bin/python -m uv pip compile pyproject.toml --extra dev --output-file requirements.txt
-	.venv/bin/python -m uv pip install -U -r requirements.txt
+# 	.venv/bin/python -m uv pip compile pyproject.toml --extra dev --output-file requirements.txt
+# 	.venv/bin/python -m uv pip install -U -r requirements.txt
+	.venv/bin/python -m uv sync --extra dev
 
 update-requirements:
 	.venv/bin/python -m uv pip freeze > requirements-frozen.txt
