@@ -21,7 +21,7 @@ class Reboot(commands.Cog):
         Reboot bot
         '''
         await ctx.message.delete()
-        os.execv(sys.executable, ['python', *sys.argv])
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
     @commands.command()
     async def update(self, ctx: commands.Context):
@@ -35,7 +35,7 @@ class Reboot(commands.Cog):
             pass
         subprocess.run('git pull origin pasture', shell=True, check=True)
         subprocess.run('uv sync', shell=True, check=True)
-        os.execv(sys.executable, ['python', *sys.argv])
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 async def setup(client):
