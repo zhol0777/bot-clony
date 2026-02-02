@@ -2,6 +2,7 @@
 name = "bot-clony"
 version = "0.0.0"
 description = "Discord moderation for mechkeys"
+requires-python = ">=3.13"
 
 # Runtime dependencies (minimum versions inferred from requirements-frozen.txt)
 dependencies = [

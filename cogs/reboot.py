@@ -24,7 +24,7 @@ class Reboot(commands.Cog):
         Reboot bot
         '''
         await ctx.message.delete()
-        os.execv(sys.executable, ['python', *sys.argv])
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
     @commands.command()
     @commands.has_role(MOD_ROLE_ID)
@@ -38,11 +38,9 @@ class Reboot(commands.Cog):
         except Forbidden:
             pass
         subprocess.run('git pull origin bot-lite', shell=True, check=True)
-        subprocess.run('uv pip compile pyproject.toml --extra dev --output-file requirements.txt',
-                       shell=True, check=True)
-        subprocess.run('uv pip install -U -r requirements.txt',
-                       shell=True, check=True)
-        os.execv(sys.executable, ['python', *sys.argv])
+        subprocess.run('uv lock --upgrade', shell=True, check=True)
+        subprocess.run('uv sync', shell=True, check=True)
+        os.execv(sys.executable, [sys.executable, *sys.argv])
 
 
 async def setup(client):

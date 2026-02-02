@@ -47,8 +47,8 @@ docker-build:
 	docker build --no-cache -t bot-clony .
 
 docker-run:
-	docker-compose up -d
+	docker compose up -d
 
 container-restart:
-	docker-compose down
-	docker-compose up -d
+	docker compose down
+	docker compose up -d
