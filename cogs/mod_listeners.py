@@ -30,14 +30,6 @@ class ModListeners(commands.Cog):
         error = getattr(error, 'original', error)
 
         if isinstance(error, ignored):
-            # may be possible to just reference wiki page
-            # TODO: a lot of this is just copied-pasted from cogs/wiki.py, should
-            # be made more modular
-            try:
-                _ = ctx.message.content.strip(self.client.command_prefix).split()[0]
-            except IndexError:
-                return  # message with single exclamation mark or whatever prefix you use
-            return
             log.exception('Exception in command %s:', ctx.command)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
 
