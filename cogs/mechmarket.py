@@ -21,8 +21,6 @@ import util
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
 BACKOFF_TIME_MS = 10000
 
-# Multireddit configuration
-MULTIREDDIT_DEFAULT_NAME = 'market_scraper'
 SUBREDDITS = ['mechmarket', 'hardwareswap', 'homelabsales']
 
 # Flair filters for each subreddit
@@ -56,13 +54,13 @@ class MechmarketScraper(commands.Cog):
     def __init__(self, client: discord.Client):
         self.client = client
         self.reddit = None
-        self.multireddit_task = None
+        self.stream_tasks = []
         self._shutdown_event = asyncio.Event()
         self.extractor = URLExtract()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        '''initialize reddit client and start multireddit streaming'''
+        '''initialize reddit client and start subreddit streaming'''
         try:
             self.reddit = asyncpraw.Reddit(
                 username=os.getenv('REDDIT_USERNAME', ''),
@@ -73,13 +71,15 @@ class MechmarketScraper(commands.Cog):
             )
             self.reddit.read_only = True
 
-            # Start multireddit streaming task
-            self.multireddit_task = asyncio.create_task(
-                self._stream_multireddit(),
-                name="stream_multireddit"
-            )
+            # Start streaming task for each subreddit
+            for subreddit_name in SUBREDDITS:
+                task = asyncio.create_task(
+                    self._stream_subreddit(subreddit_name),
+                    name=f"stream_{subreddit_name}"
+                )
+                self.stream_tasks.append(task)
 
-            log.info(f"Started multireddit streaming for {len(SUBREDDITS)} subreddits")
+            log.info(f"Started streaming for {len(SUBREDDITS)} subreddits")
 
         except Exception:
             log.exception("Failed to initialize mechmarket scraper")
@@ -88,11 +88,11 @@ class MechmarketScraper(commands.Cog):
         '''graceful shutdown'''
         self._shutdown_event.set()
 
-        # Cancel multireddit stream task
-        if self.multireddit_task:
-            self.multireddit_task.cancel()
+        # Cancel all stream tasks
+        for task in self.stream_tasks:
+            task.cancel()
             try:
-                await self.multireddit_task
+                await task
             except asyncio.CancelledError:
                 pass
 
@@ -102,8 +102,8 @@ class MechmarketScraper(commands.Cog):
             except Exception:
                 log.exception("Error closing reddit client")
 
-    async def _stream_multireddit(self):
-        '''stream posts from multireddit of market subreddits'''
+    async def _stream_subreddit(self, subreddit_name: str):
+        '''stream posts from a single subreddit'''
         while not self._shutdown_event.is_set():
             if not self.reddit:
                 log.error("Reddit client not initialized")
@@ -111,40 +111,27 @@ class MechmarketScraper(commands.Cog):
                 continue
 
             try:
-                # Create multireddit from subreddits
-                multireddit_name = os.getenv('MULTIREDDIT_SCRAPE_NAME', MULTIREDDIT_DEFAULT_NAME)
-                multireddit = await self.reddit.multireddit(
-                    redditor=os.getenv('REDDIT_USERNAME', ''),
-                    name=multireddit_name
-                )
+                subreddit = await self.reddit.subreddit(subreddit_name)
+                log.info(f"Starting stream for r/{subreddit_name}")
 
-                log.info(f"Starting stream for multireddit {multireddit_name}")
-
-                async for submission in multireddit.stream.submissions(skip_existing=True):
+                async for submission in subreddit.stream.submissions(skip_existing=True):
                     if self._shutdown_event.is_set():
                         break
 
-                    # Extract subreddit from submission
-                    subreddit_name = submission.subreddit.display_name.lower()
-
-                    # Check if post belongs to monitored subreddits
-                    if subreddit_name not in SUBREDDITS:
-                        continue
-
                     # Check if post matches flair filter
-                    flair_filter = FLAIR_FILTERS[subreddit_name]
-                    if not self._matches_flair(submission, flair_filter):
+                    flair_filter = FLAIR_FILTERS.get(subreddit_name)
+                    if flair_filter and not self._matches_flair(submission, flair_filter):
                         continue
 
                     # Process the post
-                    log.info("Processing reddit market post ID %s", submission.id)
+                    log.info("Processing reddit market post ID %s from r/%s", submission.id, subreddit_name)
                     await self._process_post(submission, subreddit_name)
 
             except asyncio.CancelledError:
-                log.info("Multireddit stream cancelled")
+                log.info(f"Stream for r/{subreddit_name} cancelled")
                 raise
             except Exception:
-                log.exception("Error in multireddit stream, restarting...")
+                log.exception("Error in stream for r/%s, restarting...", subreddit_name)
                 await asyncio.sleep(BACKOFF_TIME_MS / 1000)
 
     def _matches_flair(self, submission: praw_models.Submission, flair_filter: str) -> bool:
