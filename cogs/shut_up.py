@@ -83,7 +83,7 @@ class ShutUp(commands.Cog):
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
         # do not do this if the guy's already been contained
-        if any([message.author.id == self.client.user.id,  # ty: ignore[possibly-missing-attribute]
+        if any([message.author.id == self.client.user.id,  # ty: ignore[unresolved-attribute]
                 message.stickers,
                 not message.content and not message.attachments and not message.embeds,
                 message.channel.id in {TOXIC_CONTAINMENT_CHANNEL_ID,

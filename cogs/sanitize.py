@@ -75,12 +75,12 @@ class Sanitize(commands.Cog):
                 db.SanitizedChannel.create(
                     channel_id=ctx.channel.id
                 )
-                await ctx.channel.send(f"Enabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
+                await ctx.channel.send(f"Enabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[unresolved-attribute]
             else:
                 db.SanitizedChannel.delete().where(
                     db.SanitizedChannel.channel_id == ctx.channel.id
                 ).execute()
-                await ctx.channel.send(f"Disabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
+                await ctx.channel.send(f"Disabling auto-sanitizer for {ctx.channel.name}")  # ty: ignore[unresolved-attribute]
         self.should_sanitize.cache_clear()  # pylint: disable=no-member
 
     @commands.Cog.listener()

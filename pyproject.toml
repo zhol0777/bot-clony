@@ -16,6 +16,7 @@ dependencies = [
     "urlextract>=1.9.0",
     "validators>=0.35.0",
     "tabulate>=0.9.0",
+    "playwright>=1.58.0",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +32,8 @@ dev = [
     "types-peewee>=3.19.0.20260109",
     "types-Pillow>=10.2.0.20240822",
     "types-tabulate>=0.9.0.20241207",
+    "vulture>=2.14",
+    "ty>=0.0.17",
 ]
 
 [tool.ruff]
@@ -75,4 +78,3 @@ src.include = [
     "main.py",
     "util.py",
 ]
-

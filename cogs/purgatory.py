@@ -111,7 +111,7 @@ class Purgatory(commands.Cog):
                                                       'messaging. Please check #deleted-messages to confirm.')
             embed.add_field(name="Reasons", value=reasons)
 
-            await notification_channel.send(embed=embed)  # ty: ignore[possibly-missing-attribute]
+            await notification_channel.send(embed=embed)  # ty: ignore[unresolved-attribute]
         else:
             votes_required_for_purgatory = REQUIRED_VOTES - vote_count
             await ctx.channel.send(f"Vote recorded. {votes_required_for_purgatory} more vote"
@@ -133,7 +133,7 @@ class Purgatory(commands.Cog):
             channel for channel in guild.channels
             if isinstance(channel, discord.TextChannel)
             and channel != command_channel
-            and channel.permissions_for(member).send_messages
+            and channel.permissions_for(member).send_messages  # ty: ignore[invalid-argument-type]
         ]
         # only messages younger than 14 days can be purged
         cutoff_time = datetime.now(timezone.utc) - timedelta(days=14)

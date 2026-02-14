@@ -48,12 +48,12 @@ class ThockCount(commands.Cog):
                     channel_id=ctx.channel.id,
                     counter=0
                 )
-                await ctx.channel.send(f"Enabling thock counting for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
+                await ctx.channel.send(f"Enabling thock counting for {ctx.channel.name}")  # ty: ignore[unresolved-attribute]
             else:
                 db.ThockTrackingChannel.delete().where(
                     db.ThockTrackingChannel.channel_id == ctx.channel.id
                 ).execute()
-                await ctx.channel.send(f"Disabling thock counting for {ctx.channel.name}")  # ty: ignore[possibly-missing-attribute]
+                await ctx.channel.send(f"Disabling thock counting for {ctx.channel.name}")  # ty: ignore[unresolved-attribute]
         self.is_tracking.cache_clear()  # pylint: disable=no-member
 
     @commands.Cog.listener()

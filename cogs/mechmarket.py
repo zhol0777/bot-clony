@@ -10,11 +10,12 @@ import asyncpraw
 import discord
 from discord.ext import commands, tasks  # ignore
 from tabulate import tabulate
+from urlextract import URLExtract
 
 import db
 import util
 
-MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
+# MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
 LOOP_TIME = 300
 BACKOFF_TIME_MS = 10000
@@ -55,6 +56,7 @@ class MechmarketScraper(commands.Cog):
                 client_secret=os.getenv('REDDIT_CLIENT_SECRET', ''),
                 user_agent=util.MECHMARKET_SCRAPE_HEADERS['user-agent']
             )
+            self.reddit.read_only = True
             self.scrape.start()  # pylint: disable=no-member
         except RuntimeError:
             pass
@@ -74,41 +76,48 @@ class MechmarketScraper(commands.Cog):
         if not reddit:
             log.error("Reddit client not initialized, cannot scrape mechmarket")
             return
-        mechmarket = await reddit.subreddit('mechmarket')
+        markets = {
+            'mechmarket': 'flair_name:"Selling"',
+            'hardwareswap': 'flair_name:"SELLING"',
+            'homelabsales': '[FS]'
+        }
+        market = await reddit.subreddit('mechmarket')
         try:
-            async for post in mechmarket.search('flair:"Selling"', sort='new', limit=25):
-                post_id = post.id
-                post_link = post.url
-                with db.bot_db:
-                    if db.MechmarketPost.get_or_none(post_id=post_id):
-                        continue  # post has been processed
+            for market_name, market_search_term in markets.items():
+                market = await reddit.subreddit(market_name)
+                async for post in market.search(market_search_term, sort='new', limit=25):
+                    post_id = post.id
+                    post_link = post.url
+                    with db.bot_db:
+                        if db.MechmarketPost.get_or_none(post_id=post_id):
+                            continue  # post has been processed
 
-                timestamp = None
-                post_text = post.selftext.replace('\n', ' ')
-                urls = re.findall(r"(?P<url>https?://[^\s]+)", post_text)
-                if urls:
-                    timestamp = urls[0]  # pray that it's the first link that's the timestamp
+                    timestamp = None
+                    post_text = post.selftext.replace('\n', ' ')
+                    # urls = re.findall(r"(?P<url>https?://[^\s]+)", post_text)
+                    if urls := URLExtract().find_urls(post_text):
+                        timestamp = urls[0]  # pray that it's the first link that's the timestamp
 
-                with db.bot_db:
-                    for market_query in db.MechmarketQuery.select():
-                        matches = True
-                        # with basic search, content to match every word in query
-                        for word_that_needs_to_be_found in market_query.search_string.split():
-                            # strip html tags out
-                            found_word = word_that_needs_to_be_found.lower() in post_text.lower()
-                            matches = matches and found_word
-                        # check for exact search if necessary
-                        if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
-                            matches = market_query.search_string[1:-1].lower() in post_text.lower()
-                        matches = matches or re.match(market_query.search_string.lower(), post_text.lower())
-                        if not matches:
-                            continue
-                        reminded_user = await self.client.fetch_user(market_query.user_id)
-                        channel = await reminded_user.create_dm()
-                        text = f"Match found for following query: {market_query.search_string}\n{post.title}" + \
-                            f"\n{post_link} - {timestamp}"
-                        await channel.send(text)
-                    db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
+                    with db.bot_db:
+                        for market_query in db.MechmarketQuery.select():
+                            matches = True
+                            # with basic search, content to match every word in query
+                            for word_that_needs_to_be_found in market_query.search_string.split():
+                                # strip html tags out
+                                found_word = word_that_needs_to_be_found.lower() in post_text.lower()
+                                matches = matches and found_word
+                            # check for exact search if necessary
+                            if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
+                                matches = market_query.search_string[1:-1].lower() in post_text.lower()
+                            matches = matches or re.match(market_query.search_string.lower(), post_text.lower())
+                            if not matches:
+                                continue
+                            reminded_user = await self.client.fetch_user(market_query.user_id)
+                            channel = await reminded_user.create_dm()
+                            text = f"Match found for following query: {market_query.search_string}\n{post.title}" + \
+                                f"\n{post_link} - {timestamp}"
+                            await channel.send(text)
+                        db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
         except Exception:  # pylint:disable=broad-exception-caught
             # TODO: cry I guess
             log.exception("Error scraping mechmarket")
@@ -145,7 +154,7 @@ class MechmarketScraper(commands.Cog):
                 search_string=query
             )
         dm_channel = await ctx.message.author.create_dm()
-        await dm_channel.send(f"Scraping mechmarket to look for `{query}`")
+        await dm_channel.send(f"Scraping reddit markets to look for `{query}`")
 
     @mechmarket.command()
     async def delete(self, ctx: commands.Context, *args):
