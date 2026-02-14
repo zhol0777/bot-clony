@@ -1,31 +1,43 @@
 '''
-Scrape mechmarket periodically
+Scrape mechmarket using multireddit streaming for efficiency
 '''
+from asyncpraw.models.reddit.submission import Submission
 import asyncio
 import logging
 import os
 import re
+from functools import lru_cache
 
 import asyncpraw
 import discord
-from discord.ext import commands, tasks  # ignore
+from asyncpraw import models as praw_models
+from discord.ext import commands
 from tabulate import tabulate
 from urlextract import URLExtract
 
 import db
 import util
 
-# MECHMARKET_RSS_FEED = 'https://www.reddit.com/r/mechmarket/search.rss?q=flair%3Aselling&restrict_sr=on&sort=new&t=all'
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
-LOOP_TIME = 300
 BACKOFF_TIME_MS = 10000
+
+# Multireddit configuration
+MULTIREDDIT_DEFAULT_NAME = 'market_scraper'
+SUBREDDITS = ['mechmarket', 'hardwareswap', 'homelabsales']
+
+# Flair filters for each subreddit
+FLAIR_FILTERS = {
+    'mechmarket': 'Selling',
+    'hardwareswap': 'SELLING',
+    # 'homelabsales': '[FS]'  # this is in the title
+}
 
 EXPLANATION = '''
 mechmarket:
-  mechmarket        Searches for something for sale on mechmarket
+  mechmarket        Searches for something for sale on mechmarket/hws/hls
                     Usage: !mechmarket
                            !mechmarket qk65
-  mechmarket add    Adds a query for something on mechmarket to message you when a new posting is found
+  mechmarket add    Adds a query for something on the markets to message you when a new posting is found
                     Usage: !mechmarket add gmk umbra
   mechmarket list   Lists all running queries a user has made by ID
                     Usage: !mechmarket list
@@ -40,14 +52,17 @@ log = logging.getLogger(__name__)
 
 
 class MechmarketScraper(commands.Cog):
-    '''scrape mechmarket posts from reddit feed'''
-    def __init__(self, client):
+    '''scrape mechmarket posts from reddit using multireddit streaming'''
+    def __init__(self, client: discord.Client):
         self.client = client
         self.reddit = None
+        self.multireddit_task = None
+        self._shutdown_event = asyncio.Event()
+        self.extractor = URLExtract()
 
     @commands.Cog.listener()
     async def on_ready(self):
-        '''mostly to start task loop on bringup'''
+        '''initialize reddit client and start multireddit streaming'''
         try:
             self.reddit = asyncpraw.Reddit(
                 username=os.getenv('REDDIT_USERNAME', ''),
@@ -57,76 +72,157 @@ class MechmarketScraper(commands.Cog):
                 user_agent=util.MECHMARKET_SCRAPE_HEADERS['user-agent']
             )
             self.reddit.read_only = True
-            self.scrape.start()  # pylint: disable=no-member
-        except RuntimeError:
-            pass
+
+            # Start multireddit streaming task
+            self.multireddit_task = asyncio.create_task(
+                self._stream_multireddit(),
+                name="stream_multireddit"
+            )
+
+            log.info(f"Started multireddit streaming for {len(SUBREDDITS)} subreddits")
+
+        except Exception:
+            log.exception("Failed to initialize mechmarket scraper")
 
     async def cog_unload(self):
+        '''graceful shutdown'''
+        self._shutdown_event.set()
+
+        # Cancel multireddit stream task
+        if self.multireddit_task:
+            self.multireddit_task.cancel()
+            try:
+                await self.multireddit_task
+            except asyncio.CancelledError:
+                pass
+
         if self.reddit:
             try:
                 await self.reddit.close()
             except Exception:
                 log.exception("Error closing reddit client")
 
-    @tasks.loop(seconds=LOOP_TIME)
-    # pylint: disable=too-many-locals,too-many-branches
-    async def scrape(self):
-        '''run periodic scrape'''
-        reddit = self.reddit
-        if not reddit:
-            log.error("Reddit client not initialized, cannot scrape mechmarket")
-            return
-        markets = {
-            'mechmarket': 'flair_name:"Selling"',
-            'hardwareswap': 'flair_name:"SELLING"',
-            'homelabsales': '[FS]'
-        }
-        market = await reddit.subreddit('mechmarket')
-        try:
-            for market_name, market_search_term in markets.items():
-                market = await reddit.subreddit(market_name)
-                async for post in market.search(market_search_term, sort='new', limit=25):
-                    post_id = post.id
-                    post_link = post.url
-                    with db.bot_db:
-                        if db.MechmarketPost.get_or_none(post_id=post_id):
-                            continue  # post has been processed
+    async def _stream_multireddit(self):
+        '''stream posts from multireddit of market subreddits'''
+        while not self._shutdown_event.is_set():
+            if not self.reddit:
+                log.error("Reddit client not initialized")
+                await asyncio.sleep(BACKOFF_TIME_MS / 1000)
+                continue
 
-                    timestamp = None
-                    post_text = post.selftext.replace('\n', ' ')
-                    # urls = re.findall(r"(?P<url>https?://[^\s]+)", post_text)
-                    if urls := URLExtract().find_urls(post_text):
-                        timestamp = urls[0]  # pray that it's the first link that's the timestamp
-
-                    with db.bot_db:
-                        for market_query in db.MechmarketQuery.select():
-                            matches = True
-                            # with basic search, content to match every word in query
-                            for word_that_needs_to_be_found in market_query.search_string.split():
-                                # strip html tags out
-                                found_word = word_that_needs_to_be_found.lower() in post_text.lower()
-                                matches = matches and found_word
-                            # check for exact search if necessary
-                            if market_query.search_string.startswith('"') and market_query.search_string.endswith('"'):
-                                matches = market_query.search_string[1:-1].lower() in post_text.lower()
-                            matches = matches or re.match(market_query.search_string.lower(), post_text.lower())
-                            if not matches:
-                                continue
-                            reminded_user = await self.client.fetch_user(market_query.user_id)
-                            channel = await reminded_user.create_dm()
-                            text = f"Match found for following query: {market_query.search_string}\n{post.title}" + \
-                                f"\n{post_link} - {timestamp}"
-                            await channel.send(text)
-                        db.MechmarketPost.insert(post_id=post_id).execute()  # pylint: disable=no-value-for-parameter
-        except Exception:  # pylint:disable=broad-exception-caught
-            # TODO: cry I guess
-            log.exception("Error scraping mechmarket")
-            await asyncio.sleep(BACKOFF_TIME_MS / 1000)
             try:
-                await reddit.close()
-                await self.on_ready()
+                # Create multireddit from subreddits
+                multireddit_name = os.getenv('MULTIREDDIT_SCRAPE_NAME', MULTIREDDIT_DEFAULT_NAME)
+                multireddit = await self.reddit.multireddit(
+                    redditor=os.getenv('REDDIT_USERNAME', ''),
+                    name=multireddit_name
+                )
+
+                log.info(f"Starting stream for multireddit {multireddit_name}")
+
+                async for submission in multireddit.stream.submissions(skip_existing=True):
+                    if self._shutdown_event.is_set():
+                        break
+
+                    # Extract subreddit from submission
+                    subreddit_name = submission.subreddit.display_name.lower()
+
+                    # Check if post belongs to monitored subreddits
+                    if subreddit_name not in SUBREDDITS:
+                        continue
+
+                    # Check if post matches flair filter
+                    flair_filter = FLAIR_FILTERS[subreddit_name]
+                    if not self._matches_flair(submission, flair_filter):
+                        continue
+
+                    # Process the post
+                    log.info("Processing reddit market post ID %s", submission.id)
+                    await self._process_post(submission, subreddit_name)
+
+            except asyncio.CancelledError:
+                log.info("Multireddit stream cancelled")
+                raise
             except Exception:
-                log.exception("Error reinitializing reddit client after error")
+                log.exception("Error in multireddit stream, restarting...")
+                await asyncio.sleep(BACKOFF_TIME_MS / 1000)
+
+    def _matches_flair(self, submission: praw_models.Submission, flair_filter: str) -> bool:
+        '''check if submission matches the expected flair'''
+        # For homelabsales, check if title contains [FS]
+        if flair_filter == '[FS]':
+            return '[FS]' in submission.title
+
+        # Get flair text from submission
+        flair_text = ""
+        if hasattr(submission, 'link_flair_text') and submission.link_flair_text:
+            flair_text = submission.link_flair_text
+
+        # Check if flair text contains filter
+        return flair_filter.lower() in flair_text.lower()
+
+    async def _process_post(self, submission: praw_models.Submission, market_name: str):
+        '''process a single reddit post against all user queries'''
+        post_id = submission.id
+        post_link = submission.url
+        post_title = submission.title
+
+        # Check if already processed
+        with db.bot_db:
+            if db.MechmarketPost.get_or_none(post_id=post_id):
+                return
+
+        # Extract post text and timestamp
+        post_text = ""
+        if hasattr(submission, 'selftext') and submission.selftext:
+            post_text = submission.selftext.replace('\n', ' ')
+
+        # Combine title and text for searching
+        searchable_text = f"{post_title} {post_text}"
+
+        # Try to extract timestamp URL
+        timestamp = None
+        urls = self.extractor.find_urls(post_text)
+        if urls:
+            timestamp = urls[0]
+
+        # Match against all queries
+        with db.bot_db:
+            market_queries: list[db.MechmarketQuery] = list(db.MechmarketQuery.select())
+        for market_query in market_queries:
+            if self._matches_query(searchable_text, market_query.search_string):
+                try:
+                    reminded_user = await self.client.fetch_user(market_query.user_id)
+                    channel = await reminded_user.create_dm()
+                    text = (
+                        f"Match found for query: {market_query.search_string}\n"
+                        f"r/{market_name}: [{post_title}]({post_link})\n"
+                    )
+                    if timestamp:
+                        text += f" - [Timestamp]({timestamp})"
+                    await channel.send(text)
+                except Exception:
+                    log.exception(f"Failed to notify user {market_query.user_id}")
+        with db.bot_db:
+            # Mark as processed
+            db.MechmarketPost.insert(post_id=post_id).execute()
+
+    def _matches_query(self, text: str, query: str) -> bool:
+        '''check if text matches a search query'''
+        # Check for exact search if enclosed in quotes
+        if query.startswith('"') and query.endswith('"'):
+            return query[1:-1].lower() in text.lower()
+
+        # Check if all words are present (AND logic)
+        if all(word.lower() in text.lower() for word in query.split()):
+            return True
+        # check for text as regex
+        regex = self.regex_compilation_cached(query)
+        return regex.search(text) is not None
+
+    @lru_cache
+    def regex_compilation_cached(self, query_text: str) -> re.Pattern:
+        return re.compile(query_text)
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):
@@ -183,10 +279,7 @@ class MechmarketScraper(commands.Cog):
         dm_channel = await ctx.message.author.create_dm()
         with db.bot_db:
             queries = list(db.MechmarketQuery.select().where(db.MechmarketQuery.user_id == ctx.message.author.id))
-            # pylint: disable=not-an-iterable
-        table = []
-        for query in queries:
-            table.append([query.id, query.search_string])  # noqa
+        table = [[query.id, query.search_string] for query in queries]
         msg_text = f"```{tabulate(table, headers=['query_id', 'query string'])}```"
         await dm_channel.send(msg_text)
 
