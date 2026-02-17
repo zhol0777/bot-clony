@@ -1,12 +1,11 @@
 '''
 Scrape mechmarket using multireddit streaming for efficiency
 '''
-from asyncpraw.models.reddit.submission import Submission
 import asyncio
 import logging
 import os
 import re
-from functools import lru_cache
+from collections import defaultdict
 
 import asyncpraw
 import discord
@@ -176,20 +175,28 @@ class MechmarketScraper(commands.Cog):
         # Match against all queries
         with db.bot_db:
             market_queries: list[db.MechmarketQuery] = list(db.MechmarketQuery.select())
+        # map user_id to list of matched query strings
+        user_id_to_query_match = defaultdict(list)
         for market_query in market_queries:
             if self._matches_query(searchable_text, market_query.search_string):
-                try:
-                    reminded_user = await self.client.fetch_user(market_query.user_id)
-                    channel = await reminded_user.create_dm()
-                    text = (
-                        f"Match found for query: {market_query.search_string}\n"
-                        f"r/{market_name}: [{post_title}]({post_link})\n"
-                    )
-                    if timestamp:
-                        text += f" - [Timestamp]({timestamp})"
-                    await channel.send(text)
-                except Exception:
-                    log.exception(f"Failed to notify user {market_query.user_id}")
+                user_id_to_query_match[market_query.user_id].append(market_query.search_string)
+        for user_id, matched_queries in user_id_to_query_match.items():
+            if not matched_queries:
+                continue
+            try:
+                reminded_user = await self.client.fetch_user(user_id)
+                channel = await reminded_user.create_dm()
+                text = (
+                    f"# r/{market_name}: [{post_title}]({post_link})"
+                    f"\n Match found for {len(matched_queries)} {'query' if len(matched_queries) == 1 else 'queries'}"
+                )
+                if timestamp:
+                    text += f"\n - [Timestamp]({timestamp})"
+                for query_string in matched_queries:
+                    text += f"\n\n## {query_string}: \n{self._summarize_matches(searchable_text, query=query_string)}"
+                await channel.send(text)
+            except Exception:
+                log.exception(f"Failed to notify user {user_id}")
         with db.bot_db:
             # Mark as processed
             db.MechmarketPost.insert(post_id=post_id).execute()
@@ -203,13 +210,66 @@ class MechmarketScraper(commands.Cog):
         # Check if all words are present (AND logic)
         if all(word.lower() in text.lower() for word in query.split()):
             return True
-        # check for text as regex
-        regex = self.regex_compilation_cached(query)
-        return regex.search(text) is not None
 
-    @lru_cache
-    def regex_compilation_cached(self, query_text: str) -> re.Pattern:
-        return re.compile(query_text)
+    def _summarize_matches(self, input: str, query: str, space_to_retain: int = 40) -> str:  # noqa: PLR0912
+        '''
+        query modes:
+        * ensure every word in a query appears in input, regardless of order
+        * if in quotes, ensure that exact query appears in input
+        '''
+        keep_index = [False] * len(input)
+        bold_index = [False] * len(input)
+        # first part: build the index of characters to keep up
+        # if we see a match, keep {space_to_retain} characters before/after, and bold the match itself
+        if (query.startswith('"') and query.endswith('"')) or (query.startswith("'") and query.endswith("'")):
+            reduced_query = query[1:-1]
+            if not reduced_query:
+                return ""  # this is a big error but we don't want to interrupt loop
+            queries_to_search = [reduced_query]
+        else:
+            queries_to_search = query.split()
+        for word in queries_to_search:
+            for match in re.finditer(re.escape(word.lower()), input.lower()):
+                # Keep context around the match
+                for tru_idx in range(max(0, match.start() - space_to_retain),
+                                        min(len(input), match.end() + space_to_retain)):
+                    keep_index[tru_idx] = True
+                # Bold the actual match
+                for bold_idx in range(match.start(), match.end()):
+                    bold_index[bold_idx] = True
+
+        segments = []
+        i = 0
+        while i < len(input):
+            if keep_index[i]:
+                # Extract a continuous segment with its bold markers
+                segment_parts = []
+                in_bold = False
+
+                while i < len(input) and keep_index[i]:
+                    # Insert ** at bold state transitions
+                    if bold_index[i] != in_bold:
+                        segment_parts.append("**")
+                        in_bold = bold_index[i]
+                    segment_parts.append(input[i])
+                    i += 1
+
+                # Close any remaining bold tag
+                if in_bold:
+                    segment_parts.append("**")
+
+                segments.append("".join(segment_parts))
+            else:
+                i += 1
+
+        if not segments:
+            return ""  # maybe should flag to user...
+        joined_segments = " [...] ".join(segments)
+        if not keep_index[0]:
+            joined_segments = "[...] " + joined_segments
+        if not keep_index[-1]:
+            joined_segments += " [...]"
+        return joined_segments
 
     @commands.group()
     async def mechmarket(self, ctx: commands.Context):
@@ -230,13 +290,16 @@ class MechmarketScraper(commands.Cog):
         '''add a mechmarketquery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
+        dm_channel = await ctx.message.author.create_dm()
         query = ' '.join(ctx.message.content.split()[2:])
+        if not query.strip():
+            await dm_channel.send("Query cannot be empty")
+            return
         with db.bot_db:
             db.MechmarketQuery.get_or_create(
                 user_id=ctx.message.author.id,
                 search_string=query
             )
-        dm_channel = await ctx.message.author.create_dm()
         await dm_channel.send(f"Scraping reddit markets to look for `{query}`")
 
     @mechmarket.command()
@@ -244,6 +307,7 @@ class MechmarketScraper(commands.Cog):
         '''delete a MechmarketQuery'''
         if not isinstance(ctx.message.channel, discord.DMChannel):
             return
+        queries_to_delete = []
         with db.bot_db:
             for reason_id in args:
                 try:
@@ -253,10 +317,13 @@ class MechmarketScraper(commands.Cog):
                 query = db.MechmarketQuery.get_by_id(row_id)
                 if query:
                     if query.user_id != ctx.message.author.id:
-                        await ctx.channel.send("Cannot delete other users query")
-                        return
-                    await ctx.channel.send(f"Deleting running query for `{query.search_string}`")
+                        continue
+                    queries_to_delete.append(f"{query.search_string}")
                     query.delete_instance()
+        if queries_to_delete:
+            await ctx.channel.send(
+                f"Deleting running {'query' if len(queries_to_delete) > 2 else 'queries'}: "
+                        f"```{'\n'.join(queries_to_delete)}```")
 
     @mechmarket.command()
     async def list(self, ctx: commands.Context):
