@@ -150,6 +150,7 @@ class MessageIdentifier(BaseModel):
     # if instance count exceeds some threshold, we send some message to
     # a bot channel or something to explain to user and mods why they
     # they got muted
+    # todo: migrate this to IntegerField
     tracking_message_id = peewee.CharField(null=True)
     class Meta:
         indexes = (

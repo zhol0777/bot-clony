@@ -157,6 +157,7 @@ class ShutUp(commands.Cog):
         '''
         Alert channel for likely compromised account
         '''
+        log.warning("Attempting to send spam alert for user %s", message.author.name)
         embed = discord.Embed(color=discord.Colour.orange())
         embed.set_author(name="Spam Signal")
         embed.add_field(name="User", value=f'<@{message.author.id}>')
@@ -181,11 +182,16 @@ class ShutUp(commands.Cog):
                         db.MessageIdentifier.user_id == message.author.id,
                         db.MessageIdentifier.message_hash == hash(message.content)
                     ).execute()
-            await self.purge(message.author.id, message.guild, message.content)  # ty: ignore[invalid-argument-type]
+            await self.purge(message.author.id, message.guild)  # ty: ignore[invalid-argument-type]
         elif channel := await self.get_containment_channel():
-            original_message = await channel.fetch_message(
-                message_identifier.tracking_message_id)
+            try:
+                original_message = await channel.fetch_message(
+                    message_identifier.tracking_message_id)
+            except discord.NotFound:
+                log.error("Could not find spam alert message to edit even though it is seemingly sent?")
             await original_message.edit(content=content, embed=embed)
+        else:
+            log.error("Cannot send spam alert due to missing channel?")
 
     def parse_date_time_str(self, date_time_str: str | datetime) -> datetime:
         "dates are sometimes saved in two different formats"
@@ -196,29 +202,26 @@ class ShutUp(commands.Cog):
         except ValueError:
             return datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S%z')
 
-    async def get_containment_channel(self):
+    async def get_containment_channel(self) -> discord.TextChannel | None:
         '''
         provide containment channel since cannot be done during init
         '''
         channel = self.client.get_channel(SPAM_CONTAINMENT_CHANNEL_ID)
         if not channel:
             channel = self.client.get_channel(TOXIC_CONTAINMENT_CHANNEL_ID)
-            if not channel:
-                log.error("Please set up a containment channel!")
-                return
+        if not channel:
+            log.error("Please set up a containment channel!")
+            return
+        if not isinstance(channel, discord.TextChannel):
+            log.error("Containment channel should be a TextChannel, not %s", type(channel))
+            return
         return channel
 
-    async def purge(self, purged_user_id: int, guild: discord.Guild,
-                    message_content: str):
+    async def purge(self, purged_user_id: int, guild: discord.Guild):
         '''
         Go through last 100 messages and purge those from user
         tagged or replied to
         '''
-        content_hash = hash(message_content)
-
-        def should_be_purged(message: discord.Message):
-            return message.author.id == purged_user_id and content_hash == hash(message.content)
-
         # TODO: figure out less dumb way to do this
         # TODO: async purge
         # guild = await util.fetch_primary_guild(self.client)
@@ -228,7 +231,7 @@ class ShutUp(commands.Cog):
             try:
                 # await channel.purge(limit=20, check=should_be_purged)
                 async for message in channel.history(limit=20):
-                    if should_be_purged(message):
+                    if message.author.id == purged_user_id:
                         try:
                             await message.delete()
                         except discord.NotFound:
