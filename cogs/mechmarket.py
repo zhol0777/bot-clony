@@ -118,9 +118,17 @@ class MechmarketScraper(commands.Cog):
                         break
 
                     # Check if post matches flair filter
-                    flair_filter = FLAIR_FILTERS.get(subreddit_name)
-                    if flair_filter and not self._matches_flair(submission, flair_filter):
-                        continue
+                    if flair_filter := FLAIR_FILTERS.get(subreddit_name):
+                        if not self._matches_flair(submission, flair_filter):
+                            continue
+                    else:  # something from homelab sales, filter based on title
+                        match subreddit_name:
+                            case "homelabsales":
+                                if not submission.title.startswith("[FS]"):
+                                    continue
+                            case _:
+                                log.error("Avoiding processing post from r/%s, no filter defined", subreddit_name)
+                                continue  # not within homelabsales, ignore
 
                     # Process the post
                     log.info("Processing reddit market post ID %s from r/%s", submission.id, subreddit_name)
@@ -187,13 +195,13 @@ class MechmarketScraper(commands.Cog):
                 reminded_user = await self.client.fetch_user(user_id)
                 channel = await reminded_user.create_dm()
                 text = (
-                    f"# r/{market_name}: [{post_title}]({post_link})"
+                    f"## r/{market_name}: [{post_title}]({post_link})"
                     f"\n Match found for {len(matched_queries)} {'query' if len(matched_queries) == 1 else 'queries'}"
                 )
                 if timestamp:
                     text += f"\n - [Timestamp]({timestamp})"
                 for query_string in matched_queries:
-                    text += f"\n\n## {query_string}: \n{self._summarize_matches(searchable_text, query=query_string)}"
+                    text += f"\n### {query_string}:\n{self._summarize_matches(searchable_text, query=query_string)}"
                 await channel.send(text)
             except Exception:
                 log.exception(f"Failed to notify user {user_id}")
