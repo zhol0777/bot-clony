@@ -2,13 +2,16 @@
 Scrape mechmarket using multireddit streaming for efficiency
 '''
 import asyncio
+import datetime
 import logging
 import os
 import re
 from collections import defaultdict
 
 import asyncpraw
+import asyncprawcore
 import discord
+from aiohttp.client_exceptions import ClientConnectionError
 from asyncpraw import models as praw_models
 from discord.ext import commands
 from tabulate import tabulate
@@ -19,6 +22,9 @@ import util
 
 MECHMARKET_BASE_URL = 'https://old.reddit.com/r/mechmarket'
 BACKOFF_TIME_MS = 10000
+INITIAL_BACKOFF_MS = 1000
+MAX_BACKOFF_MS = 300000  # 5 minutes
+BACKOFF_MULTIPLIER = 2
 
 SUBREDDITS = ['mechmarket', 'hardwareswap', 'homelabsales']
 
@@ -56,6 +62,8 @@ class MechmarketScraper(commands.Cog):
         self.stream_tasks = []
         self._shutdown_event = asyncio.Event()
         self.extractor = URLExtract()
+        self._backoff_tracker: dict[str, dict] = {}  # subreddit_name -> {error_count, last_backoff_ms}
+        self._restart_counts: dict[str, int] = defaultdict(int)
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -113,33 +121,51 @@ class MechmarketScraper(commands.Cog):
                 subreddit = await self.reddit.subreddit(subreddit_name)
                 log.info(f"Starting stream for r/{subreddit_name}")
 
+                stream_healthy = False
                 async for submission in subreddit.stream.submissions(skip_existing=True):
                     if self._shutdown_event.is_set():
                         break
+
+                    # Reset backoff once we successfully receive data from the stream
+                    if not stream_healthy:
+                        self._reset_backoff(subreddit_name)
+                        stream_healthy = True
+                        log.info(f"Stream for r/{subreddit_name} is healthy")
+
+                    # Skip if already processed (database checkpoint)
+                    post_id = submission.id
+                    with db.bot_db:
+                        if db.MechmarketPost.get_or_none(post_id=post_id):
+                            log.debug("Skipping already processed post %s", post_id)
+                            continue
 
                     # Check if post matches flair filter
                     if flair_filter := FLAIR_FILTERS.get(subreddit_name):
                         if not self._matches_flair(submission, flair_filter):
                             continue
                     else:  # something from homelab sales, filter based on title
-                        match subreddit_name:
-                            case "homelabsales":
-                                if not submission.title.startswith("[FS]"):
-                                    continue
-                            case _:
-                                log.error("Avoiding processing post from r/%s, no filter defined", subreddit_name)
-                                continue  # not within homelabsales, ignore
+                        if subreddit_name != 'homelabsales':
+                            log.error("Avoiding processing post from r/%s, no filter defined", subreddit_name)
+                            continue  # not within homelabsales, ignore
+                        if not submission.title.startswith("[FS]"):
+                            continue
 
                     # Process the post
-                    log.info("Processing reddit market post ID %s from r/%s", submission.id, subreddit_name)
+                    post_created_utc = getattr(submission, 'created_utc', 0)
+                    if post_created_utc:
+                        post_age_hours = \
+                            (datetime.datetime.now(datetime.timezone.utc).timestamp() - post_created_utc) / 3600
+                        log.info("Processing reddit market post ID %s from r/%s (age: %.1f hours)",
+                                submission.id, subreddit_name, post_age_hours)
+                    else:
+                        log.info("Processing reddit market post ID %s from r/%s", submission.id, subreddit_name)
                     await self._process_post(submission, subreddit_name)
 
             except asyncio.CancelledError:
                 log.info(f"Stream for r/{subreddit_name} cancelled")
                 raise
-            except Exception:
-                log.exception("Error in stream for r/%s, restarting...", subreddit_name)
-                await asyncio.sleep(BACKOFF_TIME_MS / 1000)
+            except Exception as e:
+                await self._handle_stream_error(subreddit_name, e)
 
     def _matches_flair(self, submission: praw_models.Submission, flair_filter: str) -> bool:
         '''check if submission matches the expected flair'''
@@ -155,16 +181,61 @@ class MechmarketScraper(commands.Cog):
         # Check if flair text contains filter
         return flair_filter.lower() in flair_text.lower()
 
+    async def _handle_stream_error(self, subreddit_name: str, exc: Exception):
+        '''Handle stream errors with exponential backoff based on error type'''
+
+        tracker = self._backoff_tracker.setdefault(
+            subreddit_name, {'error_count': 0, 'last_backoff_ms': INITIAL_BACKOFF_MS})
+        self._restart_counts[subreddit_name] += 1
+
+        # Classify error type
+        error_type = 'unknown'
+        if isinstance(exc, asyncprawcore.exceptions.RequestException):
+            if '500' in str(exc) or '502' in str(exc) or '503' in str(exc):
+                error_type = 'server_error'  # Reddit server issues
+            elif 'timeout' in str(exc).lower():
+                error_type = 'timeout'
+            elif 'Cannot connect' in str(exc):
+                error_type = 'connection_error'
+        elif isinstance(exc, asyncio.TimeoutError):
+            error_type = 'timeout'
+        elif isinstance(exc, ClientConnectionError):
+            error_type = 'connection_error'
+
+        # Reset backoff for server errors (temporary), increase for others
+        if error_type == 'server_error':
+            backoff_ms = min(tracker['last_backoff_ms'] * BACKOFF_MULTIPLIER, MAX_BACKOFF_MS)
+            tracker['error_count'] += 1
+            log.warning("Stream error for r/%s: %s (type: %s), backing off %sms (attempt %d)",
+                       subreddit_name, str(exc)[:100], error_type, backoff_ms, tracker['error_count'])
+        elif error_type in {'timeout', 'connection_error'}:
+            backoff_ms = min(tracker['last_backoff_ms'] * BACKOFF_MULTIPLIER, MAX_BACKOFF_MS)
+            tracker['error_count'] += 1
+            log.error("Persistent error for r/%s: %s (type: %s), backing off %sms (attempt %d)",
+                     subreddit_name, str(exc)[:100], error_type, backoff_ms, tracker['error_count'])
+        else:
+            # Unknown error - use fixed backoff
+            backoff_ms = BACKOFF_TIME_MS
+            log.exception("Unexpected error for r/%s, using fixed backoff", subreddit_name)
+            tracker['error_count'] = 0
+
+        tracker['last_backoff_ms'] = backoff_ms
+        await asyncio.sleep(backoff_ms / 1000)
+
+        # Reset on successful connection (caller should call this on success)
+        return backoff_ms
+
+    def _reset_backoff(self, subreddit_name: str):
+        '''Reset backoff tracker after successful stream'''
+        if subreddit_name in self._backoff_tracker:
+            self._backoff_tracker[subreddit_name]['error_count'] = 0
+            self._backoff_tracker[subreddit_name]['last_backoff_ms'] = INITIAL_BACKOFF_MS
+
     async def _process_post(self, submission: praw_models.Submission, market_name: str):
         '''process a single reddit post against all user queries'''
         post_id = submission.id
         post_link = submission.url
         post_title = submission.title
-
-        # Check if already processed
-        with db.bot_db:
-            if db.MechmarketPost.get_or_none(post_id=post_id):
-                return
 
         # Extract post text and timestamp
         post_text = ""
@@ -180,14 +251,17 @@ class MechmarketScraper(commands.Cog):
         if urls:
             timestamp = urls[0]
 
-        # Match against all queries
-        with db.bot_db:
+        with db.bot_db.atomic():
+            if db.MechmarketPost.get_or_none(post_id=post_id):
+                return
             market_queries: list[db.MechmarketQuery] = list(db.MechmarketQuery.select())
-        # map user_id to list of matched query strings
-        user_id_to_query_match = defaultdict(list)
-        for market_query in market_queries:
-            if self._matches_query(searchable_text, market_query.search_string):
-                user_id_to_query_match[market_query.user_id].append(market_query.search_string)
+            user_id_to_query_match = defaultdict(list)
+            for market_query in market_queries:
+                query_string = str(market_query.search_string)
+                if self._matches_query(searchable_text, query_string):
+                    user_id_to_query_match[market_query.user_id].append(query_string)
+            db.MechmarketPost.insert(post_id=post_id).execute()
+
         for user_id, matched_queries in user_id_to_query_match.items():
             if not matched_queries:
                 continue
@@ -204,10 +278,7 @@ class MechmarketScraper(commands.Cog):
                     text += f"\n### {query_string}:\n{self._summarize_matches(searchable_text, query=query_string)}"
                 await channel.send(text)
             except Exception:
-                log.exception(f"Failed to notify user {user_id}")
-        with db.bot_db:
-            # Mark as processed
-            db.MechmarketPost.insert(post_id=post_id).execute()
+                log.exception("Failed to notify user %s", user_id)
 
     def _matches_query(self, text: str, query: str) -> bool:
         '''check if text matches a search query'''
@@ -215,9 +286,7 @@ class MechmarketScraper(commands.Cog):
         if query.startswith('"') and query.endswith('"'):
             return query[1:-1].lower() in text.lower()
 
-        # Check if all words are present (AND logic)
-        if all(word.lower() in text.lower() for word in query.split()):
-            return True
+        return all(word.lower() in text.lower() for word in query.split())
 
     def _summarize_matches(self, input: str, query: str, space_to_retain: int = 40) -> str:  # noqa: PLR0912
         '''
