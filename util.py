@@ -1,6 +1,7 @@
 '''
 Utility functions shared across cogs
 '''
+import logging
 import os
 from mimetypes import guess_type
 from typing import Optional, Union
@@ -10,6 +11,8 @@ from discord.ext import commands
 from PIL.Image import registered_extensions
 
 import db
+
+log = logging.getLogger(__name__)
 
 IGNORE_COMMAND_LIST = [
     'purge', 'purgelast', 'buy', 'eight', 'eject', 'google', 'groupbuy',
@@ -74,24 +77,24 @@ async def get_reply_message(message: discord.Message) -> discord.Message:
 
 
 # TODO: handle via role IDs
-async def apply_role(member: discord.Member, user_id: int,
-                     role_name: str, reason: Optional[str] = None,
+async def apply_role(member: discord.Member | discord.User, user_id: int,  # noqa: PLR0913,PLR0917
+                     guild: discord.Guild, role_name: str, reason: Optional[str] = None,
                      enter_in_db: bool = True) -> None:
     '''Apply a role to a member, and mark it in db'''
-    role = discord.utils.get(member.guild.roles, name=role_name)
-    if role:
+    role = discord.utils.get(guild.roles, name=role_name)
+    if not role:
+        log.error("Cannot apply non-existent role %s", role_name)
+        return
+    # sometimes the user has bailed before role can be applied - we still log in db
+    # in case they decide to come back
+    if enter_in_db:
+        with db.bot_db:
+            db.RoleAssignment.get_or_create(
+                user_id=user_id,
+                role_name=role_name
+            )
+    if isinstance(member, discord.Member):
         await member.add_roles(role, reason=reason)
-        if enter_in_db:
-            with db.bot_db:
-                query = db.RoleAssignment.select().where(
-                    (db.RoleAssignment.user_id == user_id) &
-                    (db.RoleAssignment.role_name == role_name)
-                )
-                if not query.exists():
-                    db.RoleAssignment.create(
-                        user_id=user_id,
-                        role_name=role_name
-                    )
 
 
 # TODO: handle via role IDs

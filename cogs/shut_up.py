@@ -2,6 +2,7 @@
 Track specific strings (like gifs of a cat jerking itself off or a lil shoosh soundtest)
 that triggers response
 '''
+import asyncio
 import logging
 import os
 from datetime import datetime
@@ -36,6 +37,8 @@ class ShutUp(commands.Cog):
     def __init__(self, client: discord.Client):
         self.client = client
         self.should_censor = False
+        self.users_being_purged = set()
+        self.background_tasks = set()
         if os.path.exists(BANNED_WORDLIST):
             better_profanity.profanity.load_censor_words_from_file(BANNED_WORDLIST)
             log.info("Bad words have been loaded into the censor.")
@@ -72,7 +75,13 @@ class ShutUp(commands.Cog):
         return db.MessageIdentifier.get(message_hash=message_hash,
                                         user_id=author_id)
 
-    # TODO: deal with race condition
+    def _create_background_task(self, coro):
+        '''Create a background task with proper reference tracking to prevent garbage collection'''
+        task = asyncio.create_task(coro)
+        self.background_tasks.add(task)
+        task.add_done_callback(self.background_tasks.discard)
+        return task
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         '''
@@ -83,6 +92,7 @@ class ShutUp(commands.Cog):
         # do not do this to messages that only have a sticker
         # do not do this to messages that are empty for some reason
         # do not do this if the guy's already been contained
+        # do not do this if the message is outside a guild
         if any([message.author.id == self.client.user.id,  # ty: ignore[unresolved-attribute]
                 message.stickers,
                 not message.content and not message.attachments and not message.embeds,
@@ -90,10 +100,11 @@ class ShutUp(commands.Cog):
                                        SPAM_CONTAINMENT_CHANNEL_ID}]):
             return
 
+        if not message.guild:
+            return
+
         if self.should_censor and better_profanity.profanity.contains_profanity(message.content):
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # ty: ignore[invalid-argument-type]
-                                  'hatesonar set off by following message: '
-                                  f'{message.content[:100]}...')
+            self._create_background_task(self.apply_razer_hate_role(message.author, message.guild))
             await self.send_hate_alert(message)
 
         if message.attachments:
@@ -123,20 +134,22 @@ class ShutUp(commands.Cog):
                 "ON CONFLICT(message_hash, user_id) DO UPDATE SET instance_count = instance_count + 1",
                 (message_hash, message.author.id, message.created_at)
             )
-
-        with db.bot_db:
-            # Then fetch the updated row if you need instance_count:
             message_identifier = self.get_message_identifier(message_hash, message.author.id)
-            time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)  # ty: ignore[invalid-argument-type]
+            time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if message_identifier.instance_count > 1:
                 log.info("%s has repeated message hash %s %s times", message.author.name, message_hash,
                         message_identifier.instance_count)
-            if time_delta.seconds > SPAM_INTERVAL:
-                return
-            if message_identifier.instance_count < 5:
-                return
-            await self.send_spam_alert(message, message_hash, message_identifier)
+        if time_delta.seconds > SPAM_INTERVAL:
+            return
+        if message_identifier.instance_count < 5:
+            return
+
+        # Fire and forget - apply role and purge without blocking
+        self._create_background_task(self.apply_razer_hate_role(message.author, message.guild))
+        self._create_background_task(self.purge(message.author.id, message.guild))
+
+        await self.send_spam_alert(message, message_hash, message_identifier)
 
     async def send_hate_alert(self, message: discord.Message):
         '''
@@ -157,6 +170,10 @@ class ShutUp(commands.Cog):
         '''
         Alert channel for likely compromised account
         '''
+        channel = await self.get_containment_channel()
+        if not channel:
+            log.error("Cannot send spam alert due to missing channel?")
+            return
         log.warning("Attempting to send spam alert for user %s", message.author.name)
         embed = discord.Embed(color=discord.Colour.orange())
         embed.set_author(name="Spam Signal")
@@ -170,28 +187,23 @@ class ShutUp(commands.Cog):
         embed.add_field(name="Message link", value=str(message.jump_url))
         content = f'<@688959322708901907>: <@{message.author.id}> is spamming a lot!'
         content += '\nIf you are not sending phishing links, please explain what happened so mute can be lifted.'
-        # need as fresh as possible because i don't know how to handle race conditions
+        # refresh to get latest state
         message_identifier = self.get_message_identifier(message_hash, message.author.id)
         if not message_identifier.tracking_message_id:
-            await util.apply_role(message.author, message.author.id, 'Razer Hate',  # ty: ignore[invalid-argument-type]
-                                    'this guy might be spamming')
-            if channel := await self.get_containment_channel():
-                tracking_message = await channel.send(content=content, embed=embed)
-                db.MessageIdentifier.update(
-                    tracking_message_id=tracking_message.id).where(
-                        db.MessageIdentifier.user_id == message.author.id,
-                        db.MessageIdentifier.message_hash == hash(message.content)
-                    ).execute()
-            await self.purge(message.author.id, message.guild)  # ty: ignore[invalid-argument-type]
-        elif channel := await self.get_containment_channel():
+            tracking_message = await channel.send(content=content, embed=embed)
+            db.MessageIdentifier.update(
+                tracking_message_id=tracking_message.id).where(
+                    db.MessageIdentifier.user_id == message.author.id,
+                    db.MessageIdentifier.message_hash == message_hash
+                ).execute()
+        else:
             try:
                 original_message = await channel.fetch_message(
                     message_identifier.tracking_message_id)
             except discord.NotFound:
                 log.error("Could not find spam alert message to edit even though it is seemingly sent?")
+                return
             await original_message.edit(content=content, embed=embed)
-        else:
-            log.error("Cannot send spam alert due to missing channel?")
 
     def parse_date_time_str(self, date_time_str: str | datetime) -> datetime:
         "dates are sometimes saved in two different formats"
@@ -217,30 +229,52 @@ class ShutUp(commands.Cog):
             return
         return channel
 
+    async def apply_razer_hate_role(self, member: discord.Member | discord.User, guild: discord.Guild):
+        '''Apply the Razer Hate role without waiting for completion'''
+        try:
+            # Check if already has role to avoid unnecessary API call
+            if isinstance(member, discord.Member) and any(role.name == 'Razer Hate' for role in member.roles):
+                log.debug("User %s already has Razer Hate role", member.name)
+                return
+            await util.apply_role(member, member.id, guild, 'Razer Hate',
+                                  'spam containment: applying mute role',
+                                  enter_in_db=True)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log.error("Failed to apply Razer Hate role to %s: %s", member.name, exc)
+
     async def purge(self, purged_user_id: int, guild: discord.Guild):
         '''
         Go through last 100 messages and purge those from user
         tagged or replied to
         '''
-        # TODO: figure out less dumb way to do this
-        # TODO: async purge
-        # guild = await util.fetch_primary_guild(self.client)
-        for channel in guild.channels:
-            if not isinstance(channel, discord.TextChannel):
-                continue
-            try:
-                # await channel.purge(limit=20, check=should_be_purged)
-                async for message in channel.history(limit=20):
-                    if message.author.id == purged_user_id:
-                        try:
-                            await message.delete()
-                        except discord.NotFound:
-                            pass  # hopefully already deleted?
-            except discord.errors.Forbidden:
-                pass
-            except Exception as exc:  # pylint: disable=broad-exception-caught
-                log.error("Cant purge from %s due to %s...", channel.name, exc)
-                # await channel.purge(limit=20, check=should_be_purged)
+        # Check if already being purged to avoid duplicate work
+        if purged_user_id in self.users_being_purged:
+            log.info("User %s already being purged, skipping", purged_user_id)
+            return
+        self.users_being_purged.add(purged_user_id)
+        try:
+            # Process all channels concurrently for faster purge
+            tasks = [self.purge_channel(channel, purged_user_id) for channel in guild.channels]
+            await asyncio.gather(*tasks, return_exceptions=True)
+        finally:
+            self.users_being_purged.discard(purged_user_id)
+
+    async def purge_channel(self, channel: discord.abc.GuildChannel, purged_user_id: int):
+        '''Purge messages from a single channel'''
+        if not isinstance(channel, discord.TextChannel):
+            return
+        try:
+            # await channel.purge(limit=20, check=should_be_purged)
+            async for message in channel.history(limit=20):
+                if message.author.id == purged_user_id:
+                    try:
+                        await message.delete()
+                    except discord.NotFound:
+                        pass  # hopefully already deleted?
+        except discord.errors.Forbidden:
+            pass
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            log.error("Cant purge from %s due to %s...", channel.name, exc)
 
 
 async def setup(client):

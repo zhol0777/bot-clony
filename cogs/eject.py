@@ -100,7 +100,7 @@ class Eject(commands.Cog):
 
             lift_time = int(time.time()) + sleep_time_s
             # TODO: handle via role IDs
-            await util.apply_role(ejected_member, user_id, 'ejected',
+            await util.apply_role(ejected_member, user_id, ctx.guild, 'ejected',
                                   ' '.join(args), False)
             if not temp_ejected:
                 await ctx.channel.send(f'lol ejected <@{user_id}>\n'

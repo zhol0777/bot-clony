@@ -98,7 +98,7 @@ class Purgatory(commands.Cog):
         vote_count = len(self.vote_tracker[purged_user_id])
 
         if vote_count >= REQUIRED_VOTES:
-            await util.apply_role(purgatory_member, purged_user_id, 'Razer Hate', reason)
+            await util.apply_role(purgatory_member, purged_user_id, ctx.guild, 'Razer Hate', reason)
             await self.easy_purge(ctx.guild, purged_user_id, ctx.channel)
 
             votes = self.vote_tracker.pop(purged_user_id)
