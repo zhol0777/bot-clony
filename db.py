@@ -4,6 +4,7 @@ Module to handle the few DB operations we have
 import peewee
 
 bot_db = peewee.SqliteDatabase('bot.db')
+bot_db.execute_sql('PRAGMA journal_mode=WAL;')
 
 
 class BaseModel(peewee.Model):
