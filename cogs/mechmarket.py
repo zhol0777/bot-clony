@@ -147,7 +147,7 @@ class MechmarketScraper(commands.Cog):
                         if subreddit_name != 'homelabsales':
                             log.error("Avoiding processing post from r/%s, no filter defined", subreddit_name)
                             continue  # not within homelabsales, ignore
-                        if not submission.title.startswith("[FS]"):
+                        if not submission.title.lower().startswith("[fs]"):
                             continue
 
                     # Process the post

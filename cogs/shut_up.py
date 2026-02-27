@@ -28,8 +28,8 @@ MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-LOOP_TIME = 60
-SPAM_INTERVAL = 15
+LOOP_TIME = 300
+# SPAM_INTERVAL = 15
 
 
 class ShutUp(commands.Cog):
@@ -59,7 +59,7 @@ class ShutUp(commands.Cog):
     async def purge_loop_function(self):
         '''delete messages that were initially sent too long ago'''
         db.bot_db.execute_sql(
-            "DELETE FROM messageidentifier WHERE created_at < datetime('now', '-60 seconds');")
+            f"DELETE FROM messageidentifier WHERE created_at < datetime('now', '-{LOOP_TIME} seconds');")
         # with db.bot_db:
         #     now = datetime.now(timezone.utc)
         #     for message in db.MessageIdentifier.select():
@@ -135,13 +135,13 @@ class ShutUp(commands.Cog):
                 (message_hash, message.author.id, message.created_at)
             )
             message_identifier = self.get_message_identifier(message_hash, message.author.id)
-            time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
+            # time_delta = message.created_at - self.parse_date_time_str(message_identifier.created_at)
             # send annoyance message if message has been sent multiple times in last 15s
             if message_identifier.instance_count > 1:
                 log.info("%s has repeated message hash %s %s times", message.author.name, message_hash,
                         message_identifier.instance_count)
-        if time_delta.seconds > SPAM_INTERVAL:
-            return
+        # if time_delta.seconds > SPAM_INTERVAL:
+        #     return
         if message_identifier.instance_count < 5:
             return
 
