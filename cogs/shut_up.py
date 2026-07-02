@@ -142,7 +142,8 @@ class ShutUp(commands.Cog):
                         message_identifier.instance_count)
         # if time_delta.seconds > SPAM_INTERVAL:
         #     return
-        if message_identifier.instance_count < 5:
+        instance_limit = 3 if (message.attachments or URLExtract().has_urls(message.content)) else 5
+        if message_identifier.instance_count < instance_limit:
             return
 
         # Fire and forget - apply role and purge without blocking
