@@ -7,6 +7,7 @@ import logging
 import os
 import re
 from collections import defaultdict
+from typing import Union
 
 import asyncpraw
 import asyncprawcore
@@ -109,7 +110,7 @@ class MechmarketScraper(commands.Cog):
             except Exception:
                 log.exception("Error closing reddit client")
 
-    async def _stream_subreddit(self, subreddit_name: str):
+    async def _stream_subreddit(self, subreddit_name: str):  # noqa: PLR0912
         '''stream posts from a single subreddit'''
         while not self._shutdown_event.is_set():
             if not self.reddit:
@@ -152,6 +153,7 @@ class MechmarketScraper(commands.Cog):
 
                     # Process the post
                     post_created_utc = getattr(submission, 'created_utc', 0)
+                    post_age_hours = None
                     if post_created_utc:
                         post_age_hours = \
                             (datetime.datetime.now(datetime.timezone.utc).timestamp() - post_created_utc) / 3600
@@ -159,7 +161,7 @@ class MechmarketScraper(commands.Cog):
                                 submission.id, subreddit_name, post_age_hours)
                     else:
                         log.info("Processing reddit market post ID %s from r/%s", submission.id, subreddit_name)
-                    await self._process_post(submission, subreddit_name)
+                    await self._process_post(submission, subreddit_name, post_age_hours)
 
             except asyncio.CancelledError:
                 log.info(f"Stream for r/{subreddit_name} cancelled")
@@ -231,7 +233,8 @@ class MechmarketScraper(commands.Cog):
             self._backoff_tracker[subreddit_name]['error_count'] = 0
             self._backoff_tracker[subreddit_name]['last_backoff_ms'] = INITIAL_BACKOFF_MS
 
-    async def _process_post(self, submission: praw_models.Submission, market_name: str):
+    async def _process_post(self, submission: praw_models.Submission, market_name: str,
+                            post_age_hours: Union[int, float, None]):
         '''process a single reddit post against all user queries'''
         post_id = submission.id
         post_link = submission.url
@@ -268,10 +271,9 @@ class MechmarketScraper(commands.Cog):
             try:
                 reminded_user = await self.client.fetch_user(user_id)
                 channel = await reminded_user.create_dm()
-                text = (
-                    f"## r/{market_name}: [{post_title}]({post_link})"
-                    f"\n Match found for {len(matched_queries)} {'query' if len(matched_queries) == 1 else 'queries'}"
-                )
+                text = f"## r/{market_name}: [{post_title}]({post_link})"
+                if post_age_hours and post_age_hours > (5 / 60):
+                    text += f"-# Post is {int(post_age_hours * 60)} minutes old"
                 if timestamp:
                     text += f"\n - [Timestamp]({timestamp})"
                 for query_string in matched_queries:
@@ -294,6 +296,7 @@ class MechmarketScraper(commands.Cog):
         * ensure every word in a query appears in input, regardless of order
         * if in quotes, ensure that exact query appears in input
         '''
+        input = input.replace('*', '')  # remove asterisks
         keep_index = [False] * len(input)
         bold_index = [False] * len(input)
         # first part: build the index of characters to keep up
