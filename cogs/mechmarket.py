@@ -273,7 +273,7 @@ class MechmarketScraper(commands.Cog):
                 channel = await reminded_user.create_dm()
                 text = f"## r/{market_name}: [{post_title}]({post_link})"
                 if post_age_hours and post_age_hours > (5 / 60):
-                    text += f"-# Post is {int(post_age_hours * 60)} minutes old"
+                    text += f"\n-# Post is {int(post_age_hours * 60)} minutes old"
                 if timestamp:
                     text += f"\n - [Timestamp]({timestamp})"
                 for query_string in matched_queries:
