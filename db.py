@@ -92,23 +92,6 @@ class Reminder(BaseModel):
     message_url = peewee.BigIntegerField()
 
 
-class SuspiciousUser(BaseModel):
-    '''tracking bogus user'''
-    user_id = peewee.BigIntegerField()
-    join_epoch_time = peewee.BigIntegerField()
-
-
-class KickedUser(BaseModel):
-    '''tracking user that has been kicked three times for suspicious behavior'''
-    user_id = peewee.BigIntegerField()
-    kick_count = peewee.BigIntegerField()
-
-
-class BannedUser(BaseModel):
-    '''tracking user banned by botpurge functionality to prevent fetch_ban() lookup'''
-    user_id = peewee.BigIntegerField(unique=True)
-
-
 class SanitizedChannel(BaseModel):
     '''only channel ID is tracked if auto-sanitizer should be run there'''
     channel_id = peewee.BigIntegerField()
@@ -166,8 +149,7 @@ def create_tables():
                               WikiPage, WarningMemberReason,
                               UnejectTime, BannerPost,
                               SocialCredit, Reminder,
-                              SuspiciousUser, KickedUser,
-                              BannedUser, SanitizedChannel,
+                              SanitizedChannel,
                               SillyPage, ThockTrackingChannel,
                               MechmarketPost, MechmarketQuery,
                               StupidMessage, MessageIdentifier])
