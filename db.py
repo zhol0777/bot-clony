@@ -14,13 +14,15 @@ import peewee
 PASSPHRASE = os.getenv('DATABASE_PASSPHRASE', '')
 DB_PATH = 'encrypted.db'
 
-if SqlCipherDatabase is not None:
-    if not PASSPHRASE:
-        print("FATAL: DATABASE_PASSPHRASE environment variable is not set.", file=sys.stderr)
-        sys.exit(1)
-    bot_db = SqlCipherDatabase(DB_PATH, passphrase=PASSPHRASE)
-else:
-    bot_db = peewee.SqliteDatabase(DB_PATH)
+# Encryption-at-rest is required. Never silently fall back to a plaintext DB.
+if SqlCipherDatabase is None:
+    print("FATAL: SQLCipher support not available (install 'sqlcipher3'). "
+          "Refusing to run with an unencrypted database.", file=sys.stderr)
+    sys.exit(1)
+if not PASSPHRASE:
+    print("FATAL: DATABASE_PASSPHRASE environment variable is not set.", file=sys.stderr)
+    sys.exit(1)
+bot_db = SqlCipherDatabase(DB_PATH, passphrase=PASSPHRASE)
 
 bot_db.execute_sql('PRAGMA journal_mode=WAL;')
 
