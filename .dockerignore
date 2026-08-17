@@ -1,0 +1,27 @@
+# secrets
+.env
+
+# databases
+bot.db
+encrypted.db
+
+# virtual envs / caches / tooling
+.venv
+venv
+__pycache__/
+*.pyc
+.mypy_cache
+.ruff_cache
+.pytest_cache
+
+# editors / OS
+.vscode
+.DS_Store
+
+# logs
+*.log
+output.log
+
+# requirements files are redundant with uv.lock/pyproject.toml
+requirements.txt
+requirements-frozen.txt

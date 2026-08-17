@@ -1,14 +1,17 @@
 FROM python:3.13-alpine
 
 RUN apk update
-RUN apk --no-cache add git uv
+RUN apk --no-cache add uv \
+    build-base \
+    sqlcipher-dev \
+    libffi-dev
 
 RUN mkdir -p /usr/src/bot
 WORKDIR /usr/src/bot
 
-RUN git clone https://github.com/zhol0777/bot-clony.git .
-
-RUN git checkout bot-lite
+# Build from the local working directory (docker build context),
+# not from a remote repository.
+COPY . .
 
 RUN uv venv
 RUN uv sync
