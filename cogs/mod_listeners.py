@@ -34,9 +34,12 @@ class ModListeners(commands.Cog):
             channel = self.client.get_channel(MOD_CHAT_ID)
             await channel.send("finlacoin account detected, please check #botland")
 
+        if util.is_opted_out(member.id):
+            return
+
         with db.bot_db:
             former_role_assignments = db.RoleAssignment.select().where(
-                db.RoleAssignment.user_id == member.id
+                db.RoleAssignment.hashed_user_id == util.hash_user_id(member.id)
             )
             # pylint: disable=not-an-iterable
             for r_a in former_role_assignments:
@@ -49,18 +52,28 @@ class ModListeners(commands.Cog):
 
         removed_roles = set(before.roles) - set(after.roles)
         added_roles = set(after.roles) - set(before.roles)
-        # TODO: handle via role IDs
+
+        if util.is_opted_out(after.id):
+            with db.bot_db:
+                for role in removed_roles:
+                    if role.name in MONITORED_ROLES:
+                        db.RoleAssignment.delete().where(
+                            (db.RoleAssignment.hashed_user_id == util.hash_user_id(after.id)) &
+                            (db.RoleAssignment.role_name == role.name)
+                        ).execute()
+            return
+
         with db.bot_db:
             for role in removed_roles:
                 if role.name in MONITORED_ROLES:
                     db.RoleAssignment.delete().where(
-                        (db.RoleAssignment.user_id == after.id) &
+                        (db.RoleAssignment.hashed_user_id == util.hash_user_id(after.id)) &
                         (db.RoleAssignment.role_name == role.name)
                     ).execute()
             for role in added_roles:
                 if role.name in MONITORED_ROLES:
                     db.RoleAssignment.create(
-                        user_id=after.id,
+                        hashed_user_id=util.hash_user_id(after.id),
                         role_name=role.name
                     )
 

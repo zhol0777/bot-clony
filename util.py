@@ -1,6 +1,7 @@
 '''
 Utility functions shared across cogs
 '''
+import hashlib
 import logging
 import os
 from mimetypes import guess_type
@@ -37,6 +38,27 @@ MECHMARKET_SCRAPE_HEADERS = {
     'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) '
                   'Chrome/120.0.0.0 Safari/537.36',
 }
+
+_HASH_SALT: str | None = None
+
+
+def _get_salt() -> str:
+    global _HASH_SALT  # noqa: PLW0603
+    if _HASH_SALT is None:
+        _HASH_SALT = os.getenv('HASH_SALT', '')
+    return _HASH_SALT
+
+
+def hash_user_id(user_id: int) -> str:
+    '''One-way SHA-256 hash of a user ID with a secret salt.'''
+    return hashlib.sha256(f"{user_id}{_get_salt()}".encode()).hexdigest()
+
+
+def is_opted_out(user_id: int) -> bool:
+    '''Check if a user has opted out of sticky role / social credit tracking.'''
+    hashed = hash_user_id(user_id)
+    with db.bot_db:
+        return db.OptOut.get_or_none(hashed_user_id=hashed) is not None
 
 
 def supported_image_extensions() -> set[str]:
@@ -80,7 +102,7 @@ async def get_reply_message(message: discord.Message) -> discord.Message:
 async def apply_role(member: discord.Member | discord.User, user_id: int,  # noqa: PLR0913,PLR0917
                      guild: discord.Guild, role_name: str, reason: Optional[str] = None,
                      enter_in_db: bool = True) -> None:
-    '''Apply a role to a member, and mark it in db'''
+    '''Apply a role to a member, and mark it in db with hashed user ID'''
     role = discord.utils.get(guild.roles, name=role_name)
     if not role:
         log.error("Cannot apply non-existent role %s", role_name)
@@ -88,11 +110,12 @@ async def apply_role(member: discord.Member | discord.User, user_id: int,  # noq
     # sometimes the user has bailed before role can be applied - we still log in db
     # in case they decide to come back
     if enter_in_db:
-        with db.bot_db:
-            db.RoleAssignment.get_or_create(
-                user_id=user_id,
-                role_name=role_name
-            )
+        if not is_opted_out(user_id):
+            with db.bot_db:
+                db.RoleAssignment.get_or_create(
+                    hashed_user_id=hash_user_id(user_id),
+                    role_name=role_name
+                )
     if isinstance(member, discord.Member):
         await member.add_roles(role, reason=reason)
 
@@ -105,7 +128,7 @@ async def remove_role(member: discord.Member, user_id: int,
     await member.remove_roles(role)  # ty: ignore[invalid-argument-type]
     with db.bot_db:
         db.RoleAssignment.delete().where(
-            (db.RoleAssignment.user_id == user_id) &
+            (db.RoleAssignment.hashed_user_id == hash_user_id(user_id)) &
             (db.RoleAssignment.role_name == role_name)
         ).execute()
 

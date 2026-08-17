@@ -84,7 +84,7 @@ class Eject(commands.Cog):
 
         with db.bot_db:
             temp_ejected = db.UnejectTime.get_or_none(user_id=user_id)
-            if db.RoleAssignment.get_or_none(user_id=user_id,
+            if db.RoleAssignment.get_or_none(hashed_user_id=util.hash_user_id(user_id),
                                              role_name='ejected') and not temp_ejected:
                 await ctx.channel.send("User already ejected. No temp eject will be placed.")
                 return

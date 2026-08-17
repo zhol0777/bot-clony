@@ -54,6 +54,11 @@ class SocialCredit(commands.Cog):
             user_id = relevant_user.id
         else:
             user_id = util.get_id_from_tag(args[0])
+
+        if util.is_opted_out(user_id):
+            await ctx.channel.send(f"User <@{user_id}> has opted out of social credit tracking.")
+            return
+
         with db.bot_db:
             credit_entry = db.SocialCredit.get_or_none(user_id=user_id)
             if not credit_entry:
@@ -75,6 +80,10 @@ class SocialCredit(commands.Cog):
                                f'{credit_entry.credit_amount} credits!')
 
 
-async def setup(client):
-    '''setup'''
-    await client.add_cog(SocialCredit(client))
+async def setup(client):  # noqa: ARG001, RUF029 - deprecated no-op, cog disabled
+    '''
+    DEPRECATED: social credit cog has been disabled to reduce user ID tracking.
+    Kept for historic reference. Do not re-enable without creating the
+    SocialCredit table again.
+    '''
+    return

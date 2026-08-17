@@ -107,6 +107,10 @@ class MemberWarning(commands.Cog):
                 await ctx.channel.send("Reason deleted")
 
 
-async def setup(client):
-    '''setup'''
-    await client.add_cog(MemberWarning(client))
+async def setup(client):  # noqa: ARG001, RUF029 - deprecated no-op, cog disabled
+    '''
+    DEPRECATED: member warnings cog has been disabled to reduce user tracking.
+    Kept for historic reference. Do not re-enable without creating the
+    WarningMemberReason table again.
+    '''
+    return

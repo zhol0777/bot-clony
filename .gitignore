@@ -10,3 +10,4 @@ venv
 
 requirements.txt
 requirements-frozen.txt
+output.log

@@ -1,9 +1,27 @@
 '''
 Module to handle the few DB operations we have
 '''
+import os
+import sys
+
+try:
+    from playhouse.sqlcipher_ext import SqlCipherDatabase
+except ImportError:
+    SqlCipherDatabase = None  # fallback: defined below if needed
+
 import peewee
 
-bot_db = peewee.SqliteDatabase('bot.db')
+PASSPHRASE = os.getenv('DATABASE_PASSPHRASE', '')
+DB_PATH = 'encrypted.db'
+
+if SqlCipherDatabase is not None:
+    if not PASSPHRASE:
+        print("FATAL: DATABASE_PASSPHRASE environment variable is not set.", file=sys.stderr)
+        sys.exit(1)
+    bot_db = SqlCipherDatabase(DB_PATH, passphrase=PASSPHRASE)
+else:
+    bot_db = peewee.SqliteDatabase(DB_PATH)
+
 bot_db.execute_sql('PRAGMA journal_mode=WAL;')
 
 
@@ -14,20 +32,9 @@ class BaseModel(peewee.Model):
         database = bot_db
 
 
-class WarningMemberReason(BaseModel):
-    '''
-    tracking every instance a user gave a mod a reason to give them a ban/eject
-    '''
-    user_id = peewee.IntegerField()
-    reason = peewee.CharField()
-    message_url = peewee.CharField()  # url pointing to sus message
-    for_eject = peewee.BooleanField()  # if reason comes from helper
-    for_ban = peewee.BooleanField()  # if reason comes from mod
-
-
 class RoleAssignment(BaseModel):
-    '''assignment of role to user to track for re-joins'''
-    user_id = peewee.IntegerField()
+    '''assignment of role to user, keyed by hashed user ID for privacy'''
+    hashed_user_id = peewee.CharField()
     role_name = peewee.CharField()
 
 
@@ -78,12 +85,6 @@ class BannerPost(BaseModel):
     message_id = peewee.BigIntegerField()
 
 
-class SocialCredit(BaseModel):
-    '''tracking social credit for a user'''
-    user_id = peewee.BigIntegerField()
-    credit_amount = peewee.FloatField()
-
-
 class Reminder(BaseModel):
     '''tracking a reminder and when to send'''
     user_id = peewee.BigIntegerField()
@@ -114,12 +115,6 @@ class MechmarketQuery(BaseModel):
     search_string = peewee.CharField()
 
 
-class StupidMessage(BaseModel):
-    '''part of a message you do not want to see anymore'''
-    message_text = peewee.CharField()
-    response_text = peewee.CharField()
-
-
 class MessageIdentifier(BaseModel):
     '''
     messages are identified based of content hashed, and message author
@@ -142,17 +137,22 @@ class MessageIdentifier(BaseModel):
         )
 
 
+class OptOut(BaseModel):
+    '''users who opted out of sticky role tracking'''
+    hashed_user_id = peewee.CharField(unique=True)
+
+
 def create_tables():
     '''Re-create tables when DB is fresh'''
     with bot_db:
         bot_db.create_tables([RoleAssignment, WikiRootUrl,
-                              WikiPage, WarningMemberReason,
+                              WikiPage,
                               UnejectTime, BannerPost,
-                              SocialCredit, Reminder,
+                              Reminder,
                               SanitizedChannel,
                               SillyPage, ThockTrackingChannel,
                               MechmarketPost, MechmarketQuery,
-                              StupidMessage, MessageIdentifier])
+                              MessageIdentifier, OptOut])
         if not WikiRootUrl.select():
             WikiRootUrl.get_or_create(
                 indicator='primary',
