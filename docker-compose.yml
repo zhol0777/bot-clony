@@ -7,6 +7,7 @@ services:
     restart: always
     volumes:
       - "./bot.db:/usr/src/bot/bot.db"
+      - "./encrypted.db:/usr/src/bot/encrypted.db"
       - "./allowed_params.pickle:/usr/src/bot/allowed_params.pickle"
       - "./banned_wordlist.txt:/usr/src/bot/banned_wordlist.txt"
     network_mode: bridge

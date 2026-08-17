@@ -6,6 +6,7 @@
 .vscode
 __pycache__
 bot.db
+encrypted.db
 venv
 
 requirements.txt
