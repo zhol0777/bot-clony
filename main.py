@@ -23,7 +23,8 @@ DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 
 bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # ty: ignore[invalid-argument-type]
-                   intents=discord.Intents(members=True, messages=True))
+                   intents=discord.Intents(members=True, messages=True,
+                                           message_content=True))
 bot.remove_command('help')
 
 
