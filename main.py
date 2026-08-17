@@ -22,9 +22,11 @@ db.create_tables()
 DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
 COMMAND_PREFIX = os.getenv('COMMAND_PREFIX')
 
+intents = discord.Intents.default()  # includes guilds, messages, reactions, etc.
+intents.members = True
+intents.message_content = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # ty: ignore[invalid-argument-type]
-                   intents=discord.Intents(members=True, messages=True,
-                                           message_content=True))
+                   intents=intents)
 bot.remove_command('help')
 
 
