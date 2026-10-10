@@ -7,7 +7,7 @@ import sys
 try:
     from playhouse.sqlcipher_ext import SqlCipherDatabase
 except ImportError:
-    SqlCipherDatabase = None  # fallback: defined below if needed
+    SqlCipherDatabase = None  # ty: ignore  # fallback: defined below if needed
 
 import peewee
 

@@ -200,7 +200,7 @@ class ShutUp(commands.Cog):
         else:
             try:
                 original_message = await channel.fetch_message(
-                    message_identifier.tracking_message_id)
+                    message_identifier.tracking_message_id)  # ty: ignore
             except discord.NotFound:
                 log.error("Could not find spam alert message to edit even though it is seemingly sent?")
                 return
