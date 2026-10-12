@@ -27,7 +27,7 @@ intents.members = True
 intents.message_content = True
 bot = commands.Bot(command_prefix=COMMAND_PREFIX,  # ty: ignore[invalid-argument-type]
                    intents=intents)
-bot.remove_command('help')
+# bot.remove_command('help')
 
 
 async def load_extensions():
