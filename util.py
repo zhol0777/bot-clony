@@ -42,6 +42,13 @@ MECHMARKET_SCRAPE_HEADERS = {
 _HASH_SALT: str | None = None
 
 
+def truncate_for_embed(value: str, limit: int = 1024) -> str:
+    '''Truncate a string to fit a Discord embed field value.'''
+    if len(value) > limit:
+        return value[:limit - 1] + '…'
+    return value
+
+
 def _get_salt() -> str:
     global _HASH_SALT  # noqa: PLW0603
     if _HASH_SALT is None:

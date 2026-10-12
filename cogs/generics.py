@@ -17,7 +17,7 @@ class Generics(commands.Cog):
     def __init__(self, client):
         self.client = client
 
-    @commands.command()
+    @commands.command(aliases=['buy', 'vendors'])
     async def newvendors(self, ctx: commands.Context):
         '''Posts the new vendors list'''
         reply_message = await util.get_reply_message(ctx.message)

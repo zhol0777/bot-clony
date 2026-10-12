@@ -21,6 +21,7 @@ import util
 TOXIC_CONTAINMENT_CHANNEL_ID = int(os.getenv('TOXIC_CONTAINMENT_CHANNEL_ID', '0'))
 SPAM_CONTAINMENT_CHANNEL_ID = int(os.getenv('SPAM_CONTAINMENT_CHANNEL_ID', '0'))
 BANNED_WORDLIST = os.getenv('BANNED_WORDLIST_FILE_PATH', '')
+MOD_CHAT_ID = int(os.getenv('MOD_CHAT_ID', '0'))
 HELPER_CHAT_ID = int(os.getenv('HELPER_CHAT_ID', '0'))
 HELPER_ROLE_ID = int(os.getenv('HELPER_ROLE_ID', '0'))
 MOD_ROLE_ID = int(os.getenv('MOD_ROLE_ID', '0'))
@@ -46,6 +47,30 @@ class ShutUp(commands.Cog):
         else:
             log.info("Censor word file %s not found, do not engage censorship", BANNED_WORDLIST)
             better_profanity.profanity.load_censor_words([])
+
+    @commands.command()
+    async def lifealert(self, ctx: commands.Context, *, reason: str = ''):
+        '''
+        Usage: !lifealert this guys getting too freaky in the chat
+        '''
+        if not reason:
+            await ctx.channel.send("LifeAlert not received. Please include context and try again.")
+            return
+        embed = discord.Embed(color=discord.Colour.red())
+        embed.set_author(name="Life Alert")
+        embed.add_field(name="User", value=f'<@{ctx.message.author.id}>')
+        embed.add_field(name="ID", value=ctx.message.author.id)
+        embed.add_field(name="Channel",
+                        value=getattr(ctx.message.channel, 'mention', str(ctx.message.channel)))
+        embed.add_field(name="Time", value=f'<t:{int(discord.utils.utcnow().timestamp())}:f>')
+        embed.add_field(name="Message", value=util.truncate_for_embed(reason))
+        embed.add_field(name="Jump to chat", value=ctx.message.jump_url)
+        if channel := self.client.get_channel(MOD_CHAT_ID):
+            await channel.send(content="@here", embed=embed)  # type: ignore
+            await ctx.channel.send("LifeAlert received.")
+            await ctx.message.delete()
+        else:
+            log.error("MOD_CHAT_ID is not set or channel not found, LifeAlert not delivered!")
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -268,10 +293,7 @@ class ShutUp(commands.Cog):
             # await channel.purge(limit=20, check=should_be_purged)
             async for message in channel.history(limit=20):
                 if message.author.id == purged_user_id:
-                    try:
-                        await message.delete()
-                    except discord.NotFound:
-                        pass  # hopefully already deleted?
+                    await message.delete()
         except discord.errors.Forbidden:
             pass
         except Exception as exc:  # pylint: disable=broad-exception-caught

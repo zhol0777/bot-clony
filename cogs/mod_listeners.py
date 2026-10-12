@@ -17,6 +17,7 @@ import util
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 MOD_CHAT_ID = int(os.getenv('MOD_CHAT_ID', '0'))
+DELETED_MESSAGE_CHANNEL_ID = int(os.getenv('DELETED_MESSAGE_CHANNEL_ID', '0'))
 # TODO: handle via role IDs
 MONITORED_ROLES = ['ejected', 'evicted', 'deported', 'Razer Hate', 'embed fail']
 
@@ -115,6 +116,64 @@ class ModListeners(commands.Cog):
             return
         log.exception('Exception in command %s:', ctx.command)
         traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+    def get_deleted_message_channel(self) -> discord.TextChannel | None:
+        '''Resolve the deleted-message log channel lazily, since the cache is
+        not populated when the cog is loaded.'''
+        channel = self.client.get_channel(DELETED_MESSAGE_CHANNEL_ID)
+        if not channel:
+            log.error("DELETED_MESSAGE_CHANNEL_ID is not set or channel not found!")
+            return
+        if not isinstance(channel, discord.TextChannel):
+            log.error("Deleted message channel should be a TextChannel, not %s", type(channel))
+            return
+        return channel
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        '''Log edited messages to the mod log channel'''
+        if before.content == after.content:
+            # embed unfurls, pins, etc. - nothing the user typed has changed
+            return
+        channel = self.get_deleted_message_channel()
+        if not channel:
+            return
+        embed = discord.Embed(
+            title="Edited Message",
+            color=discord.Color.blue()
+        )
+        embed.add_field(name="User", value=f'<@{before.author.id}>')
+        embed.add_field(name="ID", value=before.author.id)
+        embed.add_field(name="Time", value=f'<t:{int(discord.utils.utcnow().timestamp())}:t>')
+        embed.add_field(name="Message Before",
+                        value=util.truncate_for_embed(before.clean_content or "NO MESSAGE"))
+        embed.add_field(name="Message After",
+                        value=util.truncate_for_embed(after.clean_content or "NO MESSAGE"))
+        embed.add_field(name="Has Attachments", value=bool(before.attachments))
+        embed.add_field(name="Jump Link", value=before.jump_url)
+        after_urls = {at.url for at in after.attachments}
+        attachments = ' '.join(
+            attachment.url for attachment in before.attachments if attachment.url not in after_urls)
+        await channel.send(content=attachments or None, embed=embed)
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        '''Log deleted messages to the mod log channel'''
+        channel = self.get_deleted_message_channel()
+        if not channel:
+            return
+        embed = discord.Embed(
+            title="Deleted Message",
+            color=discord.Color.red()
+        )
+        embed.add_field(name="User", value=f'<@{message.author.id}>')
+        embed.add_field(name="ID", value=message.author.id)
+        embed.add_field(name="Time", value=f'<t:{int(discord.utils.utcnow().timestamp())}:t>')
+        embed.add_field(name="Message Content",
+                        value=util.truncate_for_embed(message.clean_content or "NO MESSAGE"))
+        embed.add_field(name="Jump Link", value=message.jump_url)
+        attachments = ' '.join(attachment.url for attachment in message.attachments)
+        await channel.send(content=attachments or None, embed=embed)
 
 
 async def setup(client):

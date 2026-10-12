@@ -40,7 +40,7 @@ on Medium to prepare it for that.
 * features
     * commands
       * all users (verified)
-        * ~~!help2~~
+        * ~~!help~~
         * ~~!wiki (page)~~
           * ~~ex. !wiki stabs, !wiki lube~~
           * ~~!wiki listall~~

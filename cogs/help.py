@@ -10,7 +10,7 @@ import util
 
 GENERAL_COMMANDS = '''
 Generics:
-  help2         Posts all this
+  help          Posts all this
   sanitize      Usage: !sanitize [url1] [url2] ...
                        !sanitize (as reply)
   newvendors    Posts the vendors list
@@ -97,7 +97,7 @@ class Help(commands.Cog):
         self.client = client
 
     @commands.command()
-    async def help2(self, ctx: commands.Context, *args):
+    async def help(self, ctx: commands.Context, *args):
         '''Help info'''
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
