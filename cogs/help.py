@@ -6,6 +6,7 @@ import re
 
 from discord.ext import commands
 
+from cogs.verify import VERIFY_CHANNEL_ID, REGION_ROLE_CHANNEL_ID
 import util
 
 GENERAL_COMMANDS = '''
@@ -99,6 +100,8 @@ class Help(commands.Cog):
     @commands.command()
     async def help(self, ctx: commands.Context, *args):
         '''Help info'''
+        if ctx.channel.id in {VERIFY_CHANNEL_ID, REGION_ROLE_CHANNEL_ID}:  # ignore region role, verify channels
+            return
         if len(args) == 0:
             await ctx.channel.send(f'```{GENERAL_COMMANDS}```')
             if util.user_has_role_from_id(ctx.message.author, HELPER_ROLE_ID) \

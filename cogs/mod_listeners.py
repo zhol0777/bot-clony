@@ -11,6 +11,7 @@ from urllib.parse import urljoin
 import discord
 from discord.ext import commands
 
+from cogs.verify import VERIFY_CHANNEL_ID, REGION_ROLE_CHANNEL_ID
 import db
 import util
 
@@ -101,6 +102,8 @@ class ModListeners(commands.Cog):
             # avoid running with bot-sony
             if command in util.IGNORE_COMMAND_LIST:
                 return
+            if ctx.channel.id in {VERIFY_CHANNEL_ID, REGION_ROLE_CHANNEL_ID}:  # ignore region role, verify channels
+                return
             with db.bot_db:
                 if wiki_page := db.WikiPage.get_or_none(shortname=command):
                     if wiki_page.goes_to_root_domain:
@@ -161,6 +164,8 @@ class ModListeners(commands.Cog):
         '''Log deleted messages to the mod log channel'''
         channel = self.get_deleted_message_channel()
         if not channel:
+            return
+        if message.channel.id in {VERIFY_CHANNEL_ID, REGION_ROLE_CHANNEL_ID}:  # ignore region role, verify channels
             return
         embed = discord.Embed(
             title="Deleted Message",
